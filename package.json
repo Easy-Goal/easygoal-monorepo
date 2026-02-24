@@ -1,13 +1,32 @@
 {
-  "name": "easygoal-packages",
-  "private": true,
+  "name": "@easygoal/packages",
+  "version": "0.1.0",
   "description": "Monorepo de packages compartilhados do ecossistema Easy Goal",
+  "exports": {
+    "./ui": {
+      "import": "./packages/ui/dist/index.mjs",
+      "require": "./packages/ui/dist/index.js",
+      "types": "./packages/ui/dist/index.d.ts"
+    },
+    "./ui/tokens": {
+      "import": "./packages/ui/dist/tokens/index.mjs",
+      "require": "./packages/ui/dist/tokens/index.js",
+      "types": "./packages/ui/dist/tokens/index.d.ts"
+    },
+    "./auth": {
+      "import": "./packages/auth/dist/index.mjs",
+      "require": "./packages/auth/dist/index.js",
+      "types": "./packages/auth/dist/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "pnpm -r run build",
-    "dev": "pnpm -r run dev",
-    "type-check": "pnpm -r run type-check",
-    "build:ui": "pnpm --filter @easygoal/ui run build",
-    "build:auth": "pnpm --filter @easygoal/auth run build"
+    "prepare": "npm run build",
+    "build": "npm install --prefix packages/ui && npm run build --prefix packages/ui && npm install --prefix packages/auth && npm run build --prefix packages/auth",
+    "build:ui": "npm install --prefix packages/ui && npm run build --prefix packages/ui",
+    "build:auth": "npm install --prefix packages/auth && npm run build --prefix packages/auth",
+    "dev:ui": "npm run dev --prefix packages/ui",
+    "dev:auth": "npm run dev --prefix packages/auth",
+    "type-check": "npm run type-check --prefix packages/ui && npm run type-check --prefix packages/auth"
   },
   "devDependencies": {
     "typescript": "^5"
