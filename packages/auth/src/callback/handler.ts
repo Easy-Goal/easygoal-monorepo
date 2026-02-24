@@ -22,13 +22,14 @@ export async function handleAuthCallback(
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+          cookiesToSet.forEach(({ name, value }: { name: string; value: string }) =>
             request.cookies.set(name, value)
           );
           response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+          cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options?: Record<string, unknown> }) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            response.cookies.set(name, value, options as any)
           );
         },
       },
@@ -65,8 +66,8 @@ export async function handleAuthCallback(
   if (authSuccess) {
     const redirectResponse = NextResponse.redirect(new URL(next, origin));
 
-    response.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie);
+    response.cookies.getAll().forEach((cookie: { name: string; value: string }) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
     });
 
     return redirectResponse;
