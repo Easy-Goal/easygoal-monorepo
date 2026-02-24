@@ -4,24 +4,24 @@
   "description": "Monorepo de packages compartilhados do ecossistema Easy Goal",
   "exports": {
     "./ui": {
+      "types": "./packages/ui/dist/index.d.ts",
       "import": "./packages/ui/dist/index.mjs",
-      "require": "./packages/ui/dist/index.js",
-      "types": "./packages/ui/dist/index.d.ts"
+      "require": "./packages/ui/dist/index.js"
     },
     "./ui/tokens": {
+      "types": "./packages/ui/dist/tokens/index.d.ts",
       "import": "./packages/ui/dist/tokens/index.mjs",
-      "require": "./packages/ui/dist/tokens/index.js",
-      "types": "./packages/ui/dist/tokens/index.d.ts"
+      "require": "./packages/ui/dist/tokens/index.js"
     },
     "./auth": {
+      "types": "./packages/auth/dist/index.d.ts",
       "import": "./packages/auth/dist/index.mjs",
-      "require": "./packages/auth/dist/index.js",
-      "types": "./packages/auth/dist/index.d.ts"
+      "require": "./packages/auth/dist/index.js"
     },
     "./auth/server": {
+      "types": "./packages/auth/dist/server.d.ts",
       "import": "./packages/auth/dist/server.mjs",
-      "require": "./packages/auth/dist/server.js",
-      "types": "./packages/auth/dist/server.d.ts"
+      "require": "./packages/auth/dist/server.js"
     }
   },
   "scripts": {
