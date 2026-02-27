@@ -2,6 +2,7 @@
   "name": "@easygoal/packages",
   "version": "0.1.0",
   "description": "Monorepo de packages compartilhados do ecossistema Easy Goal",
+  "private": true,
   "exports": {
     "./ui": {
       "types": "./packages/ui/dist/index.d.ts",
@@ -13,11 +14,13 @@
       "import": "./packages/ui/dist/tokens/index.mjs",
       "require": "./packages/ui/dist/tokens/index.js"
     },
-    "./auth": {
+
+    "./auth/client": {
       "types": "./packages/auth/dist/index.d.ts",
       "import": "./packages/auth/dist/index.mjs",
       "require": "./packages/auth/dist/index.js"
     },
+
     "./auth/server": {
       "types": "./packages/auth/dist/server.d.ts",
       "import": "./packages/auth/dist/server.mjs",

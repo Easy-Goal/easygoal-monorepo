@@ -1,21 +1,11 @@
+// ===============================
+// CLIENT ENTRY (React only)
+// ===============================
+
 // Providers
 export { AuthProvider, useAuthSession } from './providers/AuthProvider';
 
-// Types
+// Types (seguros para client)
 export type {
-  AuthProviderConfig,
-  AuthContextValue,
-  AuthUser,
-  AuthCompany,
-  AuthStats,
-  AuthData,
-  CallbackConfig,
-  MiddlewareConfig,
+  AuthCompany, AuthContextValue, AuthData, AuthProviderConfig, AuthStats, AuthUser
 } from './types';
-
-// Callback
-export { handleAuthCallback } from './callback/handler';
-export { createCallbackRoute } from './callback/route';
-
-// Middleware
-export { updateSession, defaultMatcherConfig } from './middleware/updateSession';
