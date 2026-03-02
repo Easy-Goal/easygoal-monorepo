@@ -110,7 +110,12 @@ function useSSOLogin(config) {
       const name = cookie.split("=")[0].trim();
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     });
-    window.location.href = `${ssoUrl}/auth/signout`;
+    fetch(`${ssoUrl}/auth/signout`, {
+      method: "POST",
+      credentials: "include"
+    }).catch(() => {
+    });
+    window.location.href = "/";
   };
   return { login, logout };
 }

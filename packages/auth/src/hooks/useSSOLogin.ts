@@ -43,7 +43,13 @@ export function useSSOLogin(config: SSOLoginConfig) {
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     });
 
-    window.location.href = `${ssoUrl}/auth/signout`;
+    // 🔥 chama SSO em background
+    fetch(`${ssoUrl}/auth/signout`, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => { });
+
+    window.location.href = "/";
   };
 
   return { login, logout };
