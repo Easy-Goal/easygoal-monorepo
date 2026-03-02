@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "Monorepo de packages compartilhados do ecossistema Easy Goal",
   "private": true,
+  "typesVersions": {
+    "*": {
+      "ui": ["./packages/ui/dist/index.d.ts"],
+      "ui/tokens": ["./packages/ui/dist/tokens/index.d.ts"],
+      "auth/client": ["./packages/auth/dist/index.d.ts"],
+      "auth/server": ["./packages/auth/dist/server.d.ts"]
+    }
+  },
   "exports": {
     "./ui": {
       "types": "./packages/ui/dist/index.d.ts",
