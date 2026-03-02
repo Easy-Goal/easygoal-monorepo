@@ -21,7 +21,8 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var src_exports = {};
 __export(src_exports, {
   AuthProvider: () => AuthProvider,
-  useAuthSession: () => useAuthSession
+  useAuthSession: () => useAuthSession,
+  useSSOLogin: () => useSSOLogin
 });
 module.exports = __toCommonJS(src_exports);
 
@@ -89,9 +90,25 @@ function AuthProvider({ children, config, supabaseClient }) {
   }
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthContext.Provider, { value: { session, isReady, signOut }, children });
 }
+
+// src/hooks/useSSOLogin.ts
+var import_react2 = require("react");
+function useSSOLogin(config) {
+  const { ssoUrl, apiKey, callbackPath = "/auth/callback", next = "/" } = config;
+  const login = (0, import_react2.useCallback)(() => {
+    const callbackUrl = `${window.location.origin}${callbackPath}`;
+    const checkUrl = new URL(`${ssoUrl}/auth/check`);
+    checkUrl.searchParams.set("api_key", apiKey);
+    checkUrl.searchParams.set("redirect_to", callbackUrl);
+    checkUrl.searchParams.set("next", next);
+    window.location.href = checkUrl.toString();
+  }, [ssoUrl, apiKey, callbackPath, next]);
+  return { login };
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AuthProvider,
-  useAuthSession
+  useAuthSession,
+  useSSOLogin
 });
 //# sourceMappingURL=index.js.map

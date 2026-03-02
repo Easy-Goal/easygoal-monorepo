@@ -61,4 +61,27 @@ interface AuthProviderProps {
 }
 declare function AuthProvider({ children, config, supabaseClient }: AuthProviderProps): react_jsx_runtime.JSX.Element;
 
-export { type AuthCompany, type AuthContextValue, type AuthData, AuthProvider, type AuthProviderConfig, type AuthStats, type AuthUser, useAuthSession };
+interface SSOLoginConfig {
+    /** URL base do SSO (ex: https://sso.easygoal.com.br) */
+    ssoUrl: string;
+    /** API key pública da aplicação (NEXT_PUBLIC_EASY_API_KEY) */
+    apiKey: string;
+    /** Caminho do callback nesta app (default: '/auth/callback') */
+    callbackPath?: string;
+    /** Rota para redirecionar após login (default: '/') */
+    next?: string;
+}
+/**
+ * Hook para iniciar o fluxo de login via SSO Easy Goal manualmente.
+ *
+ * Uso:
+ * ```tsx
+ * const { login } = useSSOLogin({ ssoUrl, apiKey });
+ * <button onClick={login}>Entrar</button>
+ * ```
+ */
+declare function useSSOLogin(config: SSOLoginConfig): {
+    login: () => void;
+};
+
+export { type AuthCompany, type AuthContextValue, type AuthData, AuthProvider, type AuthProviderConfig, type AuthStats, type AuthUser, type SSOLoginConfig, useAuthSession, useSSOLogin };

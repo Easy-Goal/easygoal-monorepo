@@ -68,8 +68,24 @@ function AuthProvider({ children, config, supabaseClient }) {
   }
   return /* @__PURE__ */ jsx(AuthContext.Provider, { value: { session, isReady, signOut }, children });
 }
+
+// src/hooks/useSSOLogin.ts
+import { useCallback as useCallback2 } from "react";
+function useSSOLogin(config) {
+  const { ssoUrl, apiKey, callbackPath = "/auth/callback", next = "/" } = config;
+  const login = useCallback2(() => {
+    const callbackUrl = `${window.location.origin}${callbackPath}`;
+    const checkUrl = new URL(`${ssoUrl}/auth/check`);
+    checkUrl.searchParams.set("api_key", apiKey);
+    checkUrl.searchParams.set("redirect_to", callbackUrl);
+    checkUrl.searchParams.set("next", next);
+    window.location.href = checkUrl.toString();
+  }, [ssoUrl, apiKey, callbackPath, next]);
+  return { login };
+}
 export {
   AuthProvider,
-  useAuthSession
+  useAuthSession,
+  useSSOLogin
 };
 //# sourceMappingURL=index.mjs.map
