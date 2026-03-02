@@ -11,6 +11,8 @@ export default defineConfig([
     sourcemap: true,
     clean: true,
     splitting: false,
+    // Garante que o bundle seja marcado como client component para Next.js App Router
+    banner: { js: "'use client';" },
     external: [
       "react",
       "react-dom",

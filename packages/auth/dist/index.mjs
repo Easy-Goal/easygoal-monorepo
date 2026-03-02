@@ -1,3 +1,5 @@
+'use client';
+
 // src/providers/AuthProvider.tsx
 import {
   createContext,
