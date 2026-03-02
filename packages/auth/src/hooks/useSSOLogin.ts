@@ -38,6 +38,11 @@ export function useSSOLogin(config: SSOLoginConfig) {
     localStorage.clear();
     sessionStorage.clear();
 
+    document.cookie.split(";").forEach((cookie) => {
+      const name = cookie.split("=")[0].trim();
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    });
+
     window.location.href = `${ssoUrl}/auth/signout`;
   };
 
