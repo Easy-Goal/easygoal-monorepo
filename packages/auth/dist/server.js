@@ -33,7 +33,7 @@ module.exports = __toCommonJS(server_exports);
 var import_ssr = require("@supabase/ssr");
 var import_server = require("next/server");
 var EG_SESSION_COOKIE = "eg_session";
-var EG_SESSION_MAX_AGE = 60 * 60 * 24 * 7;
+var EG_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 async function handleAuthCallback(request, config) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -52,15 +52,17 @@ async function handleAuthCallback(request, config) {
         body: JSON.stringify({ token: egToken })
       });
       if (verifyRes.ok) {
-        const { user } = await verifyRes.json();
+        const { eg_session: egSessionJwt } = await verifyRes.json();
         const redirectResponse = import_server.NextResponse.redirect(new URL(next, origin));
-        redirectResponse.cookies.set(EG_SESSION_COOKIE, JSON.stringify(user), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          path: "/",
-          maxAge: EG_SESSION_MAX_AGE
-        });
+        if (egSessionJwt) {
+          redirectResponse.cookies.set(EG_SESSION_COOKIE, egSessionJwt, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            maxAge: EG_SESSION_MAX_AGE
+          });
+        }
         return redirectResponse;
       }
       console.error("[auth] eg_token verify failed:", await verifyRes.text());

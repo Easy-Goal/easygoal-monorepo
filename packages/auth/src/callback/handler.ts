@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import type { CallbackConfig } from '../types';
 
 const EG_SESSION_COOKIE = 'eg_session';
-const EG_SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 dias
+const EG_SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 dias
 
 export async function handleAuthCallback(
   request: NextRequest,
@@ -29,16 +29,20 @@ export async function handleAuthCallback(
       });
 
       if (verifyRes.ok) {
-        const { user } = await verifyRes.json();
+        const { eg_session: egSessionJwt } = await verifyRes.json();
         const redirectResponse = NextResponse.redirect(new URL(next, origin));
 
-        redirectResponse.cookies.set(EG_SESSION_COOKIE, JSON.stringify(user), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: EG_SESSION_MAX_AGE,
-        });
+        // eg_session é um JWT assinado pelo SSO — apps decodificam o payload (base64)
+        // para obter claims do usuário, sem precisar de Supabase ou secret.
+        if (egSessionJwt) {
+          redirectResponse.cookies.set(EG_SESSION_COOKIE, egSessionJwt, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: EG_SESSION_MAX_AGE,
+          });
+        }
 
         return redirectResponse;
       }
