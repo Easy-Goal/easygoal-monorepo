@@ -49,6 +49,7 @@ export function useSSOLogin(config: SSOLoginConfig) {
     checkUrl.searchParams.set('api_key', apiKey);
     checkUrl.searchParams.set('redirect_to', callbackUrl);
     checkUrl.searchParams.set('next', next);
+    checkUrl.searchParams.set('prompt', 'login');
     window.location.href = checkUrl.toString();
   }, [ssoUrl, apiKey, callbackPath, next]);
 
