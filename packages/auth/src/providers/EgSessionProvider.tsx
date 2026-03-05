@@ -65,44 +65,54 @@ interface EgSessionProviderProps {
  * ```
  */
 export function EgSessionProvider({ children, config }: EgSessionProviderProps) {
-
   const {
     sessionPath = '/api/auth/session',
     ssoUrl,
     apiKey
-  } = config ?? {}
+  } = config ?? {};
 
   const [state, setState] = useState<EgSessionContextValue>({
     user: null,
     isReady: false,
-  })
+  });
 
   useEffect(() => {
     fetch(sessionPath)
       .then(async (res) => {
         if (res.status === 401 && ssoUrl) {
           const url = new URL(`${ssoUrl}/auth/login`);
-
           if (apiKey) {
             url.searchParams.set("api_key", apiKey);
           }
-
           url.searchParams.set("redirect_to", window.location.href);
-
           window.location.href = url.toString();
           return null;
         }
-
         return res.json();
       })
+      .then((data) => {
+        // CORREÇÃO: Atualiza o state chamando o mapClaims!
+        if (data) {
+          // Ajuste "data.user" ou "data.claims" dependendo de como sua API de session retorna
+          const claimsToMap = data.claims || data;
 
-  }, [sessionPath, ssoUrl, apiKey])
+          setState({
+            user: mapClaims(claimsToMap),
+            isReady: true,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao carregar sessão:", err);
+        setState((prev) => ({ ...prev, isReady: true }));
+      });
+  }, [sessionPath, ssoUrl, apiKey]);
 
   return (
     <EgSessionContext.Provider value={state}>
       {children}
     </EgSessionContext.Provider>
-  )
+  );
 }
 
 function mapClaims(claims: Record<string, unknown>): EgSessionUser {
@@ -115,5 +125,6 @@ function mapClaims(claims: Record<string, unknown>): EgSessionUser {
     companyName: (claims.company_name as string) ?? null,
     rankName: (claims.rank_name as string) ?? null,
     planSlug: (claims.plan_slug as string) ?? null,
+    provider: (claims.provider as string) ?? undefined, // <-- Injetando o provider pro comparativo OAuth
   };
 }

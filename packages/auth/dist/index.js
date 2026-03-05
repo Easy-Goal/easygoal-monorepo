@@ -125,9 +125,34 @@ function EgSessionProvider({ children, config }) {
         return null;
       }
       return res.json();
+    }).then((data) => {
+      if (data) {
+        const claimsToMap = data.claims || data;
+        setState({
+          user: mapClaims(claimsToMap),
+          isReady: true
+        });
+      }
+    }).catch((err) => {
+      console.error("Erro ao carregar sess\xE3o:", err);
+      setState((prev) => ({ ...prev, isReady: true }));
     });
   }, [sessionPath, ssoUrl, apiKey]);
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(EgSessionContext.Provider, { value: state, children });
+}
+function mapClaims(claims) {
+  return {
+    id: String(claims.sub ?? ""),
+    email: claims.email,
+    name: claims.name ?? null,
+    avatarUrl: claims.avatar_url ?? null,
+    isProducer: claims.is_producer === true,
+    companyName: claims.company_name ?? null,
+    rankName: claims.rank_name ?? null,
+    planSlug: claims.plan_slug ?? null,
+    provider: claims.provider ?? void 0
+    // <-- Injetando o provider pro comparativo OAuth
+  };
 }
 
 // src/hooks/useSSOLogin.ts
