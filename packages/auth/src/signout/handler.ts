@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
  * Limpa o cookie httpOnly `eg_session` server-side.
  * Deve ser chamado em um route handler POST da app que usa SSO.
  */
+// Dentro de ./signout/handler.ts
 export async function handleSignout(): Promise<NextResponse> {
-
   const cookieStore = await cookies();
 
   cookieStore.set("eg_session", "", {
@@ -15,6 +15,7 @@ export async function handleSignout(): Promise<NextResponse> {
     sameSite: "lax",
     path: "/",
     maxAge: 0,
+    domain: process.env.NODE_ENV === "production" ? ".easygoal.com.br" : undefined, // <-- O salvador da pátria!
   });
 
   return NextResponse.json({ success: true });

@@ -58,7 +58,9 @@ async function handleSignout() {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 0
+    maxAge: 0,
+    domain: process.env.NODE_ENV === "production" ? ".easygoal.com.br" : void 0
+    // <-- O salvador da pátria!
   });
   return NextResponse2.json({ success: true });
 }
