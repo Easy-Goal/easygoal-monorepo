@@ -54,21 +54,24 @@ export function useSSOLogin(config: SSOLoginConfig) {
   }, [ssoUrl, apiKey, callbackPath, next]);
 
   const logout = useCallback(async () => {
-    // Limpar storage local
+    // limpar storage local
     localStorage.clear();
     sessionStorage.clear();
 
-    // Limpar o cookie httpOnly eg_session via rota server-side da própria app
-    // (document.cookie não consegue deletar cookies httpOnly)
-    await fetch(logoutPath, { method: 'POST' }).catch(() => {});
+    // limpar cookie local
+    await fetch(logoutPath, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => { });
 
-    // Invalidar a sessão Supabase no SSO (fire-and-forget)
-    fetch(`${ssoUrl}/auth/signout`, {
-      method: 'POST',
-      credentials: 'include',
-    }).catch(() => {});
+    // redirecionar para logout do SSO
+    const url = new URL(`${ssoUrl}/auth/signout`);
+    url.searchParams.set(
+      "redirect_to",
+      `${window.location.origin}${redirectAfterLogout}`
+    );
 
-    window.location.href = redirectAfterLogout;
+    window.location.href = url.toString();
   }, [ssoUrl, logoutPath, redirectAfterLogout]);
 
   return { login, logout };

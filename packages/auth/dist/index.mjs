@@ -138,14 +138,17 @@ function useSSOLogin(config) {
   const logout = useCallback2(async () => {
     localStorage.clear();
     sessionStorage.clear();
-    await fetch(logoutPath, { method: "POST" }).catch(() => {
-    });
-    fetch(`${ssoUrl}/auth/signout`, {
+    await fetch(logoutPath, {
       method: "POST",
       credentials: "include"
     }).catch(() => {
     });
-    window.location.href = redirectAfterLogout;
+    const url = new URL(`${ssoUrl}/auth/signout`);
+    url.searchParams.set(
+      "redirect_to",
+      `${window.location.origin}${redirectAfterLogout}`
+    );
+    window.location.href = url.toString();
   }, [ssoUrl, logoutPath, redirectAfterLogout]);
   return { login, logout };
 }
