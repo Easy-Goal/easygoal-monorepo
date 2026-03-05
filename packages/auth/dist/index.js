@@ -154,19 +154,12 @@ function useSSOLogin(config) {
     checkUrl.searchParams.set("prompt", "login");
     window.location.href = checkUrl.toString();
   }, [ssoUrl, apiKey, callbackPath, next]);
-  const logout = (0, import_react3.useCallback)(async () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    await fetch(logoutPath, {
-      method: "POST",
-      credentials: "include"
-    }).catch(() => {
-    });
+  const logout = (0, import_react3.useCallback)(() => {
+    const returnUrl = `${window.location.origin}${logoutPath}?redirect=${encodeURIComponent(
+      redirectAfterLogout
+    )}`;
     const url = new URL(`${ssoUrl}/auth/signout`);
-    url.searchParams.set(
-      "redirect_to",
-      `${window.location.origin}${redirectAfterLogout}`
-    );
+    url.searchParams.set("redirect_to", returnUrl);
     window.location.href = url.toString();
   }, [ssoUrl, logoutPath, redirectAfterLogout]);
   return { login, logout };

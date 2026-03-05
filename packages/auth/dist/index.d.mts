@@ -106,38 +106,16 @@ interface EgSessionProviderProps {
 declare function EgSessionProvider({ children, config }: EgSessionProviderProps): react_jsx_runtime.JSX.Element;
 
 interface SSOLoginConfig {
-    /** URL base do SSO (ex: https://sso.easygoal.com.br) */
     ssoUrl: string;
-    /** API key pública da aplicação (NEXT_PUBLIC_EASY_API_KEY) */
     apiKey: string;
-    /** Caminho do callback nesta app (default: '/auth/callback') */
     callbackPath?: string;
-    /** Rota para redirecionar após login (default: '/') */
     next?: string;
-    /**
-     * Rota local de signout para limpar o cookie httpOnly `eg_session`.
-     * Deve apontar para um endpoint POST da própria app.
-     * (default: '/api/auth/signout')
-     */
     logoutPath?: string;
-    /**
-     * URL ou path para redirecionar após logout (default: '/').
-     * Útil para enviar o usuário ao root da app após sair.
-     */
     redirectAfterLogout?: string;
 }
-/**
- * Hook para iniciar o fluxo de login via SSO Easy Goal manualmente.
- *
- * Uso:
- * ```tsx
- * const { login } = useSSOLogin({ ssoUrl, apiKey });
- * <button onClick={login}>Entrar</button>
- * ```
- */
 declare function useSSOLogin(config: SSOLoginConfig): {
     login: () => void;
-    logout: () => Promise<void>;
+    logout: () => void;
 };
 
 export { type AuthCompany, type AuthContextValue, type AuthData, AuthProvider, type AuthProviderConfig, type AuthStats, type AuthUser, type EgSessionConfig, type EgSessionContextValue, EgSessionProvider, type EgSessionUser, type SSOLoginConfig, useAuthSession, useEgSession, useSSOLogin };
