@@ -1,7 +1,7 @@
 export { colors, cssVars } from './chunk-2K3ZSUMX.mjs';
 import { jsxs, jsx } from 'react/jsx-runtime';
 import { useEgSession, useSSOLogin } from '@easygoal/packages/auth/client';
-import { ChevronDown, LayoutDashboard, Settings, Lock, BookOpen, LogOut } from 'lucide-react';
+import { Bell, ChevronDown, LayoutDashboard, Settings, Lock, BookOpen, LogOut } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 var TEXT_COLOR = {
@@ -107,51 +107,50 @@ function HeaderUserMenu({ config }) {
   if (!isReady || !user) return null;
   const isOAuthUser = user.provider && user.provider !== "email";
   const initials = user.name ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() : (user.email?.[0] ?? "?").toUpperCase();
-  return /* @__PURE__ */ jsxs("div", { ref: containerRef, className: "relative", children: [
-    /* @__PURE__ */ jsxs(
-      "button",
-      {
-        onClick: () => setIsOpen(!isOpen),
-        className: "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-white/5",
-        children: [
-          /* @__PURE__ */ jsx("div", { className: "flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/10 border border-orange-500/20 overflow-hidden shrink-0", children: user.avatarUrl ? /* @__PURE__ */ jsx("img", { src: user.avatarUrl, className: "h-full w-full object-cover", alt: "" }) : /* @__PURE__ */ jsx("span", { className: "text-[10px] font-bold text-orange-500", children: initials }) }),
-          /* @__PURE__ */ jsx("span", { className: "hidden max-w-[100px] truncate font-medium sm:block text-white/90", children: user.name?.split(" ")[0] }),
-          /* @__PURE__ */ jsx(ChevronDown, { className: `h-4 w-4 text-white/30 transition-transform ${isOpen ? "rotate-180" : ""}` })
-        ]
-      }
-    ),
-    isOpen && /* @__PURE__ */ jsxs("div", { className: "absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-white/10 bg-[#1e2536] p-1.5 shadow-2xl", children: [
-      /* @__PURE__ */ jsxs("div", { className: "px-3 py-3 border-b border-white/5", children: [
-        /* @__PURE__ */ jsx("p", { className: "truncate text-sm font-semibold text-white", children: user.name }),
-        /* @__PURE__ */ jsx("p", { className: "truncate text-[11px] text-white/40", children: user.email })
-      ] }),
-      /* @__PURE__ */ jsx("div", { className: "py-1 border-b border-white/5", children: /* @__PURE__ */ jsxs("a", { href: getAppUrl("/dashboard"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5 transition-colors", children: [
-        /* @__PURE__ */ jsx(LayoutDashboard, { className: "h-4 w-4 opacity-50" }),
-        " Painel Principal"
-      ] }) }),
-      /* @__PURE__ */ jsxs("div", { className: "py-1 border-b border-white/5", children: [
-        /* @__PURE__ */ jsx("div", { className: "px-3 py-1.5 text-[10px] font-bold text-white/20 uppercase tracking-wider", children: "Configura\xE7\xF5es" }),
-        /* @__PURE__ */ jsxs("a", { href: getAppUrl("/settings/profile"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
-          /* @__PURE__ */ jsx(Settings, { className: "h-4 w-4 opacity-50" }),
-          " Editar Perfil"
+  return /* @__PURE__ */ jsxs("div", { ref: containerRef, className: "relative flex items-center gap-3", children: [
+    /* @__PURE__ */ jsx("button", { className: "text-white/50 hover:text-white transition-colors", children: /* @__PURE__ */ jsx(Bell, { className: "h-5 w-5" }) }),
+    /* @__PURE__ */ jsxs("div", { className: "relative", children: [
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          onClick: () => setIsOpen(!isOpen),
+          className: "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-white/5",
+          children: [
+            /* @__PURE__ */ jsx("div", { className: "flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/10 border border-orange-500/20 overflow-hidden shrink-0", children: user.avatarUrl ? /* @__PURE__ */ jsx("img", { src: user.avatarUrl, className: "h-full w-full object-cover", alt: "" }) : /* @__PURE__ */ jsx("span", { className: "text-[10px] font-bold text-orange-500", children: initials }) }),
+            /* @__PURE__ */ jsx("span", { className: "hidden max-w-[100px] truncate font-medium sm:block text-white/90", children: user.name?.split(" ")[0] }),
+            /* @__PURE__ */ jsx(ChevronDown, { className: `h-4 w-4 text-white/30 transition-transform ${isOpen ? "rotate-180" : ""}` })
+          ]
+        }
+      ),
+      isOpen && /* @__PURE__ */ jsxs("div", { className: "absolute right-0 top-full z-[100] mt-2 w-64 rounded-xl border border-white/10 bg-[#1e2536] p-1.5 shadow-2xl", children: [
+        /* @__PURE__ */ jsxs("div", { className: "px-3 py-3 border-b border-white/5", children: [
+          /* @__PURE__ */ jsx("p", { className: "truncate text-sm font-semibold text-white", children: user.name }),
+          /* @__PURE__ */ jsx("p", { className: "truncate text-[11px] text-white/40", children: user.email })
         ] }),
-        !isOAuthUser && /* @__PURE__ */ jsxs("a", { href: getAppUrl("/settings/security"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
-          /* @__PURE__ */ jsx(Lock, { className: "h-4 w-4 opacity-50" }),
-          " Seguran\xE7a"
+        /* @__PURE__ */ jsx("div", { className: "py-1 border-b border-white/5", children: /* @__PURE__ */ jsxs("a", { href: getAppUrl("/dashboard"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5 transition-colors", children: [
+          /* @__PURE__ */ jsx(LayoutDashboard, { className: "h-4 w-4 opacity-50" }),
+          " Painel Principal"
+        ] }) }),
+        /* @__PURE__ */ jsxs("div", { className: "py-1 border-b border-white/5", children: [
+          /* @__PURE__ */ jsx("div", { className: "px-3 py-1.5 text-[10px] font-bold text-white/20 uppercase tracking-wider", children: "Configura\xE7\xF5es" }),
+          /* @__PURE__ */ jsxs("a", { href: getAppUrl("/settings/profile"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
+            /* @__PURE__ */ jsx(Settings, { className: "h-4 w-4 opacity-50" }),
+            " Editar Perfil"
+          ] }),
+          !isOAuthUser && /* @__PURE__ */ jsxs("a", { href: getAppUrl("/settings/security"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
+            /* @__PURE__ */ jsx(Lock, { className: "h-4 w-4 opacity-50" }),
+            " Seguran\xE7a"
+          ] })
         ] }),
-        isOAuthUser && /* @__PURE__ */ jsxs("div", { className: "px-3 py-2 text-[10px] font-bold uppercase text-white/10", children: [
-          "via ",
-          user.provider
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxs("div", { className: "py-1", children: [
-        /* @__PURE__ */ jsxs("a", { href: config.docsUrl || "https://docs.easygoal.com.br", target: "_blank", className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
-          /* @__PURE__ */ jsx(BookOpen, { className: "h-4 w-4 opacity-50" }),
-          " Documenta\xE7\xE3o"
-        ] }),
-        /* @__PURE__ */ jsxs("button", { onClick: logout, className: "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-400/10 transition-colors", children: [
-          /* @__PURE__ */ jsx(LogOut, { className: "h-4 w-4" }),
-          " Sair da conta"
+        /* @__PURE__ */ jsxs("div", { className: "py-1", children: [
+          /* @__PURE__ */ jsxs("a", { href: config.docsUrl || "https://docs.easygoal.com.br", target: "_blank", className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
+            /* @__PURE__ */ jsx(BookOpen, { className: "h-4 w-4 opacity-50" }),
+            " Documenta\xE7\xE3o"
+          ] }),
+          /* @__PURE__ */ jsxs("button", { onClick: logout, className: "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-400/10 transition-colors", children: [
+            /* @__PURE__ */ jsx(LogOut, { className: "h-4 w-4" }),
+            " Sair da conta"
+          ] })
         ] })
       ] })
     ] })
