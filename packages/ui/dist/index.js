@@ -88,7 +88,7 @@ function Logo({ variant = "dark", width = 133, className }) {
 }
 function HeaderUserMenu({ config }) {
   const { user, isReady } = client.useEgSession();
-  const { login, logout } = client.useSSOLogin({
+  const { logout } = client.useSSOLogin({
     ssoUrl: config.ssoUrl,
     apiKey: config.apiKey,
     logoutPath: "/api/auth/signout"
@@ -106,17 +106,7 @@ function HeaderUserMenu({ config }) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-  if (!isReady) return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "w-8 h-8 rounded-full bg-white/5 animate-pulse" });
-  if (!user) {
-    return /* @__PURE__ */ jsxRuntime.jsx(
-      "button",
-      {
-        onClick: login,
-        className: "rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-white/60 transition-colors hover:border-white/20 hover:text-white",
-        children: "Entrar"
-      }
-    );
-  }
+  if (!isReady || !user) return null;
   const isOAuthUser = user.provider && user.provider !== "email";
   const initials = user.name ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() : (user.email?.[0] ?? "?").toUpperCase();
   return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref: containerRef, className: "relative", children: [

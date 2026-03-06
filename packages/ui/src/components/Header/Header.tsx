@@ -27,13 +27,13 @@ export interface EasyHeaderProps {
     ssoUrl: string;
     apiKey: string;
     docsUrl?: string;
-    appUrl?: string; // Fundamental para o redirecionamento centralizado
+    appUrl?: string; // Ex: https://app.easygoal.com.br
   };
 }
 
 function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
   const { user, isReady } = useEgSession();
-  const { login, logout } = useSSOLogin({
+  const { logout } = useSSOLogin({
     ssoUrl: config.ssoUrl,
     apiKey: config.apiKey,
     logoutPath: "/api/auth/signout",
@@ -42,7 +42,7 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Helper para garantir que links de perfil sempre apontem para o App Principal
+  // Helper para garantir links absolutos para o App Principal
   const getAppUrl = (path: string) => {
     const baseUrl = config.appUrl || "https://app.easygoal.com.br";
     return `${baseUrl}${path}`;
@@ -56,18 +56,7 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  if (!isReady) return <div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />;
-
-  if (!user) {
-    return (
-      <button
-        onClick={login}
-        className="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-white/60 transition-colors hover:border-white/20 hover:text-white"
-      >
-        Entrar
-      </button>
-    );
-  }
+  if (!isReady || !user) return null;
 
   const isOAuthUser = user.provider && user.provider !== "email";
   const initials = user.name
@@ -170,7 +159,7 @@ export function EasyHeader({
           )}
         </a>
 
-        {/* Corrigido o espaçamento dos links centrais com gap-8 */}
+        {/* Espaçamento gap-8 resolve os links grudados da imagem */}
         <nav className="hidden items-center gap-8 md:flex">
           {navLinks.map(({ label, href }) => (
             <a key={href} href={href} className="text-sm text-white/55 no-underline transition-colors hover:text-white">
