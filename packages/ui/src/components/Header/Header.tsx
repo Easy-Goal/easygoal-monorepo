@@ -1,12 +1,17 @@
 "use client";
 
 import { useEgSession, useSSOLogin } from "@easygoal/packages/auth/client";
-import { BookOpen, ChevronDown, Lock, LogOut, Mail } from "lucide-react";
-import Link from "next/link";
+import {
+  BookOpen,
+  ChevronDown,
+  LayoutDashboard,
+  Lock,
+  LogOut,
+  Settings
+} from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { Logo } from "../Logo"; // Ajuste conforme seu projeto
-// DEPOIS:
-// --- Interfaces ---
+import { Logo } from "../Logo";
+
 export interface HeaderNavLink {
   label: string;
   href: string;
@@ -18,16 +23,14 @@ export interface EasyHeaderProps {
   navLinks?: HeaderNavLink[];
   ctaSlot?: React.ReactNode;
   className?: string;
-  // Configurações de Auth passadas via Props
   config: {
     ssoUrl: string;
     apiKey: string;
     docsUrl?: string;
-    appUrl?: string; // URL do app principal para Settings
+    appUrl?: string; // Fundamental para o redirecionamento centralizado
   };
 }
 
-// --- Componente Interno do Menu ---
 function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
   const { user, isReady } = useEgSession();
   const { login, logout } = useSSOLogin({
@@ -39,6 +42,12 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Helper para garantir que links de perfil sempre apontem para o App Principal
+  const getAppUrl = (path: string) => {
+    const baseUrl = config.appUrl || "https://app.easygoal.com.br";
+    return `${baseUrl}${path}`;
+  };
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
@@ -47,7 +56,7 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  if (!isReady) return <div className="w-8 h-8" />;
+  if (!isReady) return <div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />;
 
   if (!user) {
     return (
@@ -62,7 +71,7 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
 
   const isOAuthUser = user.provider && user.provider !== "email";
   const initials = user.name
-    ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+    ? user.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
     : (user.email?.[0] ?? "?").toUpperCase();
 
   return (
@@ -71,48 +80,59 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-white/5"
       >
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-500/10 border border-orange-500/20 overflow-hidden">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/10 border border-orange-500/20 overflow-hidden shrink-0">
           {user.avatarUrl ? (
             <img src={user.avatarUrl} className="h-full w-full object-cover" alt="" />
           ) : (
             <span className="text-[10px] font-bold text-orange-500">{initials}</span>
           )}
         </div>
-        <span className="hidden max-w-[120px] truncate font-medium sm:block text-white/90">
+        <span className="hidden max-w-[100px] truncate font-medium sm:block text-white/90">
           {user.name?.split(" ")[0]}
         </span>
         <ChevronDown className={`h-4 w-4 text-white/30 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-white/10 bg-[#1e2536] p-1 shadow-xl">
-          <div className="px-3 py-2 border-b border-white/5">
-            <p className="truncate text-sm font-medium text-white">{user.name}</p>
-            <p className="truncate text-xs text-white/40">{user.email}</p>
+        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-white/10 bg-[#1e2536] p-1.5 shadow-2xl">
+          {/* Identidade */}
+          <div className="px-3 py-3 border-b border-white/5">
+            <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+            <p className="truncate text-[11px] text-white/40">{user.email}</p>
           </div>
 
-          <div className="pt-1">
-            {!isOAuthUser ? (
-              <>
-                <Link href="/settings/email" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/5" onClick={() => setIsOpen(false)}>
-                  <Mail className="h-4 w-4 opacity-50" /> Alterar email
-                </Link>
-                <Link href="/settings/password" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/5" onClick={() => setIsOpen(false)}>
-                  <Lock className="h-4 w-4 opacity-50" /> Alterar senha
-                </Link>
-              </>
-            ) : (
-              <div className="px-3 py-2 text-[10px] font-bold uppercase text-white/20">via {user.provider}</div>
-            )}
-
-            <a href={config.docsUrl ?? "https://docs.easygoal.com.br"} target="_blank" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/5" onClick={() => setIsOpen(false)}>
-              <BookOpen className="h-4 w-4 opacity-50" /> Documentação
+          {/* Navegação de Ecossistema */}
+          <div className="py-1 border-b border-white/5">
+            <a href={getAppUrl("/dashboard")} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5 transition-colors">
+              <LayoutDashboard className="h-4 w-4 opacity-50" /> Painel Principal
             </a>
           </div>
 
-          <div className="border-t border-white/5 mt-1 pt-1">
-            <button onClick={logout} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-400 transition-colors hover:bg-red-400/10">
-              <LogOut className="h-4 w-4" /> Sair
+          {/* Configurações Centrais */}
+          <div className="py-1 border-b border-white/5">
+            <div className="px-3 py-1.5 text-[10px] font-bold text-white/20 uppercase tracking-wider">
+              Configurações
+            </div>
+            <a href={getAppUrl("/settings/profile")} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
+              <Settings className="h-4 w-4 opacity-50" /> Editar Perfil
+            </a>
+            {!isOAuthUser && (
+              <a href={getAppUrl("/settings/security")} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
+                <Lock className="h-4 w-4 opacity-50" /> Segurança
+              </a>
+            )}
+            {isOAuthUser && (
+              <div className="px-3 py-2 text-[10px] font-bold uppercase text-white/10">via {user.provider}</div>
+            )}
+          </div>
+
+          {/* Ajuda e Sair */}
+          <div className="py-1">
+            <a href={config.docsUrl || "https://docs.easygoal.com.br"} target="_blank" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
+              <BookOpen className="h-4 w-4 opacity-50" /> Documentação
+            </a>
+            <button onClick={logout} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-400/10 transition-colors">
+              <LogOut className="h-4 w-4" /> Sair da conta
             </button>
           </div>
         </div>
@@ -121,7 +141,6 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
   );
 }
 
-// --- Componente Principal ---
 export function EasyHeader({
   logoSuffix,
   logoVariant = "dark",
@@ -141,7 +160,7 @@ export function EasyHeader({
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${scrolled ? "bg-[#0d1117]/95 backdrop-blur-md border-b border-white/5" : "bg-transparent"} ${className}`}>
       <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6">
-        <a href="/" className="flex items-center gap-1.5 no-underline">
+        <a href="/" className="flex items-center gap-1.5 no-underline shrink-0">
           <Logo variant={logoVariant} width={108} />
           {logoSuffix && (
             <div className="flex items-center gap-1 font-mono text-sm">
@@ -151,7 +170,8 @@ export function EasyHeader({
           )}
         </a>
 
-        <nav className="hidden items-center gap-7 md:flex">
+        {/* Corrigido o espaçamento dos links centrais com gap-8 */}
+        <nav className="hidden items-center gap-8 md:flex">
           {navLinks.map(({ label, href }) => (
             <a key={href} href={href} className="text-sm text-white/55 no-underline transition-colors hover:text-white">
               {label}
@@ -159,7 +179,7 @@ export function EasyHeader({
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <HeaderUserMenu config={config} />
           {ctaSlot}
         </div>
