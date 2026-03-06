@@ -1,24 +1,33 @@
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Limpa o cookie httpOnly `eg_session` server-side.
- * Deve ser chamado em um route handler POST da app que usa SSO.
+ * Usa a estratégia "nuclear" para garantir a deleção em qualquer variação de domínio.
  */
-// Dentro de ./signout/handler.ts
 export async function handleSignout(): Promise<NextResponse> {
-  const cookieStore = await cookies();
+  const response = NextResponse.json({ success: true });
 
-  cookieStore.set("eg_session", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-    domain: process.env.NODE_ENV === "production" ? ".easygoal.com.br" : undefined, // <-- O salvador da pátria!
-  });
+  // 1. Apaga no domínio estrito (host atual, ex: localhost ou app.easygoal.com.br)
+  response.headers.append(
+    'Set-Cookie',
+    'eg_session=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly'
+  );
 
-  return NextResponse.json({ success: true });
+  // 2. Apaga no domínio abrangente com ponto (ex: .easygoal.com.br)
+  if (process.env.NODE_ENV === "production") {
+    response.headers.append(
+      'Set-Cookie',
+      'eg_session=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly; Domain=.easygoal.com.br; Secure'
+    );
+
+    // 3. Apaga no domínio raiz sem o ponto (alguns browsers diferenciam)
+    response.headers.append(
+      'Set-Cookie',
+      'eg_session=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly; Domain=easygoal.com.br; Secure'
+    );
+  }
+
+  return response;
 }
 /**
  * Factory que cria um route handler POST para signout.

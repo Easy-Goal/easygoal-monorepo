@@ -145,22 +145,20 @@ import { useCallback as useCallback2 } from "react";
 function useSSOLogin(config) {
   const login = useCallback2(() => {
     const url = new URL(`${config.ssoUrl}/auth/login`);
-    if (config.apiKey) {
-      url.searchParams.set("api_key", config.apiKey);
-    }
-    url.searchParams.set(
-      "redirect_to",
-      window.location.href
-    );
+    if (config.apiKey) url.searchParams.set("api_key", config.apiKey);
+    url.searchParams.set("redirect_to", window.location.href);
     window.location.href = url.toString();
   }, [config]);
-  const logout = useCallback2(() => {
+  const logout = useCallback2(async () => {
     localStorage.clear();
+    const localLogoutPath = config.logoutPath || "/api/auth/signout";
+    try {
+      await fetch(localLogoutPath, { method: "POST" });
+    } catch (error) {
+      console.error("Erro ao limpar a sess\xE3o local:", error);
+    }
     const url = new URL(`${config.ssoUrl}/auth/signout`);
-    url.searchParams.set(
-      "redirect_to",
-      window.location.origin
-    );
+    url.searchParams.set("redirect_to", config.redirectAfterLogout || window.location.origin);
     window.location.href = url.toString();
   }, [config]);
   return { login, logout };

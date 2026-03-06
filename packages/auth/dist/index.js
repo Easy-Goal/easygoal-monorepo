@@ -164,22 +164,20 @@ var import_react3 = require("react");
 function useSSOLogin(config) {
   const login = (0, import_react3.useCallback)(() => {
     const url = new URL(`${config.ssoUrl}/auth/login`);
-    if (config.apiKey) {
-      url.searchParams.set("api_key", config.apiKey);
-    }
-    url.searchParams.set(
-      "redirect_to",
-      window.location.href
-    );
+    if (config.apiKey) url.searchParams.set("api_key", config.apiKey);
+    url.searchParams.set("redirect_to", window.location.href);
     window.location.href = url.toString();
   }, [config]);
-  const logout = (0, import_react3.useCallback)(() => {
+  const logout = (0, import_react3.useCallback)(async () => {
     localStorage.clear();
+    const localLogoutPath = config.logoutPath || "/api/auth/signout";
+    try {
+      await fetch(localLogoutPath, { method: "POST" });
+    } catch (error) {
+      console.error("Erro ao limpar a sess\xE3o local:", error);
+    }
     const url = new URL(`${config.ssoUrl}/auth/signout`);
-    url.searchParams.set(
-      "redirect_to",
-      window.location.origin
-    );
+    url.searchParams.set("redirect_to", config.redirectAfterLogout || window.location.origin);
     window.location.href = url.toString();
   }, [config]);
   return { login, logout };

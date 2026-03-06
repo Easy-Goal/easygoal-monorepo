@@ -49,7 +49,7 @@ declare function createCallbackRoute(config: CallbackConfig): (request: NextRequ
 
 /**
  * Limpa o cookie httpOnly `eg_session` server-side.
- * Deve ser chamado em um route handler POST da app que usa SSO.
+ * Usa a estratégia "nuclear" para garantir a deleção em qualquer variação de domínio.
  */
 declare function handleSignout(): Promise<NextResponse>;
 /**

@@ -64,20 +64,24 @@ function createCallbackRoute(config) {
 }
 
 // src/signout/handler.ts
-import { cookies } from "next/headers";
 import { NextResponse as NextResponse2 } from "next/server";
 async function handleSignout() {
-  const cookieStore = await cookies();
-  cookieStore.set("eg_session", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-    domain: process.env.NODE_ENV === "production" ? ".easygoal.com.br" : void 0
-    // <-- O salvador da pátria!
-  });
-  return NextResponse2.json({ success: true });
+  const response = NextResponse2.json({ success: true });
+  response.headers.append(
+    "Set-Cookie",
+    "eg_session=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly"
+  );
+  if (process.env.NODE_ENV === "production") {
+    response.headers.append(
+      "Set-Cookie",
+      "eg_session=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly; Domain=.easygoal.com.br; Secure"
+    );
+    response.headers.append(
+      "Set-Cookie",
+      "eg_session=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly; Domain=easygoal.com.br; Secure"
+    );
+  }
+  return response;
 }
 function createSignoutRoute() {
   return async function POST(request) {

@@ -117,7 +117,7 @@ interface SSOLoginConfig {
 }
 declare function useSSOLogin(config: SSOLoginConfig): {
     login: () => void;
-    logout: () => void;
+    logout: () => Promise<void>;
 };
 
 export { type AuthCompany, type AuthContextValue, type AuthData, AuthProvider, type AuthProviderConfig, type AuthStats, type AuthUser, type EgSessionConfig, type EgSessionContextValue, EgSessionProvider, type EgSessionUser, type SSOLoginConfig, useAuthSession, useEgSession, useSSOLogin };
