@@ -1,11 +1,17 @@
+import { jwtVerify } from 'jose';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const EG_SESSION_COOKIE = "eg_session";
 
-import { jwtVerify } from 'jose';
-
-
 export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 🚨 A MÁGICA QUE ACABA COM O LOOP INFINITO 🚨
+  // Se a rota for de auth (como o callback), deixamos passar direto!
+  if (pathname.startsWith('/auth') || pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
+  }
+
   const egSession = request.cookies.get(EG_SESSION_COOKIE)?.value;
 
   if (!egSession) {

@@ -33,43 +33,58 @@ module.exports = __toCommonJS(server_exports);
 var import_server = require("next/server");
 var EG_SESSION_COOKIE = "eg_session";
 var EG_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+var getCookieDomain = () => process.env.NODE_ENV === "production" ? ".easygoal.com.br" : void 0;
 async function handleAuthCallback(request, config) {
   const { searchParams, origin } = new URL(request.url);
+  const egSessionParam = searchParams.get("eg_session");
   const egToken = searchParams.get("eg_token");
   const next = searchParams.get("next") ?? "/";
-  if (!egToken) {
-    return import_server.NextResponse.redirect(new URL("/", origin));
-  }
-  try {
-    const verifyRes = await fetch(`${config.ssoUrl}/auth/verify`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apiKey}`
-      },
-      body: JSON.stringify({ token: egToken })
-    });
-    if (!verifyRes.ok) {
-      throw new Error("eg_token verify failed");
-    }
-    const { eg_session } = await verifyRes.json();
-    const response = import_server.NextResponse.redirect(new URL(next, origin));
-    response.cookies.set(EG_SESSION_COOKIE, eg_session, {
+  const response = import_server.NextResponse.redirect(new URL(next, origin));
+  if (egSessionParam) {
+    response.cookies.set(EG_SESSION_COOKIE, egSessionParam, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: EG_SESSION_MAX_AGE
+      maxAge: EG_SESSION_MAX_AGE,
+      domain: getCookieDomain()
+      // <-- Regra do domínio aplicada!
     });
     return response;
-  } catch (err) {
-    console.error("[auth callback error]", err);
-    const loginUrl = `${config.ssoUrl}/auth/login`;
-    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
-    return import_server.NextResponse.redirect(
-      `${loginUrl}?redirect_to=${encodeURIComponent(redirectTo)}`
-    );
   }
+  if (egToken) {
+    try {
+      const verifyRes = await fetch(`${config.ssoUrl}/auth/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.apiKey}`
+        },
+        body: JSON.stringify({ token: egToken })
+      });
+      if (!verifyRes.ok) {
+        throw new Error("eg_token verify failed");
+      }
+      const { eg_session } = await verifyRes.json();
+      response.cookies.set(EG_SESSION_COOKIE, eg_session, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: EG_SESSION_MAX_AGE,
+        domain: getCookieDomain()
+        // <-- Regra do domínio aplicada!
+      });
+      return response;
+    } catch (err) {
+      console.error("[auth callback error]", err);
+    }
+  }
+  const loginUrl = `${config.ssoUrl}/auth/login`;
+  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  return import_server.NextResponse.redirect(
+    `${loginUrl}?redirect_to=${encodeURIComponent(redirectTo)}`
+  );
 }
 
 // src/callback/route.ts
@@ -100,9 +115,6 @@ function createSignoutRoute() {
     return handleSignout();
   };
 }
-
-// src/middleware/updateSession.ts
-var import_server3 = require("next/server");
 
 // ../../node_modules/jose/dist/webapi/lib/buffer_utils.js
 var encoder = new TextEncoder();
@@ -1196,8 +1208,13 @@ async function jwtVerify(jwt, key, options) {
 }
 
 // src/middleware/updateSession.ts
+var import_server3 = require("next/server");
 var EG_SESSION_COOKIE2 = "eg_session";
 async function updateSession(request) {
+  const { pathname } = request.nextUrl;
+  if (pathname.startsWith("/auth") || pathname.startsWith("/api/auth")) {
+    return import_server3.NextResponse.next();
+  }
   const egSession = request.cookies.get(EG_SESSION_COOKIE2)?.value;
   if (!egSession) {
     const loginUrl = new URL("/auth/login", process.env.NEXT_PUBLIC_SSO_URL);
