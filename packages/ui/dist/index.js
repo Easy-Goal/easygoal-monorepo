@@ -584,6 +584,12 @@ var UserIcon = () => /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", heigh
   /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" }),
   /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "12", cy: "7", r: "4" })
 ] });
+var DashboardIcon = () => /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
+  /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "3", y: "3", width: "7", height: "7" }),
+  /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "14", y: "3", width: "7", height: "7" }),
+  /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "14", y: "14", width: "7", height: "7" }),
+  /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "3", y: "14", width: "7", height: "7" })
+] });
 var BookIcon = () => /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
   /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20" }),
   /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" })
@@ -593,7 +599,7 @@ var LogOutIcon = () => /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", hei
   /* @__PURE__ */ jsxRuntime.jsx("polyline", { points: "16 17 21 12 16 7" }),
   /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "21", y1: "12", x2: "9", y2: "12" })
 ] });
-function UserMenu({ user, onSignOut, settingsUrl, docsUrl }) {
+function UserMenu({ user, onSignOut, appUrl, settingsUrl, docsUrl }) {
   const [isOpen, setIsOpen] = react.useState(false);
   const ref = react.useRef(null);
   const initials = user.name ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() : (user.email?.[0] ?? "?").toUpperCase();
@@ -628,9 +634,13 @@ function UserMenu({ user, onSignOut, settingsUrl, docsUrl }) {
         user.email && /* @__PURE__ */ jsxRuntime.jsx("p", { style: S2.userEmail, children: user.email })
       ] }),
       /* @__PURE__ */ jsxRuntime.jsxs("div", { style: S2.section, children: [
+        appUrl && /* @__PURE__ */ jsxRuntime.jsxs("a", { href: `${appUrl}/dashboard`, style: S2.menuItem, onClick: () => setIsOpen(false), children: [
+          /* @__PURE__ */ jsxRuntime.jsx(DashboardIcon, {}),
+          " Painel Principal"
+        ] }),
         settingsUrl && /* @__PURE__ */ jsxRuntime.jsxs("a", { href: settingsUrl, style: S2.menuItem, onClick: () => setIsOpen(false), children: [
           /* @__PURE__ */ jsxRuntime.jsx(UserIcon, {}),
-          " Meu perfil"
+          " Editar Perfil"
         ] }),
         docsUrl && /* @__PURE__ */ jsxRuntime.jsxs("a", { href: docsUrl, target: "_blank", rel: "noopener noreferrer", style: S2.menuItem, onClick: () => setIsOpen(false), children: [
           /* @__PURE__ */ jsxRuntime.jsx(BookIcon, {}),

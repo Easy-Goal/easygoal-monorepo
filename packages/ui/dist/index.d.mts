@@ -53,11 +53,11 @@ interface HeaderUser {
 interface UserMenuProps {
     user: HeaderUser;
     onSignOut?: () => void;
-    /** URL to redirect for login (shown when logged out) */
+    appUrl?: string;
     settingsUrl?: string;
     docsUrl?: string;
 }
-declare function UserMenu({ user, onSignOut, settingsUrl, docsUrl }: UserMenuProps): react_jsx_runtime.JSX.Element;
+declare function UserMenu({ user, onSignOut, appUrl, settingsUrl, docsUrl }: UserMenuProps): react_jsx_runtime.JSX.Element;
 
 interface HeaderNotification {
     id: string;

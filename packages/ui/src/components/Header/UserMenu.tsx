@@ -14,7 +14,7 @@ export interface HeaderUser {
 interface UserMenuProps {
   user: HeaderUser;
   onSignOut?: () => void;
-  /** URL to redirect for login (shown when logged out) */
+  appUrl?: string;
   settingsUrl?: string;
   docsUrl?: string;
 }
@@ -136,6 +136,12 @@ const UserIcon = () => (
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
+const DashboardIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+    <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+  </svg>
+);
 const BookIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -150,7 +156,7 @@ const LogOutIcon = () => (
   </svg>
 );
 
-export function UserMenu({ user, onSignOut, settingsUrl, docsUrl }: UserMenuProps) {
+export function UserMenu({ user, onSignOut, appUrl, settingsUrl, docsUrl }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -212,9 +218,14 @@ export function UserMenu({ user, onSignOut, settingsUrl, docsUrl }: UserMenuProp
 
           {/* Links */}
           <div style={S.section}>
+            {appUrl && (
+              <a href={`${appUrl}/dashboard`} style={S.menuItem} onClick={() => setIsOpen(false)}>
+                <DashboardIcon /> Painel Principal
+              </a>
+            )}
             {settingsUrl && (
               <a href={settingsUrl} style={S.menuItem} onClick={() => setIsOpen(false)}>
-                <UserIcon /> Meu perfil
+                <UserIcon /> Editar Perfil
               </a>
             )}
             {docsUrl && (
