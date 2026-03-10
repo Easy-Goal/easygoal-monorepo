@@ -1,6 +1,6 @@
 "use client";
 
-import { useEgSession, useSSOLogin } from "@easygoal/packages/auth/client";
+import { useEgSession, useNotifications, useSSOLogin } from "@easygoal/packages/auth/client";
 import {
   BookOpen,
   ChevronDown,
@@ -28,20 +28,21 @@ export interface EasyHeaderProps {
     ssoUrl: string;
     apiKey: string;
     docsUrl?: string;
-    appUrl?: string; // URL do app principal para redirecionamentos centralizados
+    appUrl?: string;
+    /** Path do endpoint de notificações. Default: '/api/notifications' */
+    notificationsPath?: string;
   };
-  notifications?: any[];
 }
 
 // --- Componente Interno do Menu do Usuário ---
-function HeaderUserMenu({ config, notifications }: {
-  config: EasyHeaderProps["config"],
-  notifications?: any[]
-}) {
+function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
   const { user, isReady } = useEgSession();
   const { logout } = useSSOLogin({
     ssoUrl: config.ssoUrl,
     apiKey: config.apiKey,
+  });
+  const { notifications, markAsRead, markAllAsRead, dismiss } = useNotifications({
+    path: config.notificationsPath ?? '/api/notifications',
   });
 
   const [isOpen, setIsOpen] = useState(false);
@@ -60,6 +61,9 @@ function HeaderUserMenu({ config, notifications }: {
       {/* Notificações Globais */}
       <NotificationBell
         notifications={notifications}
+        onMarkRead={markAsRead}
+        onMarkAllRead={markAllAsRead}
+        onDelete={dismiss}
         allNotificationsUrl={getAppUrl("/notifications")}
       />
 
@@ -113,7 +117,6 @@ export function EasyHeader({
   ctaSlot,
   className,
   config,
-  notifications
 }: EasyHeaderProps) {
   const { user, isReady } = useEgSession();
   const [scrolled, setScrolled] = useState(false);
@@ -159,7 +162,7 @@ export function EasyHeader({
         {/* 4. LADO DIREITO (PERFIL / CTAS) */}
         <div className="flex items-center gap-4 shrink-0 ml-4">
           {user ? (
-            <HeaderUserMenu config={config} notifications={notifications} />
+            <HeaderUserMenu config={config} />
           ) : (
             isReady && ctaSlot
           )}

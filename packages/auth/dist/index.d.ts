@@ -82,6 +82,36 @@ interface AuthContextValue {
     isReady: boolean;
     signOut: () => Promise<void>;
 }
+/**
+ * Formato canônico consumido pelo componente NotificationBell do @easygoal/ui.
+ * Mapeado a partir do NotificationRow do banco via useNotifications.
+ */
+interface HeaderNotification {
+    id: string;
+    title: string;
+    message: string;
+    readAt: string | null;
+    createdAt: string;
+    actionUrl?: string | null;
+}
+
+interface UseNotificationsConfig {
+    /** Path do endpoint de notificações. Default: '/api/notifications' */
+    path?: string;
+    /** Intervalo de polling em ms. Default: 30_000 (30s). 0 = desabilita. */
+    pollInterval?: number;
+}
+interface UseNotificationsReturn {
+    notifications: HeaderNotification[];
+    unreadCount: number;
+    hasUnread: boolean;
+    isLoading: boolean;
+    markAsRead: (id: string) => Promise<void>;
+    markAllAsRead: () => Promise<void>;
+    dismiss: (id: string) => Promise<void>;
+    refetch: () => void;
+}
+declare function useNotifications({ path, pollInterval, }?: UseNotificationsConfig): UseNotificationsReturn;
 
 declare function useAuthSession(): AuthContextValue;
 interface AuthProviderProps {
@@ -91,4 +121,4 @@ interface AuthProviderProps {
 }
 declare function AuthProvider({ children, config, supabaseClient }: AuthProviderProps): react_jsx_runtime.JSX.Element;
 
-export { AuthProvider, type EgSessionConfig, type EgSessionContextValue, EgSessionProvider, type EgSessionUser, type SSOLoginConfig, useAuthSession, useEgSession, useSSOLogin };
+export { AuthProvider, type EgSessionConfig, type EgSessionContextValue, EgSessionProvider, type EgSessionUser, type HeaderNotification, type SSOLoginConfig, type UseNotificationsConfig, type UseNotificationsReturn, useAuthSession, useEgSession, useNotifications, useSSOLogin };

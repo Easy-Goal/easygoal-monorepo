@@ -24,6 +24,7 @@ __export(src_exports, {
   EgSessionProvider: () => EgSessionProvider,
   useAuthSession: () => useAuthSession,
   useEgSession: () => useEgSession,
+  useNotifications: () => useNotifications,
   useSSOLogin: () => useSSOLogin
 });
 module.exports = __toCommonJS(src_exports);
@@ -118,17 +119,101 @@ function useSSOLogin(config) {
   return { login, logout };
 }
 
-// src/providers/AuthProvider.tsx
+// src/hooks/useNotifications.ts
 var import_react3 = require("react");
+function mapRow(row) {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ""),
+    message: String(row.message ?? ""),
+    readAt: row.read_at ?? null,
+    createdAt: String(row.created_at ?? ""),
+    actionUrl: row.action_url ?? null
+  };
+}
+function useNotifications({
+  path = "/api/notifications",
+  pollInterval = 3e4
+} = {}) {
+  const [notifications, setNotifications] = (0, import_react3.useState)([]);
+  const [isLoading, setIsLoading] = (0, import_react3.useState)(true);
+  const timerRef = (0, import_react3.useRef)(null);
+  const fetchNotifications = (0, import_react3.useCallback)(async () => {
+    try {
+      const res = await fetch(path, { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setNotifications(Array.isArray(data) ? data.map(mapRow) : []);
+    } catch {
+    } finally {
+      setIsLoading(false);
+    }
+  }, [path]);
+  (0, import_react3.useEffect)(() => {
+    fetchNotifications();
+    if (pollInterval > 0) {
+      timerRef.current = setInterval(fetchNotifications, pollInterval);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [fetchNotifications, pollInterval]);
+  const markAsRead = (0, import_react3.useCallback)(async (id) => {
+    setNotifications(
+      (prev) => prev.map((n) => n.id === id ? { ...n, readAt: (/* @__PURE__ */ new Date()).toISOString() } : n)
+    );
+    await fetch(path, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    }).catch(() => null);
+  }, [path]);
+  const markAllAsRead = (0, import_react3.useCallback)(async () => {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    setNotifications(
+      (prev) => prev.map((n) => n.readAt ? n : { ...n, readAt: now })
+    );
+    await fetch(path, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ all: true })
+    }).catch(() => null);
+  }, [path]);
+  const dismiss = (0, import_react3.useCallback)(async (id) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    await fetch(path, {
+      method: "DELETE",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    }).catch(() => null);
+  }, [path]);
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
+  return {
+    notifications,
+    unreadCount,
+    hasUnread: unreadCount > 0,
+    isLoading,
+    markAsRead,
+    markAllAsRead,
+    dismiss,
+    refetch: fetchNotifications
+  };
+}
+
+// src/providers/AuthProvider.tsx
+var import_react4 = require("react");
 var import_jsx_runtime2 = require("react/jsx-runtime");
-var AuthContext = (0, import_react3.createContext)({
+var AuthContext = (0, import_react4.createContext)({
   session: null,
   isReady: false,
   signOut: async () => {
   }
 });
 function useAuthSession() {
-  return (0, import_react3.useContext)(AuthContext);
+  return (0, import_react4.useContext)(AuthContext);
 }
 function AuthProvider({ children, config, supabaseClient }) {
   const {
@@ -138,9 +223,9 @@ function AuthProvider({ children, config, supabaseClient }) {
     defaultRedirect = "/dashboard",
     loadingComponent
   } = config;
-  const [session, setSession] = (0, import_react3.useState)(null);
-  const [isReady, setIsReady] = (0, import_react3.useState)(false);
-  const redirectToLogin = (0, import_react3.useCallback)(
+  const [session, setSession] = (0, import_react4.useState)(null);
+  const [isReady, setIsReady] = (0, import_react4.useState)(false);
+  const redirectToLogin = (0, import_react4.useCallback)(
     (next) => {
       const redirectTarget = next || defaultRedirect;
       const callbackUrl = `${appUrl}${callbackPath}?next=${encodeURIComponent(redirectTarget)}`;
@@ -149,7 +234,7 @@ function AuthProvider({ children, config, supabaseClient }) {
     },
     [loginUrl, appUrl, callbackPath, defaultRedirect]
   );
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     supabaseClient.auth.getSession().then(({ data: { session: currentSession } }) => {
       if (currentSession) {
         setSession(currentSession);
@@ -159,7 +244,7 @@ function AuthProvider({ children, config, supabaseClient }) {
       }
     });
   }, [supabaseClient.auth, redirectToLogin]);
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     const {
       data: { subscription }
     } = supabaseClient.auth.onAuthStateChange((event, currentSession) => {
@@ -173,7 +258,7 @@ function AuthProvider({ children, config, supabaseClient }) {
     });
     return () => subscription.unsubscribe();
   }, [supabaseClient.auth, redirectToLogin]);
-  const signOut = (0, import_react3.useCallback)(async () => {
+  const signOut = (0, import_react4.useCallback)(async () => {
     await supabaseClient.auth.signOut();
     redirectToLogin();
   }, [supabaseClient.auth, redirectToLogin]);
@@ -188,6 +273,7 @@ function AuthProvider({ children, config, supabaseClient }) {
   EgSessionProvider,
   useAuthSession,
   useEgSession,
+  useNotifications,
   useSSOLogin
 });
 //# sourceMappingURL=index.js.map

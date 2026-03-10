@@ -16,8 +16,13 @@ export { createSessionRoute } from './session/route';
 // Middleware
 export { defaultMatcherConfig, updateSession } from './middleware/updateSession';
 
+// Notifications (server)
+export { createNotificationsRoute } from './notifications/route';
+export { handleGetNotifications, handleMarkNotificationsRead, handleDeleteNotification } from './notifications/handler';
+export type { NotificationsConfig } from './notifications/handler';
+
 // Types (seguros)
 export type {
   AuthCompany, AuthData, AuthStats, AuthUser, CallbackConfig,
-  MiddlewareConfig
+  MiddlewareConfig, HeaderNotification
 } from './types';

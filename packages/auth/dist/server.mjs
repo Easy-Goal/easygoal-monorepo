@@ -162,12 +162,95 @@ var defaultMatcherConfig = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"
   ]
 };
+
+// src/notifications/handler.ts
+import { cookies as cookies2 } from "next/headers";
+import { NextResponse as NextResponse5 } from "next/server";
+var EG_SESSION_COOKIE4 = "eg_session";
+async function resolveUserId() {
+  try {
+    const cookieStore = await cookies2();
+    const raw = cookieStore.get(EG_SESSION_COOKIE4)?.value;
+    if (!raw) return null;
+    const payload = JSON.parse(
+      Buffer.from(raw.split(".")[1], "base64url").toString("utf8")
+    );
+    return payload.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+async function handleGetNotifications(_req, config) {
+  const userId = await resolveUserId();
+  if (!userId) {
+    return NextResponse5.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  try {
+    const { data, error } = await supabase.from("notifications").select("id, user_id, type, title, message, data, read_at, action_url, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(50);
+    if (error) {
+      if (error.code === "42P01") return NextResponse5.json([]);
+      return NextResponse5.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse5.json(data ?? []);
+  } catch (err) {
+    return NextResponse5.json({ error: String(err) }, { status: 500 });
+  }
+}
+async function handleMarkNotificationsRead(req, config) {
+  const userId = await resolveUserId();
+  if (!userId) {
+    return NextResponse5.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const body = await req.json().catch(() => ({}));
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  if (body.all) {
+    const { error } = await supabase.from("notifications").update({ read_at: now }).eq("user_id", userId).is("read_at", null);
+    if (error) return NextResponse5.json({ error: error.message }, { status: 500 });
+    return NextResponse5.json({ ok: true });
+  }
+  if (body.id) {
+    const { error } = await supabase.from("notifications").update({ read_at: now }).eq("id", body.id).eq("user_id", userId);
+    if (error) return NextResponse5.json({ error: error.message }, { status: 500 });
+    return NextResponse5.json({ ok: true });
+  }
+  return NextResponse5.json({ error: "invalid_body" }, { status: 400 });
+}
+async function handleDeleteNotification(req, config) {
+  const userId = await resolveUserId();
+  if (!userId) {
+    return NextResponse5.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const body = await req.json().catch(() => ({}));
+  if (!body.id) return NextResponse5.json({ error: "missing_id" }, { status: 400 });
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  const { error } = await supabase.from("notifications").delete().eq("id", body.id).eq("user_id", userId);
+  if (error) return NextResponse5.json({ error: error.message }, { status: 500 });
+  return NextResponse5.json({ ok: true });
+}
+
+// src/notifications/route.ts
+function createNotificationsRoute(config) {
+  return {
+    GET: (req) => handleGetNotifications(req, config),
+    POST: (req) => handleMarkNotificationsRead(req, config),
+    DELETE: (req) => handleDeleteNotification(req, config)
+  };
+}
 export {
   createCallbackRoute,
+  createNotificationsRoute,
   createSessionRoute,
   createSignoutRoute,
   defaultMatcherConfig,
   handleAuthCallback,
+  handleDeleteNotification,
+  handleGetNotifications,
+  handleMarkNotificationsRead,
   handleSession,
   handleSignout,
   updateSession

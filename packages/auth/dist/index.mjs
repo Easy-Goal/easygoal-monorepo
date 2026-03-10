@@ -93,13 +93,97 @@ function useSSOLogin(config) {
   return { login, logout };
 }
 
+// src/hooks/useNotifications.ts
+import { useCallback as useCallback2, useEffect as useEffect2, useRef, useState as useState2 } from "react";
+function mapRow(row) {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ""),
+    message: String(row.message ?? ""),
+    readAt: row.read_at ?? null,
+    createdAt: String(row.created_at ?? ""),
+    actionUrl: row.action_url ?? null
+  };
+}
+function useNotifications({
+  path = "/api/notifications",
+  pollInterval = 3e4
+} = {}) {
+  const [notifications, setNotifications] = useState2([]);
+  const [isLoading, setIsLoading] = useState2(true);
+  const timerRef = useRef(null);
+  const fetchNotifications = useCallback2(async () => {
+    try {
+      const res = await fetch(path, { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setNotifications(Array.isArray(data) ? data.map(mapRow) : []);
+    } catch {
+    } finally {
+      setIsLoading(false);
+    }
+  }, [path]);
+  useEffect2(() => {
+    fetchNotifications();
+    if (pollInterval > 0) {
+      timerRef.current = setInterval(fetchNotifications, pollInterval);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [fetchNotifications, pollInterval]);
+  const markAsRead = useCallback2(async (id) => {
+    setNotifications(
+      (prev) => prev.map((n) => n.id === id ? { ...n, readAt: (/* @__PURE__ */ new Date()).toISOString() } : n)
+    );
+    await fetch(path, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    }).catch(() => null);
+  }, [path]);
+  const markAllAsRead = useCallback2(async () => {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    setNotifications(
+      (prev) => prev.map((n) => n.readAt ? n : { ...n, readAt: now })
+    );
+    await fetch(path, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ all: true })
+    }).catch(() => null);
+  }, [path]);
+  const dismiss = useCallback2(async (id) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    await fetch(path, {
+      method: "DELETE",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    }).catch(() => null);
+  }, [path]);
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
+  return {
+    notifications,
+    unreadCount,
+    hasUnread: unreadCount > 0,
+    isLoading,
+    markAsRead,
+    markAllAsRead,
+    dismiss,
+    refetch: fetchNotifications
+  };
+}
+
 // src/providers/AuthProvider.tsx
 import {
   createContext as createContext2,
-  useCallback as useCallback2,
+  useCallback as useCallback3,
   useContext as useContext2,
-  useEffect as useEffect2,
-  useState as useState2
+  useEffect as useEffect3,
+  useState as useState3
 } from "react";
 import { Fragment, jsx as jsx2 } from "react/jsx-runtime";
 var AuthContext = createContext2({
@@ -119,9 +203,9 @@ function AuthProvider({ children, config, supabaseClient }) {
     defaultRedirect = "/dashboard",
     loadingComponent
   } = config;
-  const [session, setSession] = useState2(null);
-  const [isReady, setIsReady] = useState2(false);
-  const redirectToLogin = useCallback2(
+  const [session, setSession] = useState3(null);
+  const [isReady, setIsReady] = useState3(false);
+  const redirectToLogin = useCallback3(
     (next) => {
       const redirectTarget = next || defaultRedirect;
       const callbackUrl = `${appUrl}${callbackPath}?next=${encodeURIComponent(redirectTarget)}`;
@@ -130,7 +214,7 @@ function AuthProvider({ children, config, supabaseClient }) {
     },
     [loginUrl, appUrl, callbackPath, defaultRedirect]
   );
-  useEffect2(() => {
+  useEffect3(() => {
     supabaseClient.auth.getSession().then(({ data: { session: currentSession } }) => {
       if (currentSession) {
         setSession(currentSession);
@@ -140,7 +224,7 @@ function AuthProvider({ children, config, supabaseClient }) {
       }
     });
   }, [supabaseClient.auth, redirectToLogin]);
-  useEffect2(() => {
+  useEffect3(() => {
     const {
       data: { subscription }
     } = supabaseClient.auth.onAuthStateChange((event, currentSession) => {
@@ -154,7 +238,7 @@ function AuthProvider({ children, config, supabaseClient }) {
     });
     return () => subscription.unsubscribe();
   }, [supabaseClient.auth, redirectToLogin]);
-  const signOut = useCallback2(async () => {
+  const signOut = useCallback3(async () => {
     await supabaseClient.auth.signOut();
     redirectToLogin();
   }, [supabaseClient.auth, redirectToLogin]);
@@ -168,6 +252,7 @@ export {
   EgSessionProvider,
   useAuthSession,
   useEgSession,
+  useNotifications,
   useSSOLogin
 };
 //# sourceMappingURL=index.mjs.map

@@ -10,5 +10,12 @@ export type { EgSessionUser, EgSessionContextValue, EgSessionConfig } from './pr
 export { useSSOLogin } from './hooks/useSSOLogin';
 export type { SSOLoginConfig } from './hooks/useSSOLogin';
 
+// Notifications hook
+export { useNotifications } from './hooks/useNotifications';
+export type { UseNotificationsConfig, UseNotificationsReturn } from './hooks/useNotifications';
+
+// Notification types
+export type { HeaderNotification } from './types';
+
 // Supabase-based Auth Provider (opcional)
 export { AuthProvider, useAuthSession } from './providers/AuthProvider';

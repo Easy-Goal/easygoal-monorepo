@@ -1,7 +1,9 @@
 "use strict";
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -15,16 +17,28 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/server.ts
 var server_exports = {};
 __export(server_exports, {
   createCallbackRoute: () => createCallbackRoute,
+  createNotificationsRoute: () => createNotificationsRoute,
   createSessionRoute: () => createSessionRoute,
   createSignoutRoute: () => createSignoutRoute,
   defaultMatcherConfig: () => defaultMatcherConfig,
   handleAuthCallback: () => handleAuthCallback,
+  handleDeleteNotification: () => handleDeleteNotification,
+  handleGetNotifications: () => handleGetNotifications,
+  handleMarkNotificationsRead: () => handleMarkNotificationsRead,
   handleSession: () => handleSession,
   handleSignout: () => handleSignout,
   updateSession: () => updateSession
@@ -195,4 +209,83 @@ var defaultMatcherConfig = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"
   ]
 };
+
+// src/notifications/handler.ts
+var import_headers2 = require("next/headers");
+var import_server5 = require("next/server");
+var EG_SESSION_COOKIE4 = "eg_session";
+async function resolveUserId() {
+  try {
+    const cookieStore = await (0, import_headers2.cookies)();
+    const raw = cookieStore.get(EG_SESSION_COOKIE4)?.value;
+    if (!raw) return null;
+    const payload = JSON.parse(
+      Buffer.from(raw.split(".")[1], "base64url").toString("utf8")
+    );
+    return payload.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+async function handleGetNotifications(_req, config) {
+  const userId = await resolveUserId();
+  if (!userId) {
+    return import_server5.NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  try {
+    const { data, error } = await supabase.from("notifications").select("id, user_id, type, title, message, data, read_at, action_url, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(50);
+    if (error) {
+      if (error.code === "42P01") return import_server5.NextResponse.json([]);
+      return import_server5.NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return import_server5.NextResponse.json(data ?? []);
+  } catch (err) {
+    return import_server5.NextResponse.json({ error: String(err) }, { status: 500 });
+  }
+}
+async function handleMarkNotificationsRead(req, config) {
+  const userId = await resolveUserId();
+  if (!userId) {
+    return import_server5.NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const body = await req.json().catch(() => ({}));
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  if (body.all) {
+    const { error } = await supabase.from("notifications").update({ read_at: now }).eq("user_id", userId).is("read_at", null);
+    if (error) return import_server5.NextResponse.json({ error: error.message }, { status: 500 });
+    return import_server5.NextResponse.json({ ok: true });
+  }
+  if (body.id) {
+    const { error } = await supabase.from("notifications").update({ read_at: now }).eq("id", body.id).eq("user_id", userId);
+    if (error) return import_server5.NextResponse.json({ error: error.message }, { status: 500 });
+    return import_server5.NextResponse.json({ ok: true });
+  }
+  return import_server5.NextResponse.json({ error: "invalid_body" }, { status: 400 });
+}
+async function handleDeleteNotification(req, config) {
+  const userId = await resolveUserId();
+  if (!userId) {
+    return import_server5.NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const body = await req.json().catch(() => ({}));
+  if (!body.id) return import_server5.NextResponse.json({ error: "missing_id" }, { status: 400 });
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  const { error } = await supabase.from("notifications").delete().eq("id", body.id).eq("user_id", userId);
+  if (error) return import_server5.NextResponse.json({ error: error.message }, { status: 500 });
+  return import_server5.NextResponse.json({ ok: true });
+}
+
+// src/notifications/route.ts
+function createNotificationsRoute(config) {
+  return {
+    GET: (req) => handleGetNotifications(req, config),
+    POST: (req) => handleMarkNotificationsRead(req, config),
+    DELETE: (req) => handleDeleteNotification(req, config)
+  };
+}
 //# sourceMappingURL=server.js.map

@@ -1,6 +1,24 @@
 {
   "name": "@easygoal/core",
   "version": "1.0.0",
-  "main": "src/index.ts",
-  "dependencies": {}
+  "description": "Tipos e utilitários compartilhados do ecossistema EasyGoal",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsup": "^8",
+    "typescript": "^5"
+  }
 }
