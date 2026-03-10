@@ -90,24 +90,23 @@ function createSignoutRoute() {
 }
 
 // src/session/handler.ts
-import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextResponse as NextResponse3 } from "next/server";
 var EG_SESSION_COOKIE2 = "eg_session";
 async function handleSession() {
   const cookieStore = await cookies();
-  const egSession = cookieStore.get(EG_SESSION_COOKIE2)?.value;
-  if (!egSession) {
-    return NextResponse3.json({ error: "Unauthorized" }, { status: 401 });
+  const raw = cookieStore.get(EG_SESSION_COOKIE2)?.value;
+  if (!raw) {
+    return NextResponse3.json({ error: "unauthorized", reason: "missing_session" }, { status: 401 });
   }
   try {
-    const secret = new TextEncoder().encode(process.env.SSO_JWT_SECRET);
-    const { payload } = await jwtVerify(egSession, secret, {
-      audience: "eg_session"
-    });
-    return NextResponse3.json({ claims: payload });
+    const payloadBase64 = raw.split(".")[1];
+    const payload = JSON.parse(
+      Buffer.from(payloadBase64, "base64url").toString("utf8")
+    );
+    return NextResponse3.json(payload);
   } catch {
-    return NextResponse3.json({ error: "Invalid session" }, { status: 401 });
+    return NextResponse3.json({ error: "unauthorized", reason: "invalid_session" }, { status: 401 });
   }
 }
 
@@ -119,7 +118,7 @@ function createSessionRoute() {
 }
 
 // src/middleware/updateSession.ts
-import { jwtVerify as jwtVerify2 } from "jose";
+import { jwtVerify } from "jose";
 import { NextResponse as NextResponse4 } from "next/server";
 var EG_SESSION_COOKIE3 = "eg_session";
 async function updateSession(request) {
@@ -135,7 +134,7 @@ async function updateSession(request) {
   }
   try {
     const secret = new TextEncoder().encode(process.env.SSO_JWT_SECRET);
-    const { payload } = await jwtVerify2(egSession, secret, {
+    const { payload } = await jwtVerify(egSession, secret, {
       audience: "eg_session"
     });
     const requestHeaders = new Headers(request.headers);
