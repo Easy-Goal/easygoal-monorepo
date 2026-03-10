@@ -149,27 +149,67 @@ import { keyframes, animations } from "@easygoal/ui/tokens";
 
 ---
 
-### ⏳ ETAPA 9 — Melhorias de Produto no `app-front`
+### 🔄 ETAPA 8 — Migração em Massa (`app-front`)
+
+**Concluída (app-front).** `site-easygoal` e `lp-easy-club` pendentes.
+
+**O que foi feito no `app-front`:**
+- `@easygoal/packages` → `github:Easy-Goal/easygoal-monorepo` (repo renomeado)
+- Button com `asChild` + `@radix-ui/react-slot` adicionado ao monorepo
+- Export `./ui/styles` no root `package.json` do monorepo
+- `@source` no `globals.css` para Tailwind v4 scanear o monorepo
+- 61 arquivos migrados: `Button`, `Badge`, `Card/*`, `Input`, `Textarea`, `AlertBox`, `EmptyState`, `LoadingState`
+- Permanecem locais (API própria / não no monorepo): `StatCard`, `MetricCard`, `RankBadge`, `Select`, `Label`, `Dialog`, `Checkbox`, `Switch`, `Table`, `DonutChart`, `MiniChart`, `ProductImage`
+
+**Próxima sessão — migrar `site-easygoal` e `lp-easy-club`:**
+1. Adicionar `@easygoal/packages: github:Easy-Goal/easygoal-monorepo` em cada projeto
+2. Adicionar `@source` no globals.css de cada projeto
+3. Script sed para substituir imports locais pelos do `@easygoal/packages/ui`
+4. Validar build em cada projeto
+
+---
+
+### 🔄 ETAPA 9 — Melhorias de Produto no `app-front`
 
 **Objetivo:** Elevar a qualidade e completude das funcionalidades core antes do lançamento.
 
-#### 9.1 — Checkout Estilizado
-- Redesign da página de checkout: layout limpo, steps visuais, feedback em tempo real
-- Integração clara com AbacatePay
-- Estados: loading, sucesso, erro, pendente
-- Página intermediária pós-checkout com próximos passos
+#### ✅ 9.1 — Checkout Estilizado
+**Concluído.** Commit `13719e4`.
+- Nova página `/checkout?product_id=xxx` com steps visual (Produto → Confirmar → Pagamento)
+- Resumo do produto, preço, badge de frequência, código de afiliado
+- Redirect direto para AbacatePay com estados loading/erro
+- `/saas/[slug]` agora navega para `/checkout` ao invés de chamar a API inline
+- **Fix:** conflito de rotas resolvido — página em `/app/checkout/page.tsx` (substituiu a antiga)
 
-#### 9.2 — Webhooks (Produtor)
-- Interface para o produtor configurar URLs de webhook por produto
-- Eventos: `subscription.activated`, `subscription.cancelled`, `payment.received`, `service.request.updated`
-- Log de disparos (últimas 50 chamadas, status, payload, response)
-- Retry manual e indicador de saúde do endpoint
+#### ⏳ 9.2 — Webhook Logs (Produtor)
+**Pendente — requer migração de banco.**
+- A UI de configuração de webhook já existe em `/producer/api-keys`
+- **O que falta:**
+  - Criar tabela `webhook_dispatch_logs` no Supabase:
+    ```sql
+    create table webhook_dispatch_logs (
+      id uuid primary key default gen_random_uuid(),
+      api_app_id uuid references api_apps(id) on delete cascade,
+      event_type text not null,
+      payload jsonb,
+      response_status int,
+      response_body text,
+      duration_ms int,
+      success boolean not null default false,
+      created_at timestamptz default now()
+    );
+    create index on webhook_dispatch_logs(api_app_id, created_at desc);
+    ```
+  - Gravar nessa tabela a cada disparo de webhook (no handler de pagamento)
+  - API `GET /api/producer/api-keys/[id]/webhook-logs` — últimas 50 entradas
+  - UI: seção "Logs de Disparo" no dialog de configuração de webhook (tabela + retry + health indicator)
 
-#### 9.3 — Withdrawals (Saques)
-- Fluxo completo: solicitação → aprovação admin → confirmação
-- Histórico de saques com status visual
-- Validação de dados bancários/PIX antes de permitir solicitação
-- Página admin: fila de saques pendentes com ação em lote
+#### ✅ 9.3 — Withdrawals (Saques) — visão do produtor
+**Concluído.** Commit `13719e4`.
+- Página `/producer/withdrawals` com saldo disponível e histórico de saques
+- API `/api/producer/withdrawals` filtrando por producer_id via `product_partners`
+- Item "Saques" adicionado no Sidebar do produtor
+- **Pendente (próxima sessão):** botão de solicitação de saque self-service + validação de chave PIX
 
 #### 9.4 — Páginas Intermediárias de Ações Importantes (UI/UX)
 - Confirmação antes de ações destrutivas (cancelar plano, remover produto, excluir conta)
