@@ -54,4 +54,61 @@ declare const cssVars: {
     readonly "--sidebar-border": "222 47% 18%";
 };
 
-export { type ColorToken, colors, cssVars };
+declare const animations: {
+    readonly shimmer: "shimmer 1.5s infinite";
+    readonly fadeUp: "fade-up 0.4s ease-out";
+    readonly slideUp: "slide-up 0.3s ease-out";
+    readonly float: "float 3s ease-in-out infinite";
+    readonly pulseRing: "pulse-ring 2s infinite";
+};
+declare const keyframes: {
+    readonly shimmer: {
+        readonly "0%": {
+            readonly transform: "translateX(-100%)";
+        };
+        readonly "100%": {
+            readonly transform: "translateX(100%)";
+        };
+    };
+    readonly "fade-up": {
+        readonly from: {
+            readonly opacity: "0";
+            readonly transform: "translateY(16px)";
+        };
+        readonly to: {
+            readonly opacity: "1";
+            readonly transform: "translateY(0)";
+        };
+    };
+    readonly "slide-up": {
+        readonly from: {
+            readonly opacity: "0";
+            readonly transform: "translateY(8px)";
+        };
+        readonly to: {
+            readonly opacity: "1";
+            readonly transform: "translateY(0)";
+        };
+    };
+    readonly float: {
+        readonly "0%, 100%": {
+            readonly transform: "translateY(0px)";
+        };
+        readonly "50%": {
+            readonly transform: "translateY(-8px)";
+        };
+    };
+    readonly "pulse-ring": {
+        readonly "0%": {
+            readonly boxShadow: "0 0 0 0 hsl(18 100% 62% / 0.4)";
+        };
+        readonly "70%": {
+            readonly boxShadow: "0 0 0 10px hsl(18 100% 62% / 0)";
+        };
+        readonly "100%": {
+            readonly boxShadow: "0 0 0 0 hsl(18 100% 62% / 0)";
+        };
+    };
+};
+
+export { type ColorToken, animations, colors, cssVars, keyframes };

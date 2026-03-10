@@ -45,6 +45,38 @@ var cssVars = {
   "--sidebar-border": "222 47% 18%"
 };
 
-export { colors, cssVars };
-//# sourceMappingURL=chunk-2K3ZSUMX.mjs.map
-//# sourceMappingURL=chunk-2K3ZSUMX.mjs.map
+// src/tokens/animations.ts
+var animations = {
+  shimmer: "shimmer 1.5s infinite",
+  fadeUp: "fade-up 0.4s ease-out",
+  slideUp: "slide-up 0.3s ease-out",
+  float: "float 3s ease-in-out infinite",
+  pulseRing: "pulse-ring 2s infinite"
+};
+var keyframes = {
+  shimmer: {
+    "0%": { transform: "translateX(-100%)" },
+    "100%": { transform: "translateX(100%)" }
+  },
+  "fade-up": {
+    from: { opacity: "0", transform: "translateY(16px)" },
+    to: { opacity: "1", transform: "translateY(0)" }
+  },
+  "slide-up": {
+    from: { opacity: "0", transform: "translateY(8px)" },
+    to: { opacity: "1", transform: "translateY(0)" }
+  },
+  float: {
+    "0%, 100%": { transform: "translateY(0px)" },
+    "50%": { transform: "translateY(-8px)" }
+  },
+  "pulse-ring": {
+    "0%": { boxShadow: "0 0 0 0 hsl(18 100% 62% / 0.4)" },
+    "70%": { boxShadow: "0 0 0 10px hsl(18 100% 62% / 0)" },
+    "100%": { boxShadow: "0 0 0 0 hsl(18 100% 62% / 0)" }
+  }
+};
+
+export { animations, colors, cssVars, keyframes };
+//# sourceMappingURL=chunk-5HRFNOLZ.mjs.map
+//# sourceMappingURL=chunk-5HRFNOLZ.mjs.map

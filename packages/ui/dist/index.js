@@ -1,11 +1,14 @@
 'use strict';
 
-var jsxRuntime = require('react/jsx-runtime');
 var client = require('@easygoal/packages/auth/client');
 var lucideReact = require('lucide-react');
 var react = require('react');
+var jsxRuntime = require('react/jsx-runtime');
+var classVarianceAuthority = require('class-variance-authority');
+var clsx = require('clsx');
+var tailwindMerge = require('tailwind-merge');
 
-// src/components/Logo/Logo.tsx
+// src/components/Header/Header.tsx
 var TEXT_COLOR = {
   dark: "#FAFAFA",
   light: "#09090B"
@@ -657,6 +660,318 @@ function UserMenu({ user, onSignOut, appUrl, settingsUrl, docsUrl }) {
     ] })
   ] });
 }
+function cn(...inputs) {
+  return tailwindMerge.twMerge(clsx.clsx(inputs));
+}
+var buttonVariants = classVarianceAuthority.cva(
+  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F1729] disabled:pointer-events-none disabled:opacity-50 select-none",
+  {
+    variants: {
+      variant: {
+        default: "bg-[#182644] text-white hover:bg-[#1E3050] border border-[#1E3050]",
+        outline: "border border-orange-500 text-orange-500 hover:bg-orange-500/10",
+        ghost: "text-slate-300 hover:bg-[#182644] hover:text-white",
+        gradient: "bg-gradient-to-br from-orange-400 to-orange-500 text-white shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98]",
+        glass: "bg-white/5 backdrop-blur border border-white/10 text-white hover:bg-white/10",
+        destructive: "bg-red-600 text-white hover:bg-red-700"
+      },
+      size: {
+        sm: "h-8 px-3 text-xs",
+        md: "h-10 px-4 text-sm",
+        lg: "h-11 px-6 text-base",
+        xl: "h-12 px-8 text-base",
+        icon: "h-10 w-10"
+      }
+    },
+    defaultVariants: { variant: "default", size: "md" }
+  }
+);
+var Button = react.forwardRef(
+  ({ className, variant, size, loading, disabled, children, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsxs(
+    "button",
+    {
+      ref,
+      className: cn(buttonVariants({ variant, size }), className),
+      disabled: disabled || loading,
+      ...props,
+      children: [
+        loading && /* @__PURE__ */ jsxRuntime.jsx(lucideReact.Loader2, { className: "h-4 w-4 animate-spin" }),
+        children
+      ]
+    }
+  )
+);
+Button.displayName = "Button";
+var Card = react.forwardRef(
+  ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx(
+    "div",
+    {
+      ref,
+      className: cn(
+        "rounded-xl bg-[#121E34] border border-[#1E3050] transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/10",
+        className
+      ),
+      ...props
+    }
+  )
+);
+Card.displayName = "Card";
+var CardHeader = react.forwardRef(
+  ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx("div", { ref, className: cn("flex flex-col space-y-1.5 p-6", className), ...props })
+);
+CardHeader.displayName = "CardHeader";
+var CardTitle = react.forwardRef(
+  ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx("h3", { ref, className: cn("text-lg font-semibold leading-none tracking-tight text-white", className), ...props })
+);
+CardTitle.displayName = "CardTitle";
+var CardDescription = react.forwardRef(
+  ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx("p", { ref, className: cn("text-sm text-slate-400", className), ...props })
+);
+CardDescription.displayName = "CardDescription";
+var CardContent = react.forwardRef(
+  ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx("div", { ref, className: cn("p-6 pt-0", className), ...props })
+);
+CardContent.displayName = "CardContent";
+var CardFooter = react.forwardRef(
+  ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx("div", { ref, className: cn("flex items-center p-6 pt-0", className), ...props })
+);
+CardFooter.displayName = "CardFooter";
+var badgeVariants = classVarianceAuthority.cva(
+  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
+  {
+    variants: {
+      variant: {
+        default: "bg-orange-500/20 text-orange-400 border border-orange-500/30",
+        secondary: "bg-[#182644] text-slate-300 border border-[#1E3050]",
+        destructive: "bg-red-500/20 text-red-400 border border-red-500/30",
+        outline: "border border-slate-600 text-slate-300",
+        success: "bg-green-500/20 text-green-400 border border-green-500/30",
+        warning: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+      }
+    },
+    defaultVariants: { variant: "default" }
+  }
+);
+function Badge({ className, variant, ...props }) {
+  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: cn(badgeVariants({ variant }), className), ...props });
+}
+function Skeleton({ className, ...props }) {
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    "div",
+    {
+      className: cn(
+        "relative overflow-hidden rounded-md bg-[#182644] before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/5 before:to-transparent",
+        className
+      ),
+      ...props
+    }
+  );
+}
+var sizeMap = {
+  xs: "h-6 w-6 text-xs",
+  sm: "h-8 w-8 text-xs",
+  md: "h-10 w-10 text-sm",
+  lg: "h-14 w-14 text-base"
+};
+function Avatar({ src, alt, fallback, size = "md", className, ...props }) {
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    "div",
+    {
+      className: cn(
+        "relative flex shrink-0 overflow-hidden rounded-full bg-[#182644] border border-[#1E3050]",
+        sizeMap[size],
+        className
+      ),
+      ...props,
+      children: src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        /* @__PURE__ */ jsxRuntime.jsx("img", { src, alt: alt ?? "", className: "h-full w-full object-cover" })
+      ) : /* @__PURE__ */ jsxRuntime.jsx("span", { className: "flex h-full w-full items-center justify-center font-medium text-orange-400", children: fallback ?? "?" })
+    }
+  );
+}
+var Input = react.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx(
+  "input",
+  {
+    ref,
+    className: cn(
+      "flex h-10 w-full rounded-xl border border-[#1E3050] bg-[#121E34] px-3 py-2 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
+      className
+    ),
+    ...props
+  }
+));
+Input.displayName = "Input";
+var Textarea = react.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx(
+  "textarea",
+  {
+    ref,
+    className: cn(
+      "flex min-h-[80px] w-full rounded-xl border border-[#1E3050] bg-[#121E34] px-3 py-2 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-none",
+      className
+    ),
+    ...props
+  }
+));
+Textarea.displayName = "Textarea";
+var alertVariants = classVarianceAuthority.cva("flex gap-3 rounded-xl border p-4", {
+  variants: {
+    variant: {
+      info: "border-blue-500/30 bg-blue-500/10 text-blue-300",
+      warning: "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+      error: "border-red-500/30 bg-red-500/10 text-red-300",
+      success: "border-green-500/30 bg-green-500/10 text-green-300"
+    }
+  },
+  defaultVariants: { variant: "info" }
+});
+var iconMap = {
+  info: lucideReact.Info,
+  warning: lucideReact.AlertTriangle,
+  error: lucideReact.XCircle,
+  success: lucideReact.CheckCircle
+};
+function AlertBox({ className, variant = "info", title, children, ...props }) {
+  const Icon = iconMap[variant];
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: cn(alertVariants({ variant }), className), ...props, children: [
+    /* @__PURE__ */ jsxRuntime.jsx(Icon, { className: "h-5 w-5 shrink-0 mt-0.5" }),
+    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex flex-col gap-1", children: [
+      title && /* @__PURE__ */ jsxRuntime.jsx("p", { className: "font-medium text-sm", children: title }),
+      children && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-sm opacity-80", children })
+    ] })
+  ] });
+}
+var emptyVariants = classVarianceAuthority.cva("flex flex-col items-center justify-center text-center", {
+  variants: {
+    variant: {
+      inline: "py-8 gap-2",
+      dashed: "rounded-xl border-2 border-dashed border-[#1E3050] py-12 gap-3 hover:border-orange-500/30 transition-colors",
+      card: "rounded-xl bg-[#121E34] border border-[#1E3050] py-12 gap-3"
+    }
+  },
+  defaultVariants: { variant: "inline" }
+});
+function EmptyState({
+  className,
+  variant,
+  icon,
+  title,
+  description,
+  action,
+  ...props
+}) {
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: cn(emptyVariants({ variant }), className), ...props, children: [
+    icon && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-slate-500 mb-1", children: icon }),
+    /* @__PURE__ */ jsxRuntime.jsx("p", { className: "font-medium text-white", children: title }),
+    description && /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-slate-400 max-w-xs", children: description }),
+    action && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "mt-2", children: action })
+  ] });
+}
+function LoadingState({ variant = "inline", text, className, ...props }) {
+  if (variant === "page") {
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      "div",
+      {
+        className: cn("flex min-h-[400px] flex-col items-center justify-center gap-3", className),
+        ...props,
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsx(lucideReact.Loader2, { className: "h-8 w-8 animate-spin text-orange-500" }),
+          text && /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-slate-400", children: text })
+        ]
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: cn("flex items-center gap-2 text-slate-400", className), ...props, children: [
+    /* @__PURE__ */ jsxRuntime.jsx(lucideReact.Loader2, { className: "h-4 w-4 animate-spin text-orange-500" }),
+    text && /* @__PURE__ */ jsxRuntime.jsx("span", { className: "text-sm", children: text })
+  ] });
+}
+function StatCard({ title, value, trend, icon, action, className, ...props }) {
+  const isPositive = trend !== void 0 && trend >= 0;
+  return /* @__PURE__ */ jsxRuntime.jsxs(
+    "div",
+    {
+      className: cn(
+        "rounded-xl bg-[#121E34] border border-[#1E3050] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/10",
+        className
+      ),
+      ...props,
+      children: [
+        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-start justify-between mb-3", children: [
+          /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-slate-400", children: title }),
+          icon && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "text-orange-400", children: icon })
+        ] }),
+        /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-2xl font-bold text-white mb-2", children: value }),
+        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-center justify-between", children: [
+          trend !== void 0 && /* @__PURE__ */ jsxRuntime.jsxs(
+            "div",
+            {
+              className: cn(
+                "flex items-center gap-1 text-xs font-medium",
+                isPositive ? "text-green-400" : "text-red-400"
+              ),
+              children: [
+                isPositive ? /* @__PURE__ */ jsxRuntime.jsx(lucideReact.TrendingUp, { className: "h-3 w-3" }) : /* @__PURE__ */ jsxRuntime.jsx(lucideReact.TrendingDown, { className: "h-3 w-3" }),
+                Math.abs(trend),
+                "%"
+              ]
+            }
+          ),
+          action && /* @__PURE__ */ jsxRuntime.jsxs(
+            "button",
+            {
+              onClick: action.onClick,
+              className: "ml-auto flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300 transition-colors",
+              children: [
+                action.label,
+                " ",
+                /* @__PURE__ */ jsxRuntime.jsx(lucideReact.ArrowRight, { className: "h-3 w-3" })
+              ]
+            }
+          )
+        ] })
+      ]
+    }
+  );
+}
+function MetricCard({ title, value, icon, subtitle, className, ...props }) {
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    "div",
+    {
+      className: cn(
+        "rounded-xl bg-[#121E34] border border-[#1E3050] p-4 transition-all duration-200 hover:border-orange-500/20",
+        className
+      ),
+      ...props,
+      children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-center gap-3", children: [
+        icon && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-400", children: icon }),
+        /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-xs text-slate-400", children: title }),
+          /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-xl font-bold text-white", children: value }),
+          subtitle && /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-xs text-slate-500", children: subtitle })
+        ] })
+      ] })
+    }
+  );
+}
+function QuickLinkCard({ title, description, icon, href, className, onClick, ...props }) {
+  const inner = /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
+    icon && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-400", children: icon }),
+    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex-1 min-w-0", children: [
+      /* @__PURE__ */ jsxRuntime.jsx("p", { className: "font-medium text-white", children: title }),
+      description && /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-slate-400 truncate", children: description })
+    ] }),
+    /* @__PURE__ */ jsxRuntime.jsx(lucideReact.ArrowRight, { className: "h-4 w-4 text-slate-500 group-hover:text-orange-400 transition-colors shrink-0" })
+  ] });
+  const baseClass = cn(
+    "group flex items-center gap-4 rounded-xl bg-[#121E34] border border-[#1E3050] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/10 cursor-pointer",
+    className
+  );
+  if (href) {
+    return /* @__PURE__ */ jsxRuntime.jsx("a", { href, className: baseClass, children: inner });
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: baseClass, onClick, ...props, children: inner });
+}
 
 // src/tokens/colors.ts
 var colors = {
@@ -705,13 +1020,68 @@ var cssVars = {
   "--sidebar-border": "222 47% 18%"
 };
 
+// src/tokens/animations.ts
+var animations = {
+  shimmer: "shimmer 1.5s infinite",
+  fadeUp: "fade-up 0.4s ease-out",
+  slideUp: "slide-up 0.3s ease-out",
+  float: "float 3s ease-in-out infinite",
+  pulseRing: "pulse-ring 2s infinite"
+};
+var keyframes = {
+  shimmer: {
+    "0%": { transform: "translateX(-100%)" },
+    "100%": { transform: "translateX(100%)" }
+  },
+  "fade-up": {
+    from: { opacity: "0", transform: "translateY(16px)" },
+    to: { opacity: "1", transform: "translateY(0)" }
+  },
+  "slide-up": {
+    from: { opacity: "0", transform: "translateY(8px)" },
+    to: { opacity: "1", transform: "translateY(0)" }
+  },
+  float: {
+    "0%, 100%": { transform: "translateY(0px)" },
+    "50%": { transform: "translateY(-8px)" }
+  },
+  "pulse-ring": {
+    "0%": { boxShadow: "0 0 0 0 hsl(18 100% 62% / 0.4)" },
+    "70%": { boxShadow: "0 0 0 10px hsl(18 100% 62% / 0)" },
+    "100%": { boxShadow: "0 0 0 0 hsl(18 100% 62% / 0)" }
+  }
+};
+
+exports.AlertBox = AlertBox;
+exports.Avatar = Avatar;
+exports.Badge = Badge;
+exports.Button = Button;
+exports.Card = Card;
+exports.CardContent = CardContent;
+exports.CardDescription = CardDescription;
+exports.CardFooter = CardFooter;
+exports.CardHeader = CardHeader;
+exports.CardTitle = CardTitle;
 exports.EasyHeader = EasyHeader;
+exports.EmptyState = EmptyState;
+exports.Input = Input;
+exports.LoadingState = LoadingState;
 exports.Logo = Logo;
+exports.MetricCard = MetricCard;
 exports.NotificationBell = NotificationBell;
+exports.QuickLinkCard = QuickLinkCard;
 exports.RANK_CONFIG = RANK_CONFIG;
 exports.RankBadge = RankBadge;
+exports.Skeleton = Skeleton;
+exports.StatCard = StatCard;
+exports.Textarea = Textarea;
 exports.UserMenu = UserMenu;
+exports.animations = animations;
+exports.badgeVariants = badgeVariants;
+exports.buttonVariants = buttonVariants;
+exports.cn = cn;
 exports.colors = colors;
 exports.cssVars = cssVars;
+exports.keyframes = keyframes;
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map
