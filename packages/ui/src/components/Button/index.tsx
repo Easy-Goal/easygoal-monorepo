@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -33,20 +34,24 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   loading?: boolean;
+  asChild?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, loading, disabled, children, ...props }, ref) => (
-    <button
-      ref={ref}
-      className={cn(buttonVariants({ variant, size }), className)}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-      {children}
-    </button>
-  )
+  ({ className, variant, size, loading, disabled, asChild = false, children, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        ref={ref as React.Ref<HTMLButtonElement>}
+        className={cn(buttonVariants({ variant, size }), className)}
+        disabled={!asChild ? (disabled || loading) : undefined}
+        {...props}
+      >
+        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {children}
+      </Comp>
+    );
+  }
 );
 Button.displayName = "Button";
 

@@ -3,6 +3,7 @@ import { useEgSession, useSSOLogin, useNotifications } from '@easygoal/packages/
 import { Loader2, CheckCircle, XCircle, AlertTriangle, Info, TrendingUp, TrendingDown, ArrowRight, ChevronDown, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react';
 import { forwardRef, useState, useRef, useEffect } from 'react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
+import { Slot } from '@radix-ui/react-slot';
 import { cva } from 'class-variance-authority';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -685,19 +686,22 @@ var buttonVariants = cva(
   }
 );
 var Button = forwardRef(
-  ({ className, variant, size, loading, disabled, children, ...props }, ref) => /* @__PURE__ */ jsxs(
-    "button",
-    {
-      ref,
-      className: cn(buttonVariants({ variant, size }), className),
-      disabled: disabled || loading,
-      ...props,
-      children: [
-        loading && /* @__PURE__ */ jsx(Loader2, { className: "h-4 w-4 animate-spin" }),
-        children
-      ]
-    }
-  )
+  ({ className, variant, size, loading, disabled, asChild = false, children, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return /* @__PURE__ */ jsxs(
+      Comp,
+      {
+        ref,
+        className: cn(buttonVariants({ variant, size }), className),
+        disabled: !asChild ? disabled || loading : void 0,
+        ...props,
+        children: [
+          loading && /* @__PURE__ */ jsx(Loader2, { className: "h-4 w-4 animate-spin" }),
+          children
+        ]
+      }
+    );
+  }
 );
 Button.displayName = "Button";
 var Card = forwardRef(
