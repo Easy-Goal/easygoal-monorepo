@@ -1,5 +1,6 @@
 export { EasyHeader } from "./Header";
 export type { EasyHeaderProps, HeaderNavLink } from "./Header";
+export { UserMenu } from "./UserMenu";
 export type { HeaderUser } from "./UserMenu";
 export { NotificationBell } from "./NotificationBell";
 export type { HeaderNotification } from "./NotificationBell";

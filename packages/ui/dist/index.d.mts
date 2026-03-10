@@ -50,6 +50,14 @@ interface HeaderUser {
     avatarUrl?: string | null;
     rankName?: string | null;
 }
+interface UserMenuProps {
+    user: HeaderUser;
+    onSignOut?: () => void;
+    /** URL to redirect for login (shown when logged out) */
+    settingsUrl?: string;
+    docsUrl?: string;
+}
+declare function UserMenu({ user, onSignOut, settingsUrl, docsUrl }: UserMenuProps): react_jsx_runtime.JSX.Element;
 
 interface HeaderNotification {
     id: string;
@@ -82,4 +90,4 @@ interface RankBadgeProps {
 }
 declare function RankBadge({ rankName, size, showLabel, className }: RankBadgeProps): react_jsx_runtime.JSX.Element;
 
-export { EasyHeader, type EasyHeaderProps, type HeaderNavLink, type HeaderNotification, type HeaderUser, Logo, NotificationBell, RANK_CONFIG, RankBadge };
+export { EasyHeader, type EasyHeaderProps, type HeaderNavLink, type HeaderNotification, type HeaderUser, Logo, NotificationBell, RANK_CONFIG, RankBadge, UserMenu };
