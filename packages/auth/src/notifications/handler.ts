@@ -37,8 +37,13 @@ export async function handleGetNotifications(
 
   if (!res) return NextResponse.json({ error: 'sso_unavailable' }, { status: 502 });
 
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ error: 'invalid_sso_response' }, { status: 502 });
+  }
 }
 
 /**
@@ -67,8 +72,13 @@ export async function handleMarkNotificationsRead(
 
   if (!res) return NextResponse.json({ error: 'sso_unavailable' }, { status: 502 });
 
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ error: 'invalid_sso_response' }, { status: 502 });
+  }
 }
 
 /**
@@ -97,6 +107,11 @@ export async function handleDeleteNotification(
 
   if (!res) return NextResponse.json({ error: 'sso_unavailable' }, { status: 502 });
 
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ error: 'invalid_sso_response' }, { status: 502 });
+  }
 }

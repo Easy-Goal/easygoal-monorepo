@@ -185,8 +185,13 @@ async function handleGetNotifications(_req, config) {
     cache: "no-store"
   }).catch(() => null);
   if (!res) return NextResponse5.json({ error: "sso_unavailable" }, { status: 502 });
-  const data = await res.json();
-  return NextResponse5.json(data, { status: res.status });
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    return NextResponse5.json(data, { status: res.status });
+  } catch {
+    return NextResponse5.json({ error: "invalid_sso_response" }, { status: 502 });
+  }
 }
 async function handleMarkNotificationsRead(req, config) {
   const session = await getSessionCookie();
@@ -203,8 +208,13 @@ async function handleMarkNotificationsRead(req, config) {
     body: JSON.stringify(body)
   }).catch(() => null);
   if (!res) return NextResponse5.json({ error: "sso_unavailable" }, { status: 502 });
-  const data = await res.json();
-  return NextResponse5.json(data, { status: res.status });
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    return NextResponse5.json(data, { status: res.status });
+  } catch {
+    return NextResponse5.json({ error: "invalid_sso_response" }, { status: 502 });
+  }
 }
 async function handleDeleteNotification(req, config) {
   const session = await getSessionCookie();
@@ -221,8 +231,13 @@ async function handleDeleteNotification(req, config) {
     body: JSON.stringify(body)
   }).catch(() => null);
   if (!res) return NextResponse5.json({ error: "sso_unavailable" }, { status: 502 });
-  const data = await res.json();
-  return NextResponse5.json(data, { status: res.status });
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    return NextResponse5.json(data, { status: res.status });
+  } catch {
+    return NextResponse5.json({ error: "invalid_sso_response" }, { status: 502 });
+  }
 }
 
 // src/notifications/route.ts
