@@ -2,7 +2,7 @@ export { animations, colors, cssVars, keyframes } from './chunk-5HRFNOLZ.mjs';
 import { useEgSession, useSSOLogin, useNotifications } from '@easygoal/packages/auth/client';
 import { Loader2, CheckCircle, XCircle, AlertTriangle, Info, TrendingUp, TrendingDown, ArrowRight, ChevronDown, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react';
 import { forwardRef, useState, useRef, useEffect } from 'react';
-import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
+import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { Slot } from '@radix-ui/react-slot';
 import { cva } from 'class-variance-authority';
 import { clsx } from 'clsx';
@@ -687,13 +687,16 @@ var buttonVariants = cva(
 );
 var Button = forwardRef(
   ({ className, variant, size, loading, disabled, asChild = false, children, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+    const buttonClass = cn(buttonVariants({ variant, size }), className);
+    if (asChild) {
+      return /* @__PURE__ */ jsx(Slot, { ref, className: buttonClass, ...props, children });
+    }
     return /* @__PURE__ */ jsxs(
-      Comp,
+      "button",
       {
         ref,
-        className: cn(buttonVariants({ variant, size }), className),
-        disabled: !asChild ? disabled || loading : void 0,
+        className: buttonClass,
+        disabled: disabled || loading,
         ...props,
         children: [
           loading && /* @__PURE__ */ jsx(Loader2, { className: "h-4 w-4 animate-spin" }),

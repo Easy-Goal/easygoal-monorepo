@@ -689,13 +689,16 @@ var buttonVariants = classVarianceAuthority.cva(
 );
 var Button = react.forwardRef(
   ({ className, variant, size, loading, disabled, asChild = false, children, ...props }, ref) => {
-    const Comp = asChild ? reactSlot.Slot : "button";
+    const buttonClass = cn(buttonVariants({ variant, size }), className);
+    if (asChild) {
+      return /* @__PURE__ */ jsxRuntime.jsx(reactSlot.Slot, { ref, className: buttonClass, ...props, children });
+    }
     return /* @__PURE__ */ jsxRuntime.jsxs(
-      Comp,
+      "button",
       {
         ref,
-        className: cn(buttonVariants({ variant, size }), className),
-        disabled: !asChild ? disabled || loading : void 0,
+        className: buttonClass,
+        disabled: disabled || loading,
         ...props,
         children: [
           loading && /* @__PURE__ */ jsxRuntime.jsx(lucideReact.Loader2, { className: "h-4 w-4 animate-spin" }),
