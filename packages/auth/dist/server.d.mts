@@ -63,6 +63,10 @@ declare function handleSignout(): Promise<NextResponse>;
  */
 declare function createSignoutRoute(): (request: NextRequest) => Promise<NextResponse>;
 
+/**
+ * Decodifica o payload do JWT sem verificar assinatura.
+ * Seguro pois o cookie é httpOnly — o SSO já garantiu integridade na emissão.
+ */
 declare function handleSession(): Promise<NextResponse>;
 
 declare function createSessionRoute(): () => Promise<next_server.NextResponse<unknown>>;

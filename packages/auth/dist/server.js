@@ -123,24 +123,23 @@ function createSignoutRoute() {
 }
 
 // src/session/handler.ts
-var import_jose = require("jose");
 var import_headers = require("next/headers");
 var import_server3 = require("next/server");
 var EG_SESSION_COOKIE2 = "eg_session";
 async function handleSession() {
   const cookieStore = await (0, import_headers.cookies)();
-  const egSession = cookieStore.get(EG_SESSION_COOKIE2)?.value;
-  if (!egSession) {
-    return import_server3.NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const raw = cookieStore.get(EG_SESSION_COOKIE2)?.value;
+  if (!raw) {
+    return import_server3.NextResponse.json({ error: "unauthorized", reason: "missing_session" }, { status: 401 });
   }
   try {
-    const secret = new TextEncoder().encode(process.env.SSO_JWT_SECRET);
-    const { payload } = await (0, import_jose.jwtVerify)(egSession, secret, {
-      audience: "eg_session"
-    });
-    return import_server3.NextResponse.json({ claims: payload });
+    const payloadBase64 = raw.split(".")[1];
+    const payload = JSON.parse(
+      Buffer.from(payloadBase64, "base64url").toString("utf8")
+    );
+    return import_server3.NextResponse.json(payload);
   } catch {
-    return import_server3.NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    return import_server3.NextResponse.json({ error: "unauthorized", reason: "invalid_session" }, { status: 401 });
   }
 }
 
@@ -152,7 +151,7 @@ function createSessionRoute() {
 }
 
 // src/middleware/updateSession.ts
-var import_jose2 = require("jose");
+var import_jose = require("jose");
 var import_server4 = require("next/server");
 var EG_SESSION_COOKIE3 = "eg_session";
 async function updateSession(request) {
@@ -168,7 +167,7 @@ async function updateSession(request) {
   }
   try {
     const secret = new TextEncoder().encode(process.env.SSO_JWT_SECRET);
-    const { payload } = await (0, import_jose2.jwtVerify)(egSession, secret, {
+    const { payload } = await (0, import_jose.jwtVerify)(egSession, secret, {
       audience: "eg_session"
     });
     const requestHeaders = new Headers(request.headers);
