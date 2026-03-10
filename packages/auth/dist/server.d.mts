@@ -89,22 +89,24 @@ declare const defaultMatcherConfig: {
 };
 
 interface NotificationsConfig {
-    supabaseUrl: string;
-    supabaseAnonKey: string;
+    /** URL base do SSO (ex: https://sso.easygoal.com.br) */
+    ssoUrl: string;
 }
 /**
  * GET /api/notifications
- * Lista as notificações do usuário autenticado via eg_session.
+ * Proxy para {ssoUrl}/api/notifications, repassando o eg_session.
  */
 declare function handleGetNotifications(_req: NextRequest, config: NotificationsConfig): Promise<NextResponse>;
 /**
- * POST /api/notifications/read
+ * POST /api/notifications
  * Body: { id: string } | { all: true }
+ * Proxy para {ssoUrl}/api/notifications (mark as read).
  */
 declare function handleMarkNotificationsRead(req: NextRequest, config: NotificationsConfig): Promise<NextResponse>;
 /**
  * DELETE /api/notifications
  * Body: { id: string }
+ * Proxy para {ssoUrl}/api/notifications (dismiss).
  */
 declare function handleDeleteNotification(req: NextRequest, config: NotificationsConfig): Promise<NextResponse>;
 

@@ -1,35 +1,17 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-/** Espelho da NotificationRow de @easygoal/core — mantido em sync com o DB. */
-interface NotificationRow {
-  id: string;
-  user_id: string;
-  type: string;
-  title: string;
-  message: string;
-  data?: Record<string, unknown> | null;
-  read_at?: string | null;
-  action_url?: string | null;
-  created_at: string;
-}
-
 export interface NotificationsConfig {
-  supabaseUrl: string;
-  supabaseAnonKey: string;
+  /** URL base do SSO (ex: https://sso.easygoal.com.br) */
+  ssoUrl: string;
 }
 
 const EG_SESSION_COOKIE = 'eg_session';
 
-async function resolveUserId(): Promise<string | null> {
+async function getSessionCookie(): Promise<string | null> {
   try {
     const cookieStore = await cookies();
-    const raw = cookieStore.get(EG_SESSION_COOKIE)?.value;
-    if (!raw) return null;
-    const payload = JSON.parse(
-      Buffer.from(raw.split('.')[1], 'base64url').toString('utf8')
-    );
-    return (payload.sub as string) ?? null;
+    return cookieStore.get(EG_SESSION_COOKIE)?.value ?? null;
   } catch {
     return null;
   }
@@ -37,105 +19,84 @@ async function resolveUserId(): Promise<string | null> {
 
 /**
  * GET /api/notifications
- * Lista as notificações do usuário autenticado via eg_session.
+ * Proxy para {ssoUrl}/api/notifications, repassando o eg_session.
  */
 export async function handleGetNotifications(
   _req: NextRequest,
   config: NotificationsConfig
 ): Promise<NextResponse> {
-  const userId = await resolveUserId();
-  if (!userId) {
+  const session = await getSessionCookie();
+  if (!session) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  const res = await fetch(`${config.ssoUrl}/api/notifications`, {
+    headers: { Cookie: `${EG_SESSION_COOKIE}=${session}` },
+    cache: 'no-store',
+  }).catch(() => null);
 
-  try {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('id, user_id, type, title, message, data, read_at, action_url, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(50);
+  if (!res) return NextResponse.json({ error: 'sso_unavailable' }, { status: 502 });
 
-    if (error) {
-      if (error.code === '42P01') return NextResponse.json([]);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json((data ?? []) as NotificationRow[]);
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
-  }
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
 
 /**
- * POST /api/notifications/read
+ * POST /api/notifications
  * Body: { id: string } | { all: true }
+ * Proxy para {ssoUrl}/api/notifications (mark as read).
  */
 export async function handleMarkNotificationsRead(
   req: NextRequest,
   config: NotificationsConfig
 ): Promise<NextResponse> {
-  const userId = await resolveUserId();
-  if (!userId) {
+  const session = await getSessionCookie();
+  if (!session) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
   const body = await req.json().catch(() => ({}));
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
-  const now = new Date().toISOString();
+  const res = await fetch(`${config.ssoUrl}/api/notifications`, {
+    method: 'POST',
+    headers: {
+      Cookie: `${EG_SESSION_COOKIE}=${session}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  }).catch(() => null);
 
-  if (body.all) {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read_at: now })
-      .eq('user_id', userId)
-      .is('read_at', null);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true });
-  }
+  if (!res) return NextResponse.json({ error: 'sso_unavailable' }, { status: 502 });
 
-  if (body.id) {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read_at: now })
-      .eq('id', body.id)
-      .eq('user_id', userId);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true });
-  }
-
-  return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
 
 /**
  * DELETE /api/notifications
  * Body: { id: string }
+ * Proxy para {ssoUrl}/api/notifications (dismiss).
  */
 export async function handleDeleteNotification(
   req: NextRequest,
   config: NotificationsConfig
 ): Promise<NextResponse> {
-  const userId = await resolveUserId();
-  if (!userId) {
+  const session = await getSessionCookie();
+  if (!session) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
   const body = await req.json().catch(() => ({}));
-  if (!body.id) return NextResponse.json({ error: 'missing_id' }, { status: 400 });
+  const res = await fetch(`${config.ssoUrl}/api/notifications`, {
+    method: 'DELETE',
+    headers: {
+      Cookie: `${EG_SESSION_COOKIE}=${session}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  }).catch(() => null);
 
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  if (!res) return NextResponse.json({ error: 'sso_unavailable' }, { status: 502 });
 
-  const { error } = await supabase
-    .from('notifications')
-    .delete()
-    .eq('id', body.id)
-    .eq('user_id', userId);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
