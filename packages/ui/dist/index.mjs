@@ -472,7 +472,180 @@ function RankBadge({ rankName, size = "sm", showLabel = true, className }) {
     }
   );
 }
+var S2 = {
+  wrap: { position: "relative" },
+  trigger: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "4px 8px",
+    borderRadius: 8,
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    color: "inherit",
+    fontSize: 14,
+    fontWeight: 500
+  },
+  avatar: (hasImage) => ({
+    width: 30,
+    height: 30,
+    borderRadius: "50%",
+    backgroundColor: "rgba(249,115,22,0.15)",
+    border: "1.5px solid rgba(249,115,22,0.3)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 12,
+    fontWeight: 700,
+    color: "hsl(18 100% 62%)",
+    overflow: "hidden",
+    flexShrink: 0,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    ...hasImage ? {} : {}
+  }),
+  chevron: {
+    opacity: 0.5,
+    display: "flex",
+    alignItems: "center"
+  },
+  dropdown: {
+    position: "absolute",
+    right: 0,
+    top: "calc(100% + 8px)",
+    width: 224,
+    borderRadius: 10,
+    border: "1px solid rgba(255,255,255,0.1)",
+    backgroundColor: "hsl(220 45% 17%)",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+    zIndex: 100,
+    overflow: "hidden",
+    padding: "4px 0"
+  },
+  userInfo: {
+    padding: "10px 14px 12px",
+    borderBottom: "1px solid rgba(255,255,255,0.08)"
+  },
+  userName: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "hsl(0 0% 100%)",
+    margin: "0 0 2px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  userEmail: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.45)",
+    margin: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  section: {
+    padding: "4px 0",
+    borderBottom: "1px solid rgba(255,255,255,0.08)"
+  },
+  menuItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    padding: "8px 14px",
+    fontSize: 13,
+    color: "rgba(255,255,255,0.8)",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    textDecoration: "none",
+    textAlign: "left"
+  },
+  menuItemDanger: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    padding: "8px 14px",
+    fontSize: 13,
+    color: "#f87171",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    textDecoration: "none",
+    textAlign: "left"
+  }
+};
+var ChevronDown2 = () => /* @__PURE__ */ jsx("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsx("polyline", { points: "6 9 12 15 18 9" }) });
+var UserIcon = () => /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
+  /* @__PURE__ */ jsx("path", { d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" }),
+  /* @__PURE__ */ jsx("circle", { cx: "12", cy: "7", r: "4" })
+] });
+var BookIcon = () => /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
+  /* @__PURE__ */ jsx("path", { d: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20" }),
+  /* @__PURE__ */ jsx("path", { d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" })
+] });
+var LogOutIcon = () => /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
+  /* @__PURE__ */ jsx("path", { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" }),
+  /* @__PURE__ */ jsx("polyline", { points: "16 17 21 12 16 7" }),
+  /* @__PURE__ */ jsx("line", { x1: "21", y1: "12", x2: "9", y2: "12" })
+] });
+function UserMenu({ user, onSignOut, settingsUrl, docsUrl }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+  const initials = user.name ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() : (user.email?.[0] ?? "?").toUpperCase();
+  const firstName = user.name?.split(" ")[0] ?? user.email?.split("@")[0] ?? "Usu\xE1rio";
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+  return /* @__PURE__ */ jsxs("div", { style: S2.wrap, ref, children: [
+    /* @__PURE__ */ jsxs("button", { style: S2.trigger, onClick: () => setIsOpen((o) => !o), children: [
+      user.avatarUrl ? /* @__PURE__ */ jsx(
+        "img",
+        {
+          src: user.avatarUrl,
+          alt: user.name ?? "Avatar",
+          style: { ...S2.avatar(true), objectFit: "cover" },
+          width: 30,
+          height: 30
+        }
+      ) : /* @__PURE__ */ jsx("span", { style: S2.avatar(false), children: initials }),
+      user.rankName && /* @__PURE__ */ jsx(RankBadge, { rankName: user.rankName, size: "sm", showLabel: false }),
+      /* @__PURE__ */ jsx("span", { style: { maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 13 }, children: firstName }),
+      /* @__PURE__ */ jsx("span", { style: S2.chevron, children: /* @__PURE__ */ jsx(ChevronDown2, {}) })
+    ] }),
+    isOpen && /* @__PURE__ */ jsxs("div", { style: S2.dropdown, children: [
+      /* @__PURE__ */ jsxs("div", { style: S2.userInfo, children: [
+        /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }, children: user.rankName && /* @__PURE__ */ jsx(RankBadge, { rankName: user.rankName, size: "sm", showLabel: true }) }),
+        /* @__PURE__ */ jsx("p", { style: S2.userName, children: user.name ?? user.email }),
+        user.email && /* @__PURE__ */ jsx("p", { style: S2.userEmail, children: user.email })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { style: S2.section, children: [
+        settingsUrl && /* @__PURE__ */ jsxs("a", { href: settingsUrl, style: S2.menuItem, onClick: () => setIsOpen(false), children: [
+          /* @__PURE__ */ jsx(UserIcon, {}),
+          " Meu perfil"
+        ] }),
+        docsUrl && /* @__PURE__ */ jsxs("a", { href: docsUrl, target: "_blank", rel: "noopener noreferrer", style: S2.menuItem, onClick: () => setIsOpen(false), children: [
+          /* @__PURE__ */ jsx(BookIcon, {}),
+          " Documenta\xE7\xE3o"
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx("div", { style: { padding: "4px 0" }, children: onSignOut && /* @__PURE__ */ jsxs("button", { style: S2.menuItemDanger, onClick: () => {
+        setIsOpen(false);
+        onSignOut();
+      }, children: [
+        /* @__PURE__ */ jsx(LogOutIcon, {}),
+        " Sair"
+      ] }) })
+    ] })
+  ] });
+}
 
-export { EasyHeader, Logo, NotificationBell, RANK_CONFIG, RankBadge };
+export { EasyHeader, Logo, NotificationBell, RANK_CONFIG, RankBadge, UserMenu };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map
