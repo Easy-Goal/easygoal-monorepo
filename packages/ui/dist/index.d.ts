@@ -100,6 +100,7 @@ declare const buttonVariants: (props?: ({
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
     loading?: boolean;
+    asChild?: boolean;
 }
 declare const Button: react.ForwardRefExoticComponent<ButtonProps & react.RefAttributes<HTMLButtonElement>>;
 

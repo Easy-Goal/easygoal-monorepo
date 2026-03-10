@@ -4,6 +4,7 @@ var client = require('@easygoal/packages/auth/client');
 var lucideReact = require('lucide-react');
 var react = require('react');
 var jsxRuntime = require('react/jsx-runtime');
+var reactSlot = require('@radix-ui/react-slot');
 var classVarianceAuthority = require('class-variance-authority');
 var clsx = require('clsx');
 var tailwindMerge = require('tailwind-merge');
@@ -687,19 +688,22 @@ var buttonVariants = classVarianceAuthority.cva(
   }
 );
 var Button = react.forwardRef(
-  ({ className, variant, size, loading, disabled, children, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsxs(
-    "button",
-    {
-      ref,
-      className: cn(buttonVariants({ variant, size }), className),
-      disabled: disabled || loading,
-      ...props,
-      children: [
-        loading && /* @__PURE__ */ jsxRuntime.jsx(lucideReact.Loader2, { className: "h-4 w-4 animate-spin" }),
-        children
-      ]
-    }
-  )
+  ({ className, variant, size, loading, disabled, asChild = false, children, ...props }, ref) => {
+    const Comp = asChild ? reactSlot.Slot : "button";
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      Comp,
+      {
+        ref,
+        className: cn(buttonVariants({ variant, size }), className),
+        disabled: !asChild ? disabled || loading : void 0,
+        ...props,
+        children: [
+          loading && /* @__PURE__ */ jsxRuntime.jsx(lucideReact.Loader2, { className: "h-4 w-4 animate-spin" }),
+          children
+        ]
+      }
+    );
+  }
 );
 Button.displayName = "Button";
 var Card = react.forwardRef(
