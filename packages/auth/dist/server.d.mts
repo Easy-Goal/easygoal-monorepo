@@ -63,9 +63,13 @@ declare function handleSignout(): Promise<NextResponse>;
  */
 declare function createSignoutRoute(): (request: NextRequest) => Promise<NextResponse>;
 
+declare function handleSession(): Promise<NextResponse>;
+
+declare function createSessionRoute(): () => Promise<next_server.NextResponse<unknown>>;
+
 declare function updateSession(request: NextRequest): Promise<NextResponse<unknown>>;
 declare const defaultMatcherConfig: {
     matcher: string[];
 };
 
-export { type AuthCompany, type AuthData, type AuthStats, type AuthUser, type CallbackConfig, type MiddlewareConfig, createCallbackRoute, createSignoutRoute, defaultMatcherConfig, handleAuthCallback, handleSignout, updateSession };
+export { type AuthCompany, type AuthData, type AuthStats, type AuthUser, type CallbackConfig, type MiddlewareConfig, createCallbackRoute, createSessionRoute, createSignoutRoute, defaultMatcherConfig, handleAuthCallback, handleSession, handleSignout, updateSession };

@@ -9,6 +9,10 @@ export { createCallbackRoute } from './callback/route';
 // Signout
 export { createSignoutRoute, handleSignout } from './signout/handler';
 
+// Session
+export { handleSession } from './session/handler';
+export { createSessionRoute } from './session/route';
+
 // Middleware
 export { defaultMatcherConfig, updateSession } from './middleware/updateSession';
 
