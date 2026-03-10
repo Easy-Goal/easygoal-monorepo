@@ -246,6 +246,37 @@ import { keyframes, animations } from "@easygoal/ui/tokens";
   - Hook `useProductTracking()` no `@easygoal/core` que injeta os scripts corretos
   - Middleware Next.js que adiciona UTMs automaticamente nos links de afiliados
 
+#### ✅ 9.6 — Admin: Gamificação e Gestão de Ranks
+
+**Objetivo:** Dar visibilidade e controle total sobre o sistema de ranks no painel admin.
+
+- Página `/admin/ranks`: CRUD de `rank_definitions` por tipo de perfil (`user`, `producer`, `affiliate`)
+  - Campos: `rank_level`, `rank_name`, `user_type`, `min_conversions`, `min_active_subscribers`, `commission_bonus_percent`, `badge_color`, `badge_emoji`
+- Dashboard de distribuição: lista expansível de membros por rank, separada por tipo de perfil
+- Cada membro exibe nome, email e métrica contextual (conversões / assinaturas ativas)
+- Painel de impacto financeiro: afiliados por rank + percentual de bônus
+- Link "Gamificação" adicionado no Sidebar admin
+
+**Tabelas envolvidas:** `rank_definitions`, `user_ranks`, `affiliates`, `producers`, `users_company`
+
+**Arquivos criados:**
+- `src/app/api/admin/ranks/route.ts` — GET/POST
+- `src/app/api/admin/ranks/[id]/route.ts` — PUT/DELETE
+- `src/app/api/admin/ranks/distribution/route.ts` — GET com membros por rank
+- `src/app/(authenticated)/admin/ranks/page.tsx` — página completa
+
+#### ⏳ 9.7 — Admin: Marketplace Health Dashboard
+
+**Objetivo:** Visão consolidada da saúde e performance do marketplace (serviços + SaaS).
+
+- **Overview cards:** serviços ativos, produtos SaaS aprovados, receita total (serviços + SaaS separado)
+- **Tabela SaaS performance:** MRR, assinantes ativos, churn 30d, status de health check — por produto
+- **Performance por categoria de serviço:** requests criados, receita, tempo médio de entrega, taxa de conversão (requests/views)
+- **Funil do marketplace:** requests pendentes → em andamento → concluídos → pagos (KPIs visuais)
+- **Controle de destaque:** flag `is_featured` em `services` e `saas_products` — admin define quais aparecem em destaque no marketplace
+
+**Tabelas envolvidas:** `services`, `service_requests`, `saas_products`, `saas_subscriptions`, `subscription_invoices`
+
 **Output:** PRDs por sub-etapa + implementação incremental. Validar cada feature antes da próxima.
 
 ---
