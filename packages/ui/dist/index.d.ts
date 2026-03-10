@@ -59,6 +59,15 @@ interface HeaderNotification {
     createdAt: string;
     actionUrl?: string | null;
 }
+interface NotificationBellProps {
+    notifications?: HeaderNotification[];
+    onMarkRead?: (id: string) => void;
+    onMarkAllRead?: () => void;
+    onDelete?: (id: string) => void;
+    /** URL for "ver todas" footer link */
+    allNotificationsUrl?: string;
+}
+declare function NotificationBell({ notifications, onMarkRead, onMarkAllRead, onDelete, allNotificationsUrl, }: NotificationBellProps): react_jsx_runtime.JSX.Element;
 
 declare const RANK_CONFIG: Record<string, {
     emoji: string;
@@ -73,4 +82,4 @@ interface RankBadgeProps {
 }
 declare function RankBadge({ rankName, size, showLabel, className }: RankBadgeProps): react_jsx_runtime.JSX.Element;
 
-export { EasyHeader, type EasyHeaderProps, type HeaderNavLink, type HeaderNotification, type HeaderUser, Logo, RANK_CONFIG, RankBadge };
+export { EasyHeader, type EasyHeaderProps, type HeaderNavLink, type HeaderNotification, type HeaderUser, Logo, NotificationBell, RANK_CONFIG, RankBadge };

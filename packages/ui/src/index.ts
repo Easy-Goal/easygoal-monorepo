@@ -1,6 +1,6 @@
 // Components
 export { Logo } from "./components/Logo";
-export { EasyHeader, RankBadge, RANK_CONFIG } from "./components/Header";
+export { EasyHeader, NotificationBell, RankBadge, RANK_CONFIG } from "./components/Header";
 export type { EasyHeaderProps, HeaderNavLink, HeaderUser, HeaderNotification } from "./components/Header";
 
 // Tokens

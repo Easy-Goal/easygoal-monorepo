@@ -2,7 +2,7 @@ export { colors, cssVars } from './chunk-2K3ZSUMX.mjs';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { useEgSession, useSSOLogin, useNotifications } from '@easygoal/packages/auth/client';
 import { ChevronDown, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 var TEXT_COLOR = {
   dark: "#FAFAFA",
@@ -473,6 +473,6 @@ function RankBadge({ rankName, size = "sm", showLabel = true, className }) {
   );
 }
 
-export { EasyHeader, Logo, RANK_CONFIG, RankBadge };
+export { EasyHeader, Logo, NotificationBell, RANK_CONFIG, RankBadge };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

@@ -524,6 +524,7 @@ var cssVars = {
 
 exports.EasyHeader = EasyHeader;
 exports.Logo = Logo;
+exports.NotificationBell = NotificationBell;
 exports.RANK_CONFIG = RANK_CONFIG;
 exports.RankBadge = RankBadge;
 exports.colors = colors;
