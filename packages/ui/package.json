@@ -14,17 +14,22 @@
       "types": "./dist/tokens/index.d.ts",
       "import": "./dist/tokens/index.mjs",
       "require": "./dist/tokens/index.js"
-    }
+    },
+    "./styles": "./src/globals.css"
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.5.0"
+  },
   "devDependencies": {
-    "@types/react": "^18",
     "@types/node": "^20",
+    "@types/react": "^18",
     "lucide-react": "^0.400.0",
     "next": "^14",
     "react": "^18",

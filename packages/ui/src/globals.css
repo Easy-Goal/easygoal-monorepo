@@ -1,0 +1,53 @@
+/* Easy Goal Design System — Global Styles */
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 hsl(18 100% 62% / 0.4); }
+  70% { box-shadow: 0 0 0 10px hsl(18 100% 62% / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(18 100% 62% / 0); }
+}
+
+.animate-shimmer { animation: shimmer 1.5s infinite; }
+.animate-fade-up { animation: fade-up 0.4s ease-out; }
+.animate-slide-up { animation: slide-up 0.3s ease-out; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-pulse-ring { animation: pulse-ring 2s infinite; }
+
+/* Stagger helpers */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+.shadow-glow {
+  box-shadow: 0 0 60px hsl(18 100% 62% / 0.3);
+}
+
+.card-hover {
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: hsl(18 100% 62% / 0.3);
+  box-shadow: 0 8px 32px hsl(18 100% 62% / 0.1);
+}
