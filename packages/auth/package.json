@@ -1,14 +1,11 @@
 {
   "name": "@easygoal/auth",
-  "version": "0.1.0",
-  "description": "Auth providers, callbacks e middleware SSO do ecossistema Easy Goal (Next.js + Supabase)",
-  "license": "UNLICENSED",
-  "private": true,
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "exports": {
-    ".": {
+    "./client": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
@@ -19,26 +16,26 @@
       "require": "./dist/server.js"
     }
   },
-  "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit"
   },
-  "peerDependencies": {
-    "@supabase/supabase-js": ">=2",
-    "@supabase/ssr": ">=0.5",
-    "next": ">=14",
-    "react": ">=18",
-    "react-dom": ">=18"
+  "dependencies": {
+    "jose": "^6.2.0"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2",
     "@supabase/ssr": "^0.5",
     "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/node": "^20",
     "next": "^14",
+    "react": "^18",
     "tsup": "^8",
     "typescript": "^5"
+  },
+  "peerDependencies": {
+    "next": ">=14",
+    "react": ">=18"
   }
 }

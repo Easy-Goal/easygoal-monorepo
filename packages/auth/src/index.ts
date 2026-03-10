@@ -1,19 +1,14 @@
-// ===============================
-// CLIENT ENTRY (React only)
-// ===============================
+/**
+ * @easygoal/auth - Client entry (browser-safe)
+ */
 
-// Providers — Supabase-based (app com credenciais diretas)
-export { AuthProvider, useAuthSession } from './providers/AuthProvider';
-
-// Providers — eg_session-based (app sem credenciais Supabase)
+// SSO Session Provider
 export { EgSessionProvider, useEgSession } from './providers/EgSessionProvider';
-export type { EgSessionUser, EgSessionConfig, EgSessionContextValue } from './providers/EgSessionProvider';
+export type { EgSessionUser, EgSessionContextValue, EgSessionConfig } from './providers/EgSessionProvider';
 
-// Hooks
+// SSO Login/Logout hook
 export { useSSOLogin } from './hooks/useSSOLogin';
 export type { SSOLoginConfig } from './hooks/useSSOLogin';
 
-// Types (seguros para client)
-export type {
-  AuthCompany, AuthContextValue, AuthData, AuthProviderConfig, AuthStats, AuthUser
-} from './types';
+// Supabase-based Auth Provider (opcional)
+export { AuthProvider, useAuthSession } from './providers/AuthProvider';
