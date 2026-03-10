@@ -1,6 +1,6 @@
 export { colors, cssVars } from './chunk-2K3ZSUMX.mjs';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
-import { useEgSession, useSSOLogin } from '@easygoal/packages/auth/client';
+import { useEgSession, useSSOLogin, useNotifications } from '@easygoal/packages/auth/client';
 import { ChevronDown, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -338,11 +338,14 @@ function NotificationBell({
     ] })
   ] });
 }
-function HeaderUserMenu({ config, notifications }) {
+function HeaderUserMenu({ config }) {
   const { user, isReady } = useEgSession();
   const { logout } = useSSOLogin({
     ssoUrl: config.ssoUrl,
     apiKey: config.apiKey
+  });
+  const { notifications, markAsRead, markAllAsRead, dismiss } = useNotifications({
+    path: config.notificationsPath ?? "/api/notifications"
   });
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -356,6 +359,9 @@ function HeaderUserMenu({ config, notifications }) {
       NotificationBell,
       {
         notifications,
+        onMarkRead: markAsRead,
+        onMarkAllRead: markAllAsRead,
+        onDelete: dismiss,
         allNotificationsUrl: getAppUrl("/notifications")
       }
     ),
@@ -399,8 +405,7 @@ function EasyHeader({
   navLinks = [],
   ctaSlot,
   className,
-  config,
-  notifications
+  config
 }) {
   const { user, isReady } = useEgSession();
   const [scrolled, setScrolled] = useState(false);
@@ -423,7 +428,7 @@ function EasyHeader({
       },
       href
     )) }),
-    /* @__PURE__ */ jsx("div", { className: "flex items-center gap-4 shrink-0 ml-4", children: user ? /* @__PURE__ */ jsx(HeaderUserMenu, { config, notifications }) : isReady && ctaSlot })
+    /* @__PURE__ */ jsx("div", { className: "flex items-center gap-4 shrink-0 ml-4", children: user ? /* @__PURE__ */ jsx(HeaderUserMenu, { config }) : isReady && ctaSlot })
   ] }) });
 }
 var RANK_CONFIG = {

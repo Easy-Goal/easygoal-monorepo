@@ -16,6 +16,9 @@
       ],
       "auth/server": [
         "./packages/auth/dist/server.d.ts"
+      ],
+      "core": [
+        "./packages/core/dist/index.d.ts"
       ]
     }
   },
@@ -39,16 +42,23 @@
       "types": "./packages/auth/dist/server.d.ts",
       "import": "./packages/auth/dist/server.mjs",
       "require": "./packages/auth/dist/server.js"
+    },
+    "./core": {
+      "types": "./packages/core/dist/index.d.ts",
+      "import": "./packages/core/dist/index.mjs",
+      "require": "./packages/core/dist/index.js"
     }
   },
   "scripts": {
     "prepare": "npm run build",
-    "build": "npm install --prefix packages/ui && npm run build --prefix packages/ui && npm install --prefix packages/auth && npm run build --prefix packages/auth",
+    "build": "npm install --prefix packages/core && npm run build --prefix packages/core && npm install --prefix packages/ui && npm run build --prefix packages/ui && npm install --prefix packages/auth && npm run build --prefix packages/auth",
     "build:ui": "npm install --prefix packages/ui && npm run build --prefix packages/ui",
     "build:auth": "npm install --prefix packages/auth && npm run build --prefix packages/auth",
+    "build:core": "npm install --prefix packages/core && npm run build --prefix packages/core",
     "dev:ui": "npm run dev --prefix packages/ui",
     "dev:auth": "npm run dev --prefix packages/auth",
-    "type-check": "npm run type-check --prefix packages/ui && npm run type-check --prefix packages/auth"
+    "dev:core": "npm run dev --prefix packages/core",
+    "type-check": "npm run type-check --prefix packages/core && npm run type-check --prefix packages/ui && npm run type-check --prefix packages/auth"
   },
   "devDependencies": {
     "typescript": "^5"

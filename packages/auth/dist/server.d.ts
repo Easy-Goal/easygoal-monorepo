@@ -30,6 +30,18 @@ interface AuthData {
     company: AuthCompany | null;
     stats: AuthStats | null;
 }
+/**
+ * Formato canônico consumido pelo componente NotificationBell do @easygoal/ui.
+ * Mapeado a partir do NotificationRow do banco via useNotifications.
+ */
+interface HeaderNotification {
+    id: string;
+    title: string;
+    message: string;
+    readAt: string | null;
+    createdAt: string;
+    actionUrl?: string | null;
+}
 interface CallbackConfig {
     supabaseUrl?: string;
     supabaseAnonKey?: string;
@@ -76,4 +88,39 @@ declare const defaultMatcherConfig: {
     matcher: string[];
 };
 
-export { type AuthCompany, type AuthData, type AuthStats, type AuthUser, type CallbackConfig, type MiddlewareConfig, createCallbackRoute, createSessionRoute, createSignoutRoute, defaultMatcherConfig, handleAuthCallback, handleSession, handleSignout, updateSession };
+interface NotificationsConfig {
+    supabaseUrl: string;
+    supabaseAnonKey: string;
+}
+/**
+ * GET /api/notifications
+ * Lista as notificações do usuário autenticado via eg_session.
+ */
+declare function handleGetNotifications(_req: NextRequest, config: NotificationsConfig): Promise<NextResponse>;
+/**
+ * POST /api/notifications/read
+ * Body: { id: string } | { all: true }
+ */
+declare function handleMarkNotificationsRead(req: NextRequest, config: NotificationsConfig): Promise<NextResponse>;
+/**
+ * DELETE /api/notifications
+ * Body: { id: string }
+ */
+declare function handleDeleteNotification(req: NextRequest, config: NotificationsConfig): Promise<NextResponse>;
+
+/**
+ * Cria as Route Handlers do Next.js para notificações.
+ *
+ * @example
+ * // app/api/notifications/route.ts
+ * import { createNotificationsRoute } from '@easygoal/auth/server';
+ * const config = { supabaseUrl: process.env.SUPABASE_URL!, supabaseAnonKey: process.env.SUPABASE_ANON_KEY! };
+ * export const { GET, POST, DELETE } = createNotificationsRoute(config);
+ */
+declare function createNotificationsRoute(config: NotificationsConfig): {
+    GET: (req: NextRequest) => Promise<next_server.NextResponse<unknown>>;
+    POST: (req: NextRequest) => Promise<next_server.NextResponse<unknown>>;
+    DELETE: (req: NextRequest) => Promise<next_server.NextResponse<unknown>>;
+};
+
+export { type AuthCompany, type AuthData, type AuthStats, type AuthUser, type CallbackConfig, type HeaderNotification, type MiddlewareConfig, type NotificationsConfig, createCallbackRoute, createNotificationsRoute, createSessionRoute, createSignoutRoute, defaultMatcherConfig, handleAuthCallback, handleDeleteNotification, handleGetNotifications, handleMarkNotificationsRead, handleSession, handleSignout, updateSession };

@@ -340,11 +340,14 @@ function NotificationBell({
     ] })
   ] });
 }
-function HeaderUserMenu({ config, notifications }) {
+function HeaderUserMenu({ config }) {
   const { user, isReady } = client.useEgSession();
   const { logout } = client.useSSOLogin({
     ssoUrl: config.ssoUrl,
     apiKey: config.apiKey
+  });
+  const { notifications, markAsRead, markAllAsRead, dismiss } = client.useNotifications({
+    path: config.notificationsPath ?? "/api/notifications"
   });
   const [isOpen, setIsOpen] = react.useState(false);
   const containerRef = react.useRef(null);
@@ -358,6 +361,9 @@ function HeaderUserMenu({ config, notifications }) {
       NotificationBell,
       {
         notifications,
+        onMarkRead: markAsRead,
+        onMarkAllRead: markAllAsRead,
+        onDelete: dismiss,
         allNotificationsUrl: getAppUrl("/notifications")
       }
     ),
@@ -401,8 +407,7 @@ function EasyHeader({
   navLinks = [],
   ctaSlot,
   className,
-  config,
-  notifications
+  config
 }) {
   const { user, isReady } = client.useEgSession();
   const [scrolled, setScrolled] = react.useState(false);
@@ -425,7 +430,7 @@ function EasyHeader({
       },
       href
     )) }),
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex items-center gap-4 shrink-0 ml-4", children: user ? /* @__PURE__ */ jsxRuntime.jsx(HeaderUserMenu, { config, notifications }) : isReady && ctaSlot })
+    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex items-center gap-4 shrink-0 ml-4", children: user ? /* @__PURE__ */ jsxRuntime.jsx(HeaderUserMenu, { config }) : isReady && ctaSlot })
   ] }) });
 }
 var RANK_CONFIG = {

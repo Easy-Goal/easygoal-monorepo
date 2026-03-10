@@ -37,10 +37,11 @@ interface EasyHeaderProps {
         apiKey: string;
         docsUrl?: string;
         appUrl?: string;
+        /** Path do endpoint de notificações. Default: '/api/notifications' */
+        notificationsPath?: string;
     };
-    notifications?: any[];
 }
-declare function EasyHeader({ logoSuffix, logoVariant, navLinks, ctaSlot, className, config, notifications }: EasyHeaderProps): react_jsx_runtime.JSX.Element;
+declare function EasyHeader({ logoSuffix, logoVariant, navLinks, ctaSlot, className, config, }: EasyHeaderProps): react_jsx_runtime.JSX.Element;
 
 interface HeaderUser {
     id: string;

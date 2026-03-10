@@ -59,6 +59,21 @@ export interface AuthData {
   stats: AuthStats | null;
 }
 
+// ─── Notificações (Header UI) ──────────────────────────────────────────────────
+
+/**
+ * Formato canônico consumido pelo componente NotificationBell do @easygoal/ui.
+ * Mapeado a partir do NotificationRow do banco via useNotifications.
+ */
+export interface HeaderNotification {
+  id: string;
+  title: string;
+  message: string;
+  readAt: string | null;
+  createdAt: string;
+  actionUrl?: string | null;
+}
+
 export interface CallbackConfig {
   supabaseUrl?: string;
   supabaseAnonKey?: string;
