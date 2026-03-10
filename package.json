@@ -28,6 +28,7 @@
       "import": "./packages/ui/dist/index.mjs",
       "require": "./packages/ui/dist/index.js"
     },
+    "./ui/styles": "./packages/ui/src/globals.css",
     "./ui/tokens": {
       "types": "./packages/ui/dist/tokens/index.d.ts",
       "import": "./packages/ui/dist/tokens/index.mjs",
