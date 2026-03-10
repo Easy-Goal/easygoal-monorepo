@@ -73,7 +73,7 @@ Se a sessão estiver longa ou o usuário solicitar "Handoff", gere imediatamente
 
 ---
 
-### 🔄 ETAPA 7 — Design System Completo (`@easygoal/ui`)
+### ✅ ETAPA 7 — Design System Completo (`@easygoal/ui`)
 
 **Objetivo:** Construir biblioteca de componentes unificada, baseada no melhor de cada projeto, para servir de base para a migração em massa (Etapa 8).
 
@@ -109,6 +109,21 @@ Se a sessão estiver longa ou o usuário solicitar "Handoff", gere imediatamente
 - [ ] `globals.css` exportável — .skeleton, .card-hover, .shadow-glow, stagger helpers
 
 **Output esperado:** Build limpo + push no main + instrução de configuração Tailwind para projetos consumidores.
+
+**Concluída.** Build limpo. 15 componentes + tokens + globals.css. Commit `af8ec07`.
+
+**Consumir nos projetos:**
+```ts
+// tailwind.config.ts — adicionar ao content:
+"./node_modules/@easygoal/ui/src/**/*.{ts,tsx}"
+
+// layout.tsx ou globals.css — importar estilos base:
+import "@easygoal/ui/styles";
+
+// Imports de componentes:
+import { Button, Card, Badge, StatCard, ... } from "@easygoal/ui";
+import { keyframes, animations } from "@easygoal/ui/tokens";
+```
 
 ---
 
