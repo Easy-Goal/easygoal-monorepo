@@ -246,38 +246,116 @@ import { keyframes, animations } from "@easygoal/ui/tokens";
   - Hook `useProductTracking()` no `@easygoal/core` que injeta os scripts corretos
   - Middleware Next.js que adiciona UTMs automaticamente nos links de afiliados
 
-#### ✅ 9.6 — Admin: Gamificação e Gestão de Ranks
+#### ✅ 9.6 — Admin: Gamificação e Gestão de Ranks (UI/CRUD)
 
-**Objetivo:** Dar visibilidade e controle total sobre o sistema de ranks no painel admin.
-
-- Página `/admin/ranks`: CRUD de `rank_definitions` por tipo de perfil (`user`, `producer`, `affiliate`)
-  - Campos: `rank_level`, `rank_name`, `user_type`, `min_conversions`, `min_active_subscribers`, `commission_bonus_percent`, `badge_color`, `badge_emoji`
-- Dashboard de distribuição: lista expansível de membros por rank, separada por tipo de perfil
-- Cada membro exibe nome, email e métrica contextual (conversões / assinaturas ativas)
-- Painel de impacto financeiro: afiliados por rank + percentual de bônus
-- Link "Gamificação" adicionado no Sidebar admin
-
-**Tabelas envolvidas:** `rank_definitions`, `user_ranks`, `affiliates`, `producers`, `users_company`
+**Concluído parcialmente.** CRUD de rank_definitions + dashboard de distribuição construídos.
+Engine de auto-rank pendente (ver 9.6-B abaixo).
 
 **Arquivos criados:**
 - `src/app/api/admin/ranks/route.ts` — GET/POST
 - `src/app/api/admin/ranks/[id]/route.ts` — PUT/DELETE
-- `src/app/api/admin/ranks/distribution/route.ts` — GET com membros por rank
+- `src/app/api/admin/ranks/distribution/route.ts` — GET com membros por rank (lê dados armazenados)
 - `src/app/(authenticated)/admin/ranks/page.tsx` — página completa
 
-#### ⏳ 9.7 — Admin: Marketplace Health Dashboard
+---
 
-**Objetivo:** Visão consolidada da saúde e performance do marketplace (serviços + SaaS).
+#### ⏳ 9.6-B — Gamificação: Arquitetura de Perfis e Engine de Rank
 
-- **Overview cards:** serviços ativos, produtos SaaS aprovados, receita total (serviços + SaaS separado)
-- **Tabela SaaS performance:** MRR, assinantes ativos, churn 30d, status de health check — por produto
-- **Performance por categoria de serviço:** requests criados, receita, tempo médio de entrega, taxa de conversão (requests/views)
-- **Funil do marketplace:** requests pendentes → em andamento → concluídos → pagos (KPIs visuais)
-- **Controle de destaque:** flag `is_featured` em `services` e `saas_products` — admin define quais aparecem em destaque no marketplace
+**Contexto e regra de negócio revisada:**
 
-**Tabelas envolvidas:** `services`, `service_requests`, `saas_products`, `saas_subscriptions`, `subscription_invoices`
+Um `user_id` pode ter até 3 perfis **independentes e simultâneos**. O onboarding inicial deixa o usuário escolher com qual perfil começa, mas os 3 podem coexistir:
 
-**Output:** PRDs por sub-etapa + implementação incremental. Validar cada feature antes da próxima.
+| Perfil | Tabela | Ativado quando | Critério de rank |
+|--------|--------|----------------|-----------------|
+| **Consumidor** | `users_company` | Sempre (todo usuário tem) | Assinaturas SaaS ativas como comprador |
+| **Afiliado** | `affiliates` (status=active) | Registro opt-in | Conversões indicadas (`total_conversions`) |
+| **Produtor** | `producers` (status=verified) | Cadastro aprovado | Assinantes ativos dos seus produtos |
+
+Cada perfil tem seu próprio rank, calculado de forma independente. Um usuário pode ter rank Silver como consumidor, Gold como afiliado e Bronze como produtor ao mesmo tempo.
+
+**Problema atual:**
+- `rank_definitions.user_type` só tem `"producer"` e `"affiliate"` — falta `"user"` (consumidor)
+- `user_ranks` existe mas nunca é populada — não há engine que observe eventos
+- `affiliates.rank_name/rank_level` e `producers.rank_name/rank_level` são campos estáticos, setados manualmente — não refletem a atividade real
+- JWT do SSO carrega `rank_name` mas só sincroniza no login
+
+**Arquitetura proposta:**
+
+Ranks são **calculados dinamicamente** a partir da fonte de verdade (tabelas de atividade), não armazenados como valor fixo. O campo `rank_name/rank_level` nas tabelas de perfil é um **cache** que deve ser atualizado por triggers.
+
+```
+Evento de negócio → Trigger Supabase → recalculate_rank(user_id, profile_type) → atualiza cache
+```
+
+**Triggers necessários:**
+
+| Evento | Tabela monitorada | Perfil afetado | Função |
+|--------|------------------|----------------|--------|
+| INSERT/UPDATE `saas_subscriptions` (status→active/cancelled) | saas_subscriptions | Consumidor (comprador) | `recalc_consumer_rank` |
+| INSERT/UPDATE `saas_subscriptions` (via produto do produtor) | saas_subscriptions JOIN saas_products | Produtor (vendedor) | `recalc_producer_rank` |
+| UPDATE `affiliates.total_conversions` | affiliates | Afiliado | `recalc_affiliate_rank` |
+
+**Função de cálculo de rank (SQL Supabase):**
+```sql
+-- Consumidor: conta assinaturas ativas
+SELECT COUNT(*) FROM saas_subscriptions WHERE user_id = $1 AND status = 'active'
+→ compara com rank_definitions WHERE user_type = 'user' ORDER BY min_active_subscriptions DESC LIMIT 1
+
+-- Produtor: conta assinantes ativos dos seus produtos
+SELECT COUNT(*) FROM saas_subscriptions s
+JOIN saas_products p ON s.saas_product_id = p.id
+WHERE p.producer_id = $1 AND s.status = 'active'
+→ compara com rank_definitions WHERE user_type = 'producer'
+
+-- Afiliado: usa total_conversions já existente
+SELECT total_conversions FROM affiliates WHERE id = $1
+→ compara com rank_definitions WHERE user_type = 'affiliate'
+```
+
+**O que precisa ser feito:**
+
+1. **DB migration:**
+   - Adicionar `user_type = 'user'` como valor válido em `rank_definitions` (ou garantir que o CRUD já permita)
+   - Criar função SQL `recalculate_rank(profile_type text, profile_id uuid)` no Supabase
+   - Criar triggers em `saas_subscriptions` e `affiliates`
+   - Popular `user_ranks` com dados históricos via script one-time
+
+2. **API admin:**
+   - `POST /api/admin/ranks/recalculate` — recalcula todos os ranks manualmente (para usar após migration)
+   - Atualizar `/api/admin/ranks/distribution` para calcular dinamicamente ao invés de ler campos estáticos
+
+3. **SSO:**
+   - Revisar `EgSessionClaims.rank_name` — definir qual rank exibir (consumidor por padrão, ou mais alto entre os perfis ativos)
+   - Garantir que o JWT é refreshado quando rank muda (via `refreshUser()` após evento de assinatura)
+
+4. **app-front:**
+   - Onboarding: tela de seleção de perfil inicial (Consumidor → padrão, Afiliado → opt-in, Produtor → opt-in com cadastro)
+   - Exibir rank correto por perfil (consumidor no dashboard geral, afiliado em /affiliate, produtor em /producer)
+   - Vincular ao Etapa 10 (Onboarding)
+
+**Arquivos a criar/modificar:**
+- Migration SQL Supabase (fora do codebase — executar manualmente)
+- `src/app/api/admin/ranks/recalculate/route.ts`
+- `src/app/api/admin/ranks/distribution/route.ts` — reescrever com cálculo dinâmico
+- `src/components/ui/RankBadge.tsx` — suportar os 3 tipos de perfil
+- `sso/src/utils/eg-session.ts` — revisar claim rank_name
+
+#### ✅ 9.7 — Admin: Marketplace Health Dashboard
+
+**Concluído.**
+
+**Arquivos criados:**
+- `src/app/api/admin/marketplace-health/route.ts` — GET overview + SaaS perf + funil + categorias + serviços
+- `src/app/api/admin/marketplace-health/featured/route.ts` — PATCH toggle is_featured
+- `src/app/(authenticated)/admin/marketplace-health/page.tsx` — dashboard completo
+- `src/types/database.ts` — `is_featured?: boolean` adicionado em `SaasProductRow` e `ServiceRow`
+- Sidebar: link "Marketplace Health" adicionado na seção Produtos
+
+**⚠️ Requer migration no Supabase:**
+```sql
+alter table services add column if not exists is_featured boolean not null default false;
+alter table saas_products add column if not exists is_featured boolean not null default false;
+```
 
 ---
 
