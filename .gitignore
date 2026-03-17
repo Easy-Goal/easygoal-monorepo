@@ -2,4 +2,8 @@ node_modules/
 *.tsbuildinfo
 .env
 .env.local
-migrations
+migrations/
+MIGRATION_PLAN.md
+ETAPA_2_DOC_PLAN.md
+ONBOARDING_BLUEPRINT.md
+.claude/
