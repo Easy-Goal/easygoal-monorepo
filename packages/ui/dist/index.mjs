@@ -671,6 +671,7 @@ var buttonVariants = cva(
         outline: "border border-orange-500 text-orange-500 hover:bg-orange-500/10",
         ghost: "text-slate-300 hover:bg-[#182644] hover:text-white",
         gradient: "bg-gradient-to-br from-orange-400 to-orange-500 text-white shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98]",
+        business: "bg-[#28A745] text-white shadow-lg hover:bg-[#218838] hover:shadow-[#28A745]/30 hover:scale-[1.02] active:scale-[0.98]",
         glass: "bg-white/5 backdrop-blur border border-white/10 text-white hover:bg-white/10",
         destructive: "bg-red-600 text-white hover:bg-red-700"
       },

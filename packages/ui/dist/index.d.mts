@@ -95,7 +95,7 @@ interface LogoProps {
 declare function Logo({ variant, width, className }: LogoProps): react_jsx_runtime.JSX.Element;
 
 declare const buttonVariants: (props?: ({
-    variant?: "default" | "outline" | "ghost" | "gradient" | "glass" | "destructive" | null | undefined;
+    variant?: "default" | "outline" | "ghost" | "gradient" | "business" | "glass" | "destructive" | null | undefined;
     size?: "sm" | "md" | "lg" | "icon" | "xl" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
