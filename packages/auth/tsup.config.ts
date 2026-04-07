@@ -28,6 +28,27 @@ export default defineConfig([
     format: ["esm", "cjs"],
     dts: true,
     sourcemap: true,
+    clean: false,
+    splitting: false,
+    platform: "neutral",
+    target: "es2022",
+    external: [
+      "react",
+      "react-dom",
+      "next",
+      "@supabase/supabase-js",
+      "@supabase/ssr"
+    ]
+  },
+
+  // =========================
+  // EXTERNAL BUILD (Node/Edge)
+  // =========================
+  {
+    entry: { external: "src/external/index.ts" },
+    format: ["esm", "cjs"],
+    dts: true,
+    sourcemap: true,
     clean: false, // importante: não limpar o build do client
     splitting: false,
     platform: "neutral", // 🔥 importante para edge runtime

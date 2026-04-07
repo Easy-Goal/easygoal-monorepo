@@ -14,6 +14,11 @@
       "types": "./dist/server.d.ts",
       "import": "./dist/server.mjs",
       "require": "./dist/server.js"
+    },
+    "./external": {
+      "types": "./dist/external.d.ts",
+      "import": "./dist/external.mjs",
+      "require": "./dist/external.js"
     }
   },
   "scripts": {
