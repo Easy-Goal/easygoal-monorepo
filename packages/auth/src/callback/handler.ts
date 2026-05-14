@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import type { CallbackConfig } from '../types';
 
 const EG_SESSION_COOKIE = 'eg_session';
-const EG_SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 dias
+const EG_SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 dias (deve coincidir com o SSO)
 
 // Helper para manter a consistência do domínio (essencial pro logout funcionar globalmente!)
 const getCookieDomain = () =>
@@ -15,15 +15,23 @@ export async function handleAuthCallback(
 ) {
   const { searchParams, origin } = new URL(request.url);
 
-  const egSessionParam = searchParams.get("eg_session"); // <-- App Interno
-  const egToken = searchParams.get("eg_token");          // <-- App Externo
+  const egSessionParam = searchParams.get("eg_session"); // <-- Legado / dev local
+  const egToken = searchParams.get("eg_token");          // <-- App externo (troca server-to-server)
   const next = searchParams.get("next") ?? "/";
 
   // Já preparamos a resposta de sucesso
   const response = NextResponse.redirect(new URL(next, origin));
 
   // ==========================================
-  // CENÁRIO 1: SSO enviou o eg_session direto na URL (App Interno)
+  // CENÁRIO 0: Cookie já presente (app interno — cookie .easygoal.com.br compartilhado pelo SSO)
+  // O SSO não coloca mais token na URL para subdomínios internos; o cookie de domínio é suficiente.
+  // ==========================================
+  if (!egSessionParam && !egToken && request.cookies.get(EG_SESSION_COOKIE)?.value) {
+    return response;
+  }
+
+  // ==========================================
+  // CENÁRIO 1: SSO enviou o eg_session direto na URL (legado ou dev local)
   // ==========================================
   if (egSessionParam) {
     response.cookies.set(EG_SESSION_COOKIE, egSessionParam, {

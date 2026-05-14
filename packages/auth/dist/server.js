@@ -38,7 +38,7 @@ module.exports = __toCommonJS(server_exports);
 // src/callback/handler.ts
 var import_server = require("next/server");
 var EG_SESSION_COOKIE = "eg_session";
-var EG_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+var EG_SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 var getCookieDomain = () => process.env.NODE_ENV === "production" ? ".easygoal.com.br" : void 0;
 async function handleAuthCallback(request, config) {
   const { searchParams, origin } = new URL(request.url);
@@ -46,6 +46,9 @@ async function handleAuthCallback(request, config) {
   const egToken = searchParams.get("eg_token");
   const next = searchParams.get("next") ?? "/";
   const response = import_server.NextResponse.redirect(new URL(next, origin));
+  if (!egSessionParam && !egToken && request.cookies.get(EG_SESSION_COOKIE)?.value) {
+    return response;
+  }
   if (egSessionParam) {
     response.cookies.set(EG_SESSION_COOKIE, egSessionParam, {
       httpOnly: true,
