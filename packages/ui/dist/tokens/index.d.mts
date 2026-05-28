@@ -8,20 +8,20 @@ declare const colors: {
     readonly primary: "#F97316";
     readonly primaryLight: "#FB923C";
     readonly primaryDark: "#EA580C";
-    /** Azul escuro — fundo principal */
-    readonly background: "#0F1729";
+    /** Azul escuro neutro — fundo principal */
+    readonly background: "#13151B";
     /** Cards e painéis */
-    readonly card: "#121E34";
+    readonly card: "#1A1D23";
     /** Elementos secundários */
-    readonly secondary: "#182644";
+    readonly secondary: "#1C1F27";
     /** Bordas e inputs */
-    readonly border: "#1E3050";
+    readonly border: "#1C1F27";
     /** Sidebar */
-    readonly sidebarBackground: "#0B1220";
+    readonly sidebarBackground: "#0F1115";
     /** Texto primário (sobre fundo escuro) */
     readonly foreground: "#F8FAFC";
     /** Texto secundário / muted */
-    readonly mutedForeground: "#798BAA";
+    readonly mutedForeground: "#858FA3";
 };
 type ColorToken = keyof typeof colors;
 /**
@@ -31,27 +31,27 @@ type ColorToken = keyof typeof colors;
 declare const cssVars: {
     readonly "--primary": "24 95% 53%";
     readonly "--primary-foreground": "0 0% 100%";
-    readonly "--background": "222 47% 11%";
+    readonly "--background": "222 18% 9%";
     readonly "--foreground": "210 40% 98%";
-    readonly "--card": "222 47% 13%";
+    readonly "--card": "222 15% 12%";
     readonly "--card-foreground": "210 40% 98%";
-    readonly "--secondary": "222 47% 18%";
+    readonly "--secondary": "222 10% 17%";
     readonly "--secondary-foreground": "210 40% 98%";
-    readonly "--muted": "222 47% 20%";
-    readonly "--muted-foreground": "215 20% 55%";
+    readonly "--muted": "222 10% 19%";
+    readonly "--muted-foreground": "220 14% 58%";
     readonly "--accent": "24 95% 53%";
     readonly "--accent-foreground": "0 0% 100%";
-    readonly "--border": "222 47% 20%";
-    readonly "--input": "222 47% 20%";
+    readonly "--border": "222 10% 17%";
+    readonly "--input": "222 10% 17%";
     readonly "--ring": "24 95% 53%";
     readonly "--radius": "0.75rem";
-    readonly "--sidebar-background": "222 47% 9%";
-    readonly "--sidebar-foreground": "215 20% 65%";
+    readonly "--sidebar-background": "222 18% 7%";
+    readonly "--sidebar-foreground": "220 14% 65%";
     readonly "--sidebar-primary": "24 95% 53%";
     readonly "--sidebar-primary-foreground": "0 0% 100%";
-    readonly "--sidebar-accent": "222 47% 15%";
+    readonly "--sidebar-accent": "222 10% 14%";
     readonly "--sidebar-accent-foreground": "210 40% 98%";
-    readonly "--sidebar-border": "222 47% 18%";
+    readonly "--sidebar-border": "222 10% 15%";
 };
 
 declare const animations: {
