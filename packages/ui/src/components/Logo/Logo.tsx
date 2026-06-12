@@ -1,8 +1,8 @@
 import React from "react";
 
 interface LogoProps {
-  /** Variante de cor: "dark" = texto branco (fundo escuro), "light" = texto escuro (fundo claro) */
-  variant?: "dark" | "light";
+  /** Variante de cor: "dark" = texto branco + marca laranja, "light" = texto escuro + marca laranja, "white" = tudo branco */
+  variant?: "dark" | "light" | "white";
   /** Largura em px. A altura é proporcional ao viewBox 133×37. */
   width?: number;
   className?: string;
@@ -11,9 +11,14 @@ interface LogoProps {
 const TEXT_COLOR = {
   dark: "#FAFAFA",
   light: "#09090B",
+  white: "#FFFFFF",
 } as const;
 
-const ACCENT = "#F97316";
+const ACCENT_COLOR = {
+  dark: "#F97316",
+  light: "#F97316",
+  white: "#FFFFFF",
+} as const;
 
 /**
  * Logo oficial da Easy Goal.
@@ -29,6 +34,7 @@ const ACCENT = "#F97316";
 export function Logo({ variant = "dark", width = 133, className }: LogoProps) {
   const height = Math.round((width * 37) / 133);
   const textColor = TEXT_COLOR[variant];
+  const accentColor = ACCENT_COLOR[variant];
 
   return (
     <svg
@@ -79,7 +85,7 @@ export function Logo({ variant = "dark", width = 133, className }: LogoProps) {
       {/* Ícone circular — brand accent */}
       <path
         d="M102.456 31.0726C109.003 29.1078 110.605 21.7301 108.929 15.3643C107.235 8.96896 102.272 3.60515 95.7243 5.56992C89.1863 7.53468 87.6024 14.8731 89.2968 21.2684C90.9727 27.6342 95.9177 33.0373 102.456 31.0726ZM103.109 10.0398C104.242 9.70574 105.421 9.88257 105.771 11.2284C106.922 15.5804 99.0854 25.414 95.0889 26.6125C93.9563 26.9564 92.796 26.7304 92.4369 25.3846C91.2858 21.0326 99.1222 11.2481 103.109 10.0398Z"
-        fill={ACCENT}
+        fill={accentColor}
       />
     </svg>
   );
