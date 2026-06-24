@@ -52,11 +52,14 @@ async function handleAuthCallback(request, config) {
       console.error("[auth callback error]", err);
     }
   }
+  const invite = searchParams.get("invite");
   const loginUrl = `${config.ssoUrl}/auth/login`;
-  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
-  return NextResponse.redirect(
-    `${loginUrl}?redirect_to=${encodeURIComponent(redirectTo)}`
-  );
+  const callbackParams = new URLSearchParams({ next });
+  if (invite) callbackParams.set("invite", invite);
+  const redirectTo = `${origin}/auth/callback?${callbackParams.toString()}`;
+  const loginParams = new URLSearchParams({ redirect_to: redirectTo });
+  if (invite) loginParams.set("invite", invite);
+  return NextResponse.redirect(`${loginUrl}?${loginParams.toString()}`);
 }
 
 // src/callback/route.ts

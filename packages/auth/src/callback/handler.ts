@@ -85,10 +85,13 @@ export async function handleAuthCallback(
   // ==========================================
   // CENÁRIO 3: Fallback (Não tem sessão ou o verify falhou)
   // ==========================================
+  const invite = searchParams.get("invite");
   const loginUrl = `${config.ssoUrl}/auth/login`;
-  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  const callbackParams = new URLSearchParams({ next });
+  if (invite) callbackParams.set("invite", invite);
+  const redirectTo = `${origin}/auth/callback?${callbackParams.toString()}`;
+  const loginParams = new URLSearchParams({ redirect_to: redirectTo });
+  if (invite) loginParams.set("invite", invite);
 
-  return NextResponse.redirect(
-    `${loginUrl}?redirect_to=${encodeURIComponent(redirectTo)}`
-  );
+  return NextResponse.redirect(`${loginUrl}?${loginParams.toString()}`);
 }
