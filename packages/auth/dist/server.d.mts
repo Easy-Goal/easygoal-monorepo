@@ -73,7 +73,7 @@ declare function handleSignout(): Promise<NextResponse>;
  * export const POST = createSignoutRoute();
  * ```
  */
-declare function createSignoutRoute(): (request: NextRequest) => Promise<NextResponse>;
+declare function createSignoutRoute(): (_request: NextRequest) => Promise<NextResponse>;
 
 /**
  * Decodifica o payload do JWT sem verificar assinatura.

@@ -127,7 +127,7 @@ async function handleSignout() {
   return response;
 }
 function createSignoutRoute() {
-  return async function POST(request) {
+  return async function POST(_request) {
     return handleSignout();
   };
 }
