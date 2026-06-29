@@ -1,0 +1,121 @@
+/*
+ * Easy Goal — Design Tokens
+ * Fonte da verdade para dark/light em todo o ecossistema.
+ * Importar em qualquer frontend via: @import "@easygoal/ui/theme-styles"
+ * Ou copiar este arquivo para projetos sem monorepo.
+ *
+ * Accent (laranja) é constante nos dois temas — identidade da marca.
+ */
+
+/* ── Tema claro: Branco + Laranja ─────────────────────────────────────────── */
+:root {
+  --eg-bg:          hsl(0 0% 100%);
+  --eg-bg-subtle:   hsl(220 20% 97%);
+  --eg-bg-surface:  hsl(220 18% 94%);
+  --eg-bg-elevated: hsl(220 16% 91%);
+
+  --eg-text:        hsl(228 40% 10%);
+  --eg-text-muted:  hsl(220 15% 45%);
+  --eg-text-faint:  hsl(220 12% 65%);
+
+  --eg-border:      hsl(220 18% 86%);
+  --eg-border-subtle: hsl(220 15% 92%);
+
+  --eg-accent:      hsl(22 94% 55%);
+  --eg-accent-hover: hsl(22 94% 48%);
+  --eg-accent-muted: hsl(22 94% 55% / 0.12);
+  --eg-accent-text: hsl(0 0% 100%);
+
+  --eg-success:     hsl(134 61% 38%);
+  --eg-danger:      hsl(0 72% 51%);
+
+  --eg-shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+  --eg-shadow-md:   0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+  --eg-shadow-lg:   0 10px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.07);
+  --eg-shadow-glow: 0 0 32px hsl(22 94% 55% / 0.22);
+
+  --eg-radius-sm:   0.5rem;
+  --eg-radius:      0.75rem;
+  --eg-radius-lg:   1rem;
+  --eg-radius-xl:   1.5rem;
+}
+
+/* ── Tema escuro: Azul EasyGoal + Laranja ─────────────────────────────────── */
+html.dark,
+[data-theme="dark"] {
+  --eg-bg:          hsl(228 35% 8%);
+  --eg-bg-subtle:   hsl(228 32% 11%);
+  --eg-bg-surface:  hsl(226 28% 11%);
+  --eg-bg-elevated: hsl(226 24% 15%);
+
+  --eg-text:        hsl(0 0% 97%);
+  --eg-text-muted:  hsl(220 10% 58%);
+  --eg-text-faint:  hsl(220 10% 38%);
+
+  --eg-border:      hsl(228 20% 16%);
+  --eg-border-subtle: hsl(228 20% 13%);
+
+  --eg-accent:      hsl(22 94% 55%);
+  --eg-accent-hover: hsl(22 94% 48%);
+  --eg-accent-muted: hsl(22 94% 55% / 0.15);
+  --eg-accent-text: hsl(0 0% 100%);
+
+  --eg-success:     hsl(134 61% 41%);
+  --eg-danger:      hsl(0 72% 55%);
+
+  --eg-shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
+  --eg-shadow-md:   0 4px 16px rgba(0,0,0,0.4);
+  --eg-shadow-lg:   0 10px 40px rgba(0,0,0,0.5);
+  --eg-shadow-glow: 0 0 40px hsl(22 94% 55% / 0.25);
+}
+
+/* ── Utilitários Tailwind-agnósticos ──────────────────────────────────────── */
+.eg-bg          { background-color: var(--eg-bg); }
+.eg-surface     { background-color: var(--eg-bg-surface); }
+.eg-elevated    { background-color: var(--eg-bg-elevated); }
+.eg-text        { color: var(--eg-text); }
+.eg-text-muted  { color: var(--eg-text-muted); }
+.eg-border      { border-color: var(--eg-border); }
+.eg-accent      { background-color: var(--eg-accent); color: var(--eg-accent-text); }
+.eg-accent-text { color: var(--eg-accent); }
+.eg-shadow-lg   { box-shadow: var(--eg-shadow-lg); }
+.eg-shadow-glow { box-shadow: var(--eg-shadow-glow); }
+
+/* Card padrão */
+.eg-card {
+  background-color: var(--eg-bg-surface);
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.eg-card:hover {
+  border-color: hsl(22 94% 55% / 0.3);
+  box-shadow: var(--eg-shadow-md), 0 0 20px hsl(22 94% 55% / 0.1);
+}
+
+/* Botão primário */
+.eg-btn-cta {
+  background-color: var(--eg-accent);
+  color: var(--eg-accent-text);
+  border-radius: var(--eg-radius);
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.eg-btn-cta:hover {
+  background-color: var(--eg-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--eg-shadow-glow);
+}
+
+/* Botão outline */
+.eg-btn-outline {
+  border: 1px solid var(--eg-border);
+  color: var(--eg-text);
+  border-radius: var(--eg-radius);
+  font-weight: 500;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.eg-btn-outline:hover {
+  border-color: var(--eg-text-muted);
+  background-color: var(--eg-bg-subtle);
+}

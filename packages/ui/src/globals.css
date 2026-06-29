@@ -1,4 +1,5 @@
 /* Easy Goal Design System — Global Styles */
+@import "./theme/tokens.css";
 
 @keyframes shimmer {
   0% { transform: translateX(-100%); }

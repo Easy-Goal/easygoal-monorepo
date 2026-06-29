@@ -35,6 +35,10 @@ export { StatCard } from "./components/StatCard";
 export { MetricCard } from "./components/MetricCard";
 export { QuickLinkCard } from "./components/QuickLinkCard";
 
+// Theme system
+export { ThemeProvider, useTheme, themeScript } from "./theme";
+export { ThemeToggle } from "./theme";
+
 // Tokens
 export { colors, cssVars, animations, keyframes } from "./tokens";
 export type { ColorToken } from "./tokens";

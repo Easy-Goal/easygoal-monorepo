@@ -15,7 +15,8 @@
       "import": "./dist/tokens/index.mjs",
       "require": "./dist/tokens/index.js"
     },
-    "./styles": "./src/globals.css"
+    "./styles": "./src/globals.css",
+    "./theme-styles": "./src/theme/tokens.css"
   },
   "scripts": {
     "build": "tsup",
