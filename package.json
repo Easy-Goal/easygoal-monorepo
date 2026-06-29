@@ -29,6 +29,7 @@
       "require": "./packages/ui/dist/index.js"
     },
     "./ui/styles": "./packages/ui/src/globals.css",
+    "./ui/theme-styles": "./packages/ui/src/theme/tokens.css",
     "./ui/tokens": {
       "types": "./packages/ui/dist/tokens/index.d.ts",
       "import": "./packages/ui/dist/tokens/index.mjs",
