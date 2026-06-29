@@ -28,19 +28,7 @@ interface ThemeProviderProps {
   storageKey?: string;
 }
 
-// Script inline para evitar flash antes da hidratação.
-// Injete no <head> ANTES de qualquer stylesheet.
-export const themeScript = `
-(function(){
-  try{
-    var t=localStorage.getItem("eg-theme");
-    var preferred=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
-    var theme=t||preferred||"dark";
-    document.documentElement.classList.toggle("dark",theme==="dark");
-    document.documentElement.setAttribute("data-theme",theme);
-  }catch(e){}
-})();
-`.trim();
+export { themeScript } from "./script";
 
 export function ThemeProvider({
   children,

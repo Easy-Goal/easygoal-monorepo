@@ -1,4 +1,5 @@
 export { animations, colors, cssVars, keyframes } from './chunk-PNZJRODR.mjs';
+export { themeScript } from './chunk-NYPQH2ZY.mjs';
 import { useEgSession, useSSOLogin, useNotifications } from '@easygoal/packages/auth/client';
 import { Loader2, CheckCircle, XCircle, AlertTriangle, Info, TrendingUp, TrendingDown, ArrowRight, ChevronDown, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react';
 import { forwardRef, createContext, useState, useRef, useEffect, useContext } from 'react';
@@ -991,17 +992,6 @@ var ThemeContext = createContext({
 function useTheme() {
   return useContext(ThemeContext);
 }
-var themeScript = `
-(function(){
-  try{
-    var t=localStorage.getItem("eg-theme");
-    var preferred=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
-    var theme=t||preferred||"dark";
-    document.documentElement.classList.toggle("dark",theme==="dark");
-    document.documentElement.setAttribute("data-theme",theme);
-  }catch(e){}
-})();
-`.trim();
 function ThemeProvider({
   children,
   defaultTheme = "dark",
@@ -1090,6 +1080,6 @@ function ThemeToggle({ className = "", variant = "icon" }) {
   );
 }
 
-export { AlertBox, Avatar, Badge, Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EasyHeader, EmptyState, Input, LoadingState, Logo, MetricCard, NotificationBell, QuickLinkCard, RANK_CONFIG, RankBadge, Skeleton, StatCard, Textarea, ThemeProvider, ThemeToggle, UserMenu, badgeVariants, buttonVariants, cn, themeScript, useTheme };
+export { AlertBox, Avatar, Badge, Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EasyHeader, EmptyState, Input, LoadingState, Logo, MetricCard, NotificationBell, QuickLinkCard, RANK_CONFIG, RankBadge, Skeleton, StatCard, Textarea, ThemeProvider, ThemeToggle, UserMenu, badgeVariants, buttonVariants, cn, useTheme };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

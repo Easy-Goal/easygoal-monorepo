@@ -5,6 +5,7 @@ import * as class_variance_authority_types from 'class-variance-authority/types'
 import { VariantProps } from 'class-variance-authority';
 export { ColorToken, animations, colors, cssVars, keyframes } from './tokens/index.mjs';
 import { ClassValue } from 'clsx';
+export { themeScript } from './script.mjs';
 
 interface HeaderNavLink {
     label: string;
@@ -208,7 +209,7 @@ interface ThemeProviderProps {
     /** Chave no localStorage. Default: "eg-theme" */
     storageKey?: string;
 }
-declare const themeScript: string;
+
 declare function ThemeProvider({ children, defaultTheme, storageKey, }: ThemeProviderProps): react_jsx_runtime.JSX.Element;
 
 interface ThemeToggleProps {
@@ -220,4 +221,4 @@ declare function ThemeToggle({ className, variant }: ThemeToggleProps): react_js
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AlertBox, type AlertBoxProps, Avatar, Badge, type BadgeProps, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EasyHeader, type EasyHeaderProps, EmptyState, type EmptyStateProps, type HeaderNavLink, type HeaderNotification, type HeaderUser, Input, type InputProps, LoadingState, Logo, MetricCard, NotificationBell, QuickLinkCard, RANK_CONFIG, RankBadge, Skeleton, StatCard, Textarea, type TextareaProps, ThemeProvider, ThemeToggle, UserMenu, badgeVariants, buttonVariants, cn, themeScript, useTheme };
+export { AlertBox, type AlertBoxProps, Avatar, Badge, type BadgeProps, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EasyHeader, type EasyHeaderProps, EmptyState, type EmptyStateProps, type HeaderNavLink, type HeaderNotification, type HeaderUser, Input, type InputProps, LoadingState, Logo, MetricCard, NotificationBell, QuickLinkCard, RANK_CONFIG, RankBadge, Skeleton, StatCard, Textarea, type TextareaProps, ThemeProvider, ThemeToggle, UserMenu, badgeVariants, buttonVariants, cn, useTheme };

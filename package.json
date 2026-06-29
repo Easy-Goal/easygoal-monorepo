@@ -30,6 +30,11 @@
     },
     "./ui/styles": "./packages/ui/src/globals.css",
     "./ui/theme-styles": "./packages/ui/src/theme/tokens.css",
+    "./ui/script": {
+      "types": "./packages/ui/dist/script.d.ts",
+      "import": "./packages/ui/dist/script.mjs",
+      "require": "./packages/ui/dist/script.js"
+    },
     "./ui/tokens": {
       "types": "./packages/ui/dist/tokens/index.d.ts",
       "import": "./packages/ui/dist/tokens/index.mjs",

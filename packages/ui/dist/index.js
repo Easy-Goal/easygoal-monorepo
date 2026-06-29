@@ -983,6 +983,9 @@ function QuickLinkCard({ title, description, icon, href, className, onClick, ...
   }
   return /* @__PURE__ */ jsxRuntime.jsx("div", { className: baseClass, onClick, ...props, children: inner });
 }
+
+// src/theme/script.ts
+var themeScript = `(function(){try{var t=localStorage.getItem("eg-theme");var preferred=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";var theme=t||preferred||"dark";document.documentElement.classList.toggle("dark",theme==="dark");document.documentElement.setAttribute("data-theme",theme);}catch(e){}})();`;
 var ThemeContext = react.createContext({
   theme: "dark",
   toggleTheme: () => {
@@ -993,17 +996,6 @@ var ThemeContext = react.createContext({
 function useTheme() {
   return react.useContext(ThemeContext);
 }
-var themeScript = `
-(function(){
-  try{
-    var t=localStorage.getItem("eg-theme");
-    var preferred=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
-    var theme=t||preferred||"dark";
-    document.documentElement.classList.toggle("dark",theme==="dark");
-    document.documentElement.setAttribute("data-theme",theme);
-  }catch(e){}
-})();
-`.trim();
 function ThemeProvider({
   children,
   defaultTheme = "dark",
