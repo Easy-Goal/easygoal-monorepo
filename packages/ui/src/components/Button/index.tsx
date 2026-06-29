@@ -7,16 +7,16 @@ import { Loader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F1729] disabled:pointer-events-none disabled:opacity-50 select-none",
+  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 select-none",
   {
     variants: {
       variant: {
-        default: "bg-[#182644] text-white hover:bg-[#1E3050] border border-[#1E3050]",
-        outline: "border border-orange-500 text-orange-500 hover:bg-orange-500/10",
-        ghost: "text-slate-300 hover:bg-[#182644] hover:text-white",
+        default: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border",
+        outline: "border border-accent text-accent hover:bg-accent/10",
+        ghost: "text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
         gradient: "bg-gradient-to-br from-orange-400 to-orange-500 text-white shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98]",
         business: "bg-[#28A745] text-white shadow-lg hover:bg-[#218838] hover:shadow-[#28A745]/30 hover:scale-[1.02] active:scale-[0.98]",
-        glass: "bg-white/5 backdrop-blur border border-white/10 text-white hover:bg-white/10",
+        glass: "bg-foreground/5 backdrop-blur border border-foreground/10 text-foreground hover:bg-foreground/10",
         destructive: "bg-red-600 text-white hover:bg-red-700",
       },
       size: {
