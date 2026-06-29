@@ -75,8 +75,8 @@ interface RankBadgeProps {
 declare function RankBadge({ rankName, size, showLabel, className }: RankBadgeProps): react_jsx_runtime.JSX.Element;
 
 interface LogoProps {
-    /** Variante de cor: "dark" = texto branco (fundo escuro), "light" = texto escuro (fundo claro) */
-    variant?: "dark" | "light";
+    /** Variante de cor: "dark" = texto branco + marca laranja, "light" = texto escuro + marca laranja, "white" = tudo branco */
+    variant?: "dark" | "light" | "white";
     /** Largura em px. A altura é proporcional ao viewBox 133×37. */
     width?: number;
     className?: string;
@@ -194,6 +194,30 @@ interface QuickLinkCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 declare function QuickLinkCard({ title, description, icon, href, className, onClick, ...props }: QuickLinkCardProps): react_jsx_runtime.JSX.Element;
 
+type Theme = "dark" | "light";
+interface ThemeContextValue {
+    theme: Theme;
+    toggleTheme: () => void;
+    setTheme: (t: Theme) => void;
+}
+declare function useTheme(): ThemeContextValue;
+interface ThemeProviderProps {
+    children: react__default.ReactNode;
+    /** Tema padrão se não houver preferência salva. Default: "dark" */
+    defaultTheme?: Theme;
+    /** Chave no localStorage. Default: "eg-theme" */
+    storageKey?: string;
+}
+declare const themeScript: string;
+declare function ThemeProvider({ children, defaultTheme, storageKey, }: ThemeProviderProps): react_jsx_runtime.JSX.Element;
+
+interface ThemeToggleProps {
+    className?: string;
+    /** "icon" = só ícone (default) | "label" = ícone + texto */
+    variant?: "icon" | "label";
+}
+declare function ThemeToggle({ className, variant }: ThemeToggleProps): react_jsx_runtime.JSX.Element;
+
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AlertBox, type AlertBoxProps, Avatar, Badge, type BadgeProps, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EasyHeader, type EasyHeaderProps, EmptyState, type EmptyStateProps, type HeaderNavLink, type HeaderNotification, type HeaderUser, Input, type InputProps, LoadingState, Logo, MetricCard, NotificationBell, QuickLinkCard, RANK_CONFIG, RankBadge, Skeleton, StatCard, Textarea, type TextareaProps, UserMenu, badgeVariants, buttonVariants, cn };
+export { AlertBox, type AlertBoxProps, Avatar, Badge, type BadgeProps, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EasyHeader, type EasyHeaderProps, EmptyState, type EmptyStateProps, type HeaderNavLink, type HeaderNotification, type HeaderUser, Input, type InputProps, LoadingState, Logo, MetricCard, NotificationBell, QuickLinkCard, RANK_CONFIG, RankBadge, Skeleton, StatCard, Textarea, type TextareaProps, ThemeProvider, ThemeToggle, UserMenu, badgeVariants, buttonVariants, cn, themeScript, useTheme };

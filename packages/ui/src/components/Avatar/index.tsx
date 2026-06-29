@@ -25,7 +25,6 @@ export function Avatar({ src, alt, fallback, size = "md", className, ...props }:
       {...props}
     >
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={alt ?? ""} className="h-full w-full object-cover" />
       ) : (
         <span className="flex h-full w-full items-center justify-center font-medium text-orange-400">

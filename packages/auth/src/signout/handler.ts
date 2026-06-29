@@ -39,7 +39,7 @@ export async function handleSignout(): Promise<NextResponse> {
  * ```
  */
 export function createSignoutRoute() {
-  return async function POST(request: NextRequest): Promise<NextResponse> {
+  return async function POST(_request: NextRequest): Promise<NextResponse> {
     return handleSignout(); // sua função que limpa o cookie
   };
 }

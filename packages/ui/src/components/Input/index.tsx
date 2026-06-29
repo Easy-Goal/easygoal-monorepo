@@ -3,6 +3,7 @@
 import { forwardRef } from "react";
 import { cn } from "../../lib/utils";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, ...props }, ref) => (
@@ -17,6 +18,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, ...p
 ));
 Input.displayName = "Input";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, ...props }, ref) => (

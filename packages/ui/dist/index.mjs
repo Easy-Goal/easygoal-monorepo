@@ -1,7 +1,7 @@
 export { animations, colors, cssVars, keyframes } from './chunk-PNZJRODR.mjs';
 import { useEgSession, useSSOLogin, useNotifications } from '@easygoal/packages/auth/client';
 import { Loader2, CheckCircle, XCircle, AlertTriangle, Info, TrendingUp, TrendingDown, ArrowRight, ChevronDown, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react';
-import { forwardRef, useState, useRef, useEffect } from 'react';
+import { forwardRef, createContext, useState, useRef, useEffect, useContext } from 'react';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { Slot } from '@radix-ui/react-slot';
 import { cva } from 'class-variance-authority';
@@ -10,12 +10,18 @@ import { twMerge } from 'tailwind-merge';
 
 var TEXT_COLOR = {
   dark: "#FAFAFA",
-  light: "#09090B"
+  light: "#09090B",
+  white: "#FFFFFF"
 };
-var ACCENT = "#F97316";
+var ACCENT_COLOR = {
+  dark: "#F97316",
+  light: "#F97316",
+  white: "#FFFFFF"
+};
 function Logo({ variant = "dark", width = 133, className }) {
   const height = Math.round(width * 37 / 133);
   const textColor = TEXT_COLOR[variant];
+  const accentColor = ACCENT_COLOR[variant];
   return /* @__PURE__ */ jsxs(
     "svg",
     {
@@ -81,7 +87,7 @@ function Logo({ variant = "dark", width = 133, className }) {
           "path",
           {
             d: "M102.456 31.0726C109.003 29.1078 110.605 21.7301 108.929 15.3643C107.235 8.96896 102.272 3.60515 95.7243 5.56992C89.1863 7.53468 87.6024 14.8731 89.2968 21.2684C90.9727 27.6342 95.9177 33.0373 102.456 31.0726ZM103.109 10.0398C104.242 9.70574 105.421 9.88257 105.771 11.2284C106.922 15.5804 99.0854 25.414 95.0889 26.6125C93.9563 26.9564 92.796 26.7304 92.4369 25.3846C91.2858 21.0326 99.1222 11.2481 103.109 10.0398Z",
-            fill: ACCENT
+            fill: accentColor
           }
         )
       ]
@@ -390,7 +396,7 @@ function HeaderUserMenu({ config }) {
             /* @__PURE__ */ jsx(Settings, { className: "h-4 w-4 opacity-50" }),
             " Editar Perfil"
           ] }),
-          /* @__PURE__ */ jsxs("a", { href: config.docsUrl || "https://docs.easygoal.com.br", target: "_blank", className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
+          /* @__PURE__ */ jsxs("a", { href: config.docsUrl || "https://docs.easygoal.com.br", target: "_blank", rel: "noreferrer", className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
             /* @__PURE__ */ jsx(BookOpen, { className: "h-4 w-4 opacity-50" }),
             " Documenta\xE7\xE3o"
           ] })
@@ -789,10 +795,7 @@ function Avatar({ src, alt, fallback, size = "md", className, ...props }) {
         className
       ),
       ...props,
-      children: src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        /* @__PURE__ */ jsx("img", { src, alt: alt ?? "", className: "h-full w-full object-cover" })
-      ) : /* @__PURE__ */ jsx("span", { className: "flex h-full w-full items-center justify-center font-medium text-orange-400", children: fallback ?? "?" })
+      children: src ? /* @__PURE__ */ jsx("img", { src, alt: alt ?? "", className: "h-full w-full object-cover" }) : /* @__PURE__ */ jsx("span", { className: "flex h-full w-full items-center justify-center font-medium text-orange-400", children: fallback ?? "?" })
     }
   );
 }
@@ -978,7 +981,115 @@ function QuickLinkCard({ title, description, icon, href, className, onClick, ...
   }
   return /* @__PURE__ */ jsx("div", { className: baseClass, onClick, ...props, children: inner });
 }
+var ThemeContext = createContext({
+  theme: "dark",
+  toggleTheme: () => {
+  },
+  setTheme: () => {
+  }
+});
+function useTheme() {
+  return useContext(ThemeContext);
+}
+var themeScript = `
+(function(){
+  try{
+    var t=localStorage.getItem("eg-theme");
+    var preferred=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+    var theme=t||preferred||"dark";
+    document.documentElement.classList.toggle("dark",theme==="dark");
+    document.documentElement.setAttribute("data-theme",theme);
+  }catch(e){}
+})();
+`.trim();
+function ThemeProvider({
+  children,
+  defaultTheme = "dark",
+  storageKey = "eg-theme"
+}) {
+  const [theme, setThemeState] = useState(defaultTheme);
+  function applyTheme(t) {
+    const root = document.documentElement;
+    root.classList.toggle("dark", t === "dark");
+    root.setAttribute("data-theme", t);
+    localStorage.setItem(storageKey, t);
+  }
+  useEffect(() => {
+    const stored = localStorage.getItem(storageKey);
+    const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    const resolved = stored ?? preferred ?? defaultTheme;
+    applyTheme(resolved);
+    setThemeState(resolved);
+  }, [storageKey, defaultTheme]);
+  function setTheme(t) {
+    applyTheme(t);
+    setThemeState(t);
+  }
+  function toggleTheme() {
+    setTheme(theme === "dark" ? "light" : "dark");
+  }
+  return /* @__PURE__ */ jsx(ThemeContext.Provider, { value: { theme, toggleTheme, setTheme }, children });
+}
+function ThemeToggle({ className = "", variant = "icon" }) {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+  return /* @__PURE__ */ jsxs(
+    "button",
+    {
+      onClick: toggleTheme,
+      "aria-label": isDark ? "Mudar para tema claro" : "Mudar para tema escuro",
+      title: isDark ? "Tema claro" : "Tema escuro",
+      className: [
+        "inline-flex items-center gap-2 rounded-lg border transition-all duration-200",
+        "border-[var(--eg-border)] bg-[var(--eg-bg-surface)]",
+        "text-[var(--eg-text-muted)] hover:text-[var(--eg-text)]",
+        "hover:border-[var(--eg-accent)] hover:bg-[var(--eg-accent-muted)]",
+        "px-2.5 py-2 text-sm font-medium",
+        className
+      ].join(" "),
+      children: [
+        isDark ? (
+          // Sol — mudar para claro
+          /* @__PURE__ */ jsxs(
+            "svg",
+            {
+              xmlns: "http://www.w3.org/2000/svg",
+              className: "h-4 w-4",
+              viewBox: "0 0 24 24",
+              fill: "none",
+              stroke: "currentColor",
+              strokeWidth: 2,
+              strokeLinecap: "round",
+              strokeLinejoin: "round",
+              children: [
+                /* @__PURE__ */ jsx("circle", { cx: "12", cy: "12", r: "4" }),
+                /* @__PURE__ */ jsx("path", { d: "M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" })
+              ]
+            }
+          )
+        ) : (
+          // Lua — mudar para escuro
+          /* @__PURE__ */ jsx(
+            "svg",
+            {
+              xmlns: "http://www.w3.org/2000/svg",
+              className: "h-4 w-4",
+              viewBox: "0 0 24 24",
+              fill: "none",
+              stroke: "currentColor",
+              strokeWidth: 2,
+              strokeLinecap: "round",
+              strokeLinejoin: "round",
+              children: /* @__PURE__ */ jsx("path", { d: "M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" })
+            }
+          )
+        ),
+        variant === "label" && /* @__PURE__ */ jsx("span", { children: isDark ? "Claro" : "Escuro" })
+      ]
+    }
+  );
+}
 
-export { AlertBox, Avatar, Badge, Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EasyHeader, EmptyState, Input, LoadingState, Logo, MetricCard, NotificationBell, QuickLinkCard, RANK_CONFIG, RankBadge, Skeleton, StatCard, Textarea, UserMenu, badgeVariants, buttonVariants, cn };
+export { AlertBox, Avatar, Badge, Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EasyHeader, EmptyState, Input, LoadingState, Logo, MetricCard, NotificationBell, QuickLinkCard, RANK_CONFIG, RankBadge, Skeleton, StatCard, Textarea, ThemeProvider, ThemeToggle, UserMenu, badgeVariants, buttonVariants, cn, themeScript, useTheme };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

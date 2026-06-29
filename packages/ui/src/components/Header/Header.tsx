@@ -91,7 +91,7 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
               <a href={getAppUrl("/settings/profile")} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
                 <Settings className="h-4 w-4 opacity-50" /> Editar Perfil
               </a>
-              <a href={config.docsUrl || "https://docs.easygoal.com.br"} target="_blank" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
+              <a href={config.docsUrl || "https://docs.easygoal.com.br"} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
                 <BookOpen className="h-4 w-4 opacity-50" /> Documentação
               </a>
             </div>

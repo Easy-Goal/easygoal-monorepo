@@ -59,9 +59,17 @@
     "dev:ui": "npm run dev --prefix packages/ui",
     "dev:auth": "npm run dev --prefix packages/auth",
     "dev:core": "npm run dev --prefix packages/core",
-    "type-check": "npm run type-check --prefix packages/core && npm run type-check --prefix packages/ui && npm run type-check --prefix packages/auth"
+    "type-check": "npm run type-check --prefix packages/core && npm run type-check --prefix packages/ui && npm run type-check --prefix packages/auth",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
+    "@typescript-eslint/parser": "^8.62.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "typescript": "^5"
   },
   "dependencies": {
