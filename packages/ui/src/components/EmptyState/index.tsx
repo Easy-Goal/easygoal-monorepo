@@ -6,8 +6,8 @@ const emptyVariants = cva("flex flex-col items-center justify-center text-center
     variant: {
       inline: "py-8 gap-2",
       dashed:
-        "rounded-xl border-2 border-dashed border-[#1E3050] py-12 gap-3 hover:border-orange-500/30 transition-colors",
-      card: "rounded-xl bg-[#121E34] border border-[#1E3050] py-12 gap-3",
+        "rounded-xl border-2 border-dashed border-border py-12 gap-3 hover:border-accent/30 transition-colors",
+      card: "rounded-xl bg-card border border-border py-12 gap-3",
     },
   },
   defaultVariants: { variant: "inline" },
@@ -33,9 +33,9 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className={cn(emptyVariants({ variant }), className)} {...props}>
-      {icon && <div className="text-slate-500 mb-1">{icon}</div>}
-      <p className="font-medium text-white">{title}</p>
-      {description && <p className="text-sm text-slate-400 max-w-xs">{description}</p>}
+      {icon && <div className="text-muted-foreground mb-1">{icon}</div>}
+      <p className="font-medium text-foreground">{title}</p>
+      {description && <p className="text-sm text-muted-foreground max-w-xs">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );

@@ -11,7 +11,7 @@ export function MetricCard({ title, value, icon, subtitle, className, ...props }
   return (
     <div
       className={cn(
-        "rounded-xl bg-[#121E34] border border-[#1E3050] p-4 transition-all duration-200 hover:border-orange-500/20",
+        "rounded-xl bg-card border border-border p-4 transition-all duration-200 hover:border-accent/20",
         className
       )}
       {...props}
@@ -23,9 +23,9 @@ export function MetricCard({ title, value, icon, subtitle, className, ...props }
           </div>
         )}
         <div>
-          <p className="text-xs text-slate-400">{title}</p>
-          <p className="text-xl font-bold text-white">{value}</p>
-          {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+          <p className="text-xs text-muted-foreground">{title}</p>
+          <p className="text-xl font-bold text-foreground">{value}</p>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
     </div>

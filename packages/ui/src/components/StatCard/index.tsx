@@ -14,16 +14,16 @@ export function StatCard({ title, value, trend, icon, action, className, ...prop
   return (
     <div
       className={cn(
-        "rounded-xl bg-[#121E34] border border-[#1E3050] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/10",
+        "rounded-xl bg-card border border-border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/10",
         className
       )}
       {...props}
     >
       <div className="flex items-start justify-between mb-3">
-        <p className="text-sm text-slate-400">{title}</p>
+        <p className="text-sm text-muted-foreground">{title}</p>
         {icon && <div className="text-orange-400">{icon}</div>}
       </div>
-      <p className="text-2xl font-bold text-white mb-2">{value}</p>
+      <p className="text-2xl font-bold text-foreground mb-2">{value}</p>
       <div className="flex items-center justify-between">
         {trend !== undefined && (
           <div

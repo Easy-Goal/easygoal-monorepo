@@ -377,32 +377,32 @@ function HeaderUserMenu({ config }) {
       }
     ),
     /* @__PURE__ */ jsxs("div", { ref: containerRef, className: "relative", children: [
-      /* @__PURE__ */ jsxs("button", { onClick: () => setIsOpen(!isOpen), className: "flex items-center gap-2 px-2 py-1.5 transition-colors hover:bg-white/5 rounded-lg", children: [
+      /* @__PURE__ */ jsxs("button", { onClick: () => setIsOpen(!isOpen), className: "flex items-center gap-2 px-2 py-1.5 transition-colors hover:bg-foreground/5 rounded-lg", children: [
         /* @__PURE__ */ jsx("div", { className: "h-8 w-8 rounded-full border border-orange-500/20 bg-orange-500/10 overflow-hidden shrink-0", children: /* @__PURE__ */ jsx("img", { src: user.avatarUrl ?? "", className: "h-full w-full object-cover", alt: "" }) }),
-        /* @__PURE__ */ jsx("span", { className: "hidden sm:block text-white/90 text-sm font-medium", children: user.name?.split(" ")[0] }),
-        /* @__PURE__ */ jsx(ChevronDown, { className: "h-4 w-4 text-white/30" })
+        /* @__PURE__ */ jsx("span", { className: "hidden sm:block text-foreground/90 text-sm font-medium", children: user.name?.split(" ")[0] }),
+        /* @__PURE__ */ jsx(ChevronDown, { className: "h-4 w-4 text-foreground/30" })
       ] }),
       isOpen && /* CORREÇÃO DE TRANSPARÊNCIA: Adicionado bg sólido e shadow pesado */
-      /* @__PURE__ */ jsxs("div", { className: "absolute right-0 top-full z-[100] mt-2 w-64 rounded-xl border border-white/10 bg-[#1e2536] p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.7)]", children: [
-        /* @__PURE__ */ jsxs("div", { className: "px-3 py-3 border-b border-white/5", children: [
-          /* @__PURE__ */ jsx("p", { className: "truncate text-sm font-semibold text-white", children: user.name }),
-          /* @__PURE__ */ jsx("p", { className: "truncate text-[11px] text-white/40", children: user.email })
+      /* @__PURE__ */ jsxs("div", { className: "absolute right-0 top-full z-[100] mt-2 w-64 rounded-xl border border-border bg-popover p-1.5 shadow-lg", children: [
+        /* @__PURE__ */ jsxs("div", { className: "px-3 py-3 border-b border-border/50", children: [
+          /* @__PURE__ */ jsx("p", { className: "truncate text-sm font-semibold text-foreground", children: user.name }),
+          /* @__PURE__ */ jsx("p", { className: "truncate text-[11px] text-muted-foreground", children: user.email })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "py-1", children: [
-          /* @__PURE__ */ jsxs("a", { href: getAppUrl("/dashboard"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
+          /* @__PURE__ */ jsxs("a", { href: getAppUrl("/dashboard"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground/70 hover:bg-foreground/5", children: [
             /* @__PURE__ */ jsx(LayoutDashboard, { className: "h-4 w-4 opacity-50" }),
             " Painel Principal"
           ] }),
-          /* @__PURE__ */ jsxs("a", { href: getAppUrl("/settings/profile"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
+          /* @__PURE__ */ jsxs("a", { href: getAppUrl("/settings/profile"), className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground/70 hover:bg-foreground/5", children: [
             /* @__PURE__ */ jsx(Settings, { className: "h-4 w-4 opacity-50" }),
             " Editar Perfil"
           ] }),
-          /* @__PURE__ */ jsxs("a", { href: config.docsUrl || "https://docs.easygoal.com.br", target: "_blank", rel: "noreferrer", className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5", children: [
+          /* @__PURE__ */ jsxs("a", { href: config.docsUrl || "https://docs.easygoal.com.br", target: "_blank", rel: "noreferrer", className: "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground/70 hover:bg-foreground/5", children: [
             /* @__PURE__ */ jsx(BookOpen, { className: "h-4 w-4 opacity-50" }),
             " Documenta\xE7\xE3o"
           ] })
         ] }),
-        /* @__PURE__ */ jsx("div", { className: "border-t border-white/5 pt-1", children: /* @__PURE__ */ jsxs("button", { onClick: logout, className: "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-400/10", children: [
+        /* @__PURE__ */ jsx("div", { className: "border-t border-border/50 pt-1", children: /* @__PURE__ */ jsxs("button", { onClick: logout, className: "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-400/10", children: [
           /* @__PURE__ */ jsx(LogOut, { className: "h-4 w-4" }),
           " Sair da conta"
         ] }) })
@@ -425,16 +425,16 @@ function EasyHeader({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  return /* @__PURE__ */ jsx("header", { className: `fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${scrolled ? "bg-[#0d1117]/95 backdrop-blur-md border-b border-white/5" : "bg-transparent"} ${className}`, children: /* @__PURE__ */ jsxs("div", { className: "mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 lg:px-8", children: [
+  return /* @__PURE__ */ jsx("header", { className: `fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${scrolled ? "bg-background/95 backdrop-blur-md border-b border-border" : "bg-transparent"} ${className}`, children: /* @__PURE__ */ jsxs("div", { className: "mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 lg:px-8", children: [
     /* @__PURE__ */ jsxs("a", { href: "/", className: "flex items-center gap-3 no-underline shrink-0 mr-4", children: [
       /* @__PURE__ */ jsx(Logo, { variant: logoVariant, width: 108 }),
-      logoSuffix && /* @__PURE__ */ jsx("div", { className: "flex items-center gap-2 font-mono text-sm border-l border-white/10 pl-3", children: /* @__PURE__ */ jsx("span", { className: "opacity-40", children: logoSuffix }) })
+      logoSuffix && /* @__PURE__ */ jsx("div", { className: "flex items-center gap-2 font-mono text-sm border-l border-border/40 pl-3", children: /* @__PURE__ */ jsx("span", { className: "opacity-40", children: logoSuffix }) })
     ] }),
     navLinks.length > 0 && /* @__PURE__ */ jsx("nav", { className: "hidden md:flex items-center justify-center gap-10 flex-1 px-4", children: navLinks.map(({ label, href }) => /* @__PURE__ */ jsx(
       "a",
       {
         href,
-        className: "text-sm font-medium text-white/55 no-underline transition-all hover:text-white hover:scale-105",
+        className: "text-sm font-medium text-foreground/55 no-underline transition-all hover:text-foreground hover:scale-105",
         children: label
       },
       href
@@ -677,8 +677,8 @@ var buttonVariants = cva(
         default: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border",
         outline: "border border-accent text-accent hover:bg-accent/10",
         ghost: "text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
-        gradient: "bg-gradient-to-br from-orange-400 to-orange-500 text-white shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98]",
-        business: "bg-[#28A745] text-white shadow-lg hover:bg-[#218838] hover:shadow-[#28A745]/30 hover:scale-[1.02] active:scale-[0.98]",
+        gradient: "bg-gradient-to-br from-orange-400 to-orange-500 text-accent-foreground shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98]",
+        business: "bg-[#28A745] text-accent-foreground shadow-lg hover:bg-[#218838] hover:shadow-[#28A745]/30 hover:scale-[1.02] active:scale-[0.98]",
         glass: "bg-foreground/5 backdrop-blur border border-foreground/10 text-foreground hover:bg-foreground/10",
         destructive: "bg-red-600 text-white hover:bg-red-700"
       },
@@ -721,7 +721,7 @@ var Card = forwardRef(
     {
       ref,
       className: cn(
-        "rounded-xl bg-[#121E34] border border-[#1E3050] transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/10",
+        "rounded-xl bg-card border border-border transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/10",
         className
       ),
       ...props
@@ -734,11 +734,11 @@ var CardHeader = forwardRef(
 );
 CardHeader.displayName = "CardHeader";
 var CardTitle = forwardRef(
-  ({ className, ...props }, ref) => /* @__PURE__ */ jsx("h3", { ref, className: cn("text-lg font-semibold leading-none tracking-tight text-white", className), ...props })
+  ({ className, ...props }, ref) => /* @__PURE__ */ jsx("h3", { ref, className: cn("text-lg font-semibold leading-none tracking-tight text-foreground", className), ...props })
 );
 CardTitle.displayName = "CardTitle";
 var CardDescription = forwardRef(
-  ({ className, ...props }, ref) => /* @__PURE__ */ jsx("p", { ref, className: cn("text-sm text-slate-400", className), ...props })
+  ({ className, ...props }, ref) => /* @__PURE__ */ jsx("p", { ref, className: cn("text-sm text-muted-foreground", className), ...props })
 );
 CardDescription.displayName = "CardDescription";
 var CardContent = forwardRef(
@@ -773,7 +773,7 @@ function Skeleton({ className, ...props }) {
     "div",
     {
       className: cn(
-        "relative overflow-hidden rounded-md bg-[#182644] before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/5 before:to-transparent",
+        "relative overflow-hidden rounded-md bg-muted before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-foreground/5 before:to-transparent",
         className
       ),
       ...props
@@ -791,7 +791,7 @@ function Avatar({ src, alt, fallback, size = "md", className, ...props }) {
     "div",
     {
       className: cn(
-        "relative flex shrink-0 overflow-hidden rounded-full bg-[#182644] border border-[#1E3050]",
+        "relative flex shrink-0 overflow-hidden rounded-full bg-muted border border-border",
         sizeMap[size],
         className
       ),
@@ -805,7 +805,7 @@ var Input = forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
   {
     ref,
     className: cn(
-      "flex h-10 w-full rounded-xl border border-[#1E3050] bg-[#121E34] px-3 py-2 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
+      "flex h-10 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
       className
     ),
     ...props
@@ -817,7 +817,7 @@ var Textarea = forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
   {
     ref,
     className: cn(
-      "flex min-h-[80px] w-full rounded-xl border border-[#1E3050] bg-[#121E34] px-3 py-2 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-none",
+      "flex min-h-[80px] w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-none",
       className
     ),
     ...props
@@ -855,8 +855,8 @@ var emptyVariants = cva("flex flex-col items-center justify-center text-center",
   variants: {
     variant: {
       inline: "py-8 gap-2",
-      dashed: "rounded-xl border-2 border-dashed border-[#1E3050] py-12 gap-3 hover:border-orange-500/30 transition-colors",
-      card: "rounded-xl bg-[#121E34] border border-[#1E3050] py-12 gap-3"
+      dashed: "rounded-xl border-2 border-dashed border-border py-12 gap-3 hover:border-accent/30 transition-colors",
+      card: "rounded-xl bg-card border border-border py-12 gap-3"
     }
   },
   defaultVariants: { variant: "inline" }
@@ -871,9 +871,9 @@ function EmptyState({
   ...props
 }) {
   return /* @__PURE__ */ jsxs("div", { className: cn(emptyVariants({ variant }), className), ...props, children: [
-    icon && /* @__PURE__ */ jsx("div", { className: "text-slate-500 mb-1", children: icon }),
-    /* @__PURE__ */ jsx("p", { className: "font-medium text-white", children: title }),
-    description && /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400 max-w-xs", children: description }),
+    icon && /* @__PURE__ */ jsx("div", { className: "text-muted-foreground mb-1", children: icon }),
+    /* @__PURE__ */ jsx("p", { className: "font-medium text-foreground", children: title }),
+    description && /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground max-w-xs", children: description }),
     action && /* @__PURE__ */ jsx("div", { className: "mt-2", children: action })
   ] });
 }
@@ -886,12 +886,12 @@ function LoadingState({ variant = "inline", text, className, ...props }) {
         ...props,
         children: [
           /* @__PURE__ */ jsx(Loader2, { className: "h-8 w-8 animate-spin text-orange-500" }),
-          text && /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400", children: text })
+          text && /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: text })
         ]
       }
     );
   }
-  return /* @__PURE__ */ jsxs("div", { className: cn("flex items-center gap-2 text-slate-400", className), ...props, children: [
+  return /* @__PURE__ */ jsxs("div", { className: cn("flex items-center gap-2 text-muted-foreground", className), ...props, children: [
     /* @__PURE__ */ jsx(Loader2, { className: "h-4 w-4 animate-spin text-orange-500" }),
     text && /* @__PURE__ */ jsx("span", { className: "text-sm", children: text })
   ] });
@@ -902,16 +902,16 @@ function StatCard({ title, value, trend, icon, action, className, ...props }) {
     "div",
     {
       className: cn(
-        "rounded-xl bg-[#121E34] border border-[#1E3050] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/10",
+        "rounded-xl bg-card border border-border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/10",
         className
       ),
       ...props,
       children: [
         /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between mb-3", children: [
-          /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400", children: title }),
+          /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: title }),
           icon && /* @__PURE__ */ jsx("div", { className: "text-orange-400", children: icon })
         ] }),
-        /* @__PURE__ */ jsx("p", { className: "text-2xl font-bold text-white mb-2", children: value }),
+        /* @__PURE__ */ jsx("p", { className: "text-2xl font-bold text-foreground mb-2", children: value }),
         /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
           trend !== void 0 && /* @__PURE__ */ jsxs(
             "div",
@@ -949,16 +949,16 @@ function MetricCard({ title, value, icon, subtitle, className, ...props }) {
     "div",
     {
       className: cn(
-        "rounded-xl bg-[#121E34] border border-[#1E3050] p-4 transition-all duration-200 hover:border-orange-500/20",
+        "rounded-xl bg-card border border-border p-4 transition-all duration-200 hover:border-accent/20",
         className
       ),
       ...props,
       children: /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
         icon && /* @__PURE__ */ jsx("div", { className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-400", children: icon }),
         /* @__PURE__ */ jsxs("div", { children: [
-          /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-400", children: title }),
-          /* @__PURE__ */ jsx("p", { className: "text-xl font-bold text-white", children: value }),
-          subtitle && /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-500", children: subtitle })
+          /* @__PURE__ */ jsx("p", { className: "text-xs text-muted-foreground", children: title }),
+          /* @__PURE__ */ jsx("p", { className: "text-xl font-bold text-foreground", children: value }),
+          subtitle && /* @__PURE__ */ jsx("p", { className: "text-xs text-muted-foreground", children: subtitle })
         ] })
       ] })
     }
@@ -968,13 +968,13 @@ function QuickLinkCard({ title, description, icon, href, className, onClick, ...
   const inner = /* @__PURE__ */ jsxs(Fragment, { children: [
     icon && /* @__PURE__ */ jsx("div", { className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-400", children: icon }),
     /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
-      /* @__PURE__ */ jsx("p", { className: "font-medium text-white", children: title }),
-      description && /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400 truncate", children: description })
+      /* @__PURE__ */ jsx("p", { className: "font-medium text-foreground", children: title }),
+      description && /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground truncate", children: description })
     ] }),
-    /* @__PURE__ */ jsx(ArrowRight, { className: "h-4 w-4 text-slate-500 group-hover:text-orange-400 transition-colors shrink-0" })
+    /* @__PURE__ */ jsx(ArrowRight, { className: "h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0" })
   ] });
   const baseClass = cn(
-    "group flex items-center gap-4 rounded-xl bg-[#121E34] border border-[#1E3050] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/10 cursor-pointer",
+    "group flex items-center gap-4 rounded-xl bg-card border border-border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/10 cursor-pointer",
     className
   );
   if (href) {

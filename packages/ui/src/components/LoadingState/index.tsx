@@ -14,12 +14,12 @@ export function LoadingState({ variant = "inline", text, className, ...props }: 
         {...props}
       >
         <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-        {text && <p className="text-sm text-slate-400">{text}</p>}
+        {text && <p className="text-sm text-muted-foreground">{text}</p>}
       </div>
     );
   }
   return (
-    <div className={cn("flex items-center gap-2 text-slate-400", className)} {...props}>
+    <div className={cn("flex items-center gap-2 text-muted-foreground", className)} {...props}>
       <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
       {text && <span className="text-sm">{text}</span>}
     </div>

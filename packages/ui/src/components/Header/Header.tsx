@@ -68,35 +68,35 @@ function HeaderUserMenu({ config }: { config: EasyHeaderProps["config"] }) {
       />
 
       <div ref={containerRef} className="relative">
-        <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 px-2 py-1.5 transition-colors hover:bg-white/5 rounded-lg">
+        <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 px-2 py-1.5 transition-colors hover:bg-foreground/5 rounded-lg">
           <div className="h-8 w-8 rounded-full border border-orange-500/20 bg-orange-500/10 overflow-hidden shrink-0">
             <img src={user.avatarUrl ?? ""} className="h-full w-full object-cover" alt="" />
           </div>
-          <span className="hidden sm:block text-white/90 text-sm font-medium">{user.name?.split(" ")[0]}</span>
-          <ChevronDown className="h-4 w-4 text-white/30" />
+          <span className="hidden sm:block text-foreground/90 text-sm font-medium">{user.name?.split(" ")[0]}</span>
+          <ChevronDown className="h-4 w-4 text-foreground/30" />
         </button>
 
         {isOpen && (
           /* CORREÇÃO DE TRANSPARÊNCIA: Adicionado bg sólido e shadow pesado */
-          <div className="absolute right-0 top-full z-[100] mt-2 w-64 rounded-xl border border-white/10 bg-[#1e2536] p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.7)]">
-            <div className="px-3 py-3 border-b border-white/5">
-              <p className="truncate text-sm font-semibold text-white">{user.name}</p>
-              <p className="truncate text-[11px] text-white/40">{user.email}</p>
+          <div className="absolute right-0 top-full z-[100] mt-2 w-64 rounded-xl border border-border bg-popover p-1.5 shadow-lg">
+            <div className="px-3 py-3 border-b border-border/50">
+              <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+              <p className="truncate text-[11px] text-muted-foreground">{user.email}</p>
             </div>
 
             <div className="py-1">
-              <a href={getAppUrl("/dashboard")} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
+              <a href={getAppUrl("/dashboard")} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground/70 hover:bg-foreground/5">
                 <LayoutDashboard className="h-4 w-4 opacity-50" /> Painel Principal
               </a>
-              <a href={getAppUrl("/settings/profile")} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
+              <a href={getAppUrl("/settings/profile")} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground/70 hover:bg-foreground/5">
                 <Settings className="h-4 w-4 opacity-50" /> Editar Perfil
               </a>
-              <a href={config.docsUrl || "https://docs.easygoal.com.br"} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/5">
+              <a href={config.docsUrl || "https://docs.easygoal.com.br"} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground/70 hover:bg-foreground/5">
                 <BookOpen className="h-4 w-4 opacity-50" /> Documentação
               </a>
             </div>
 
-            <div className="border-t border-white/5 pt-1">
+            <div className="border-t border-border/50 pt-1">
               <button onClick={logout} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-400/10">
                 <LogOut className="h-4 w-4" /> Sair da conta
               </button>
@@ -128,7 +128,7 @@ export function EasyHeader({
   }, []);
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${scrolled ? "bg-[#0d1117]/95 backdrop-blur-md border-b border-white/5" : "bg-transparent"
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${scrolled ? "bg-background/95 backdrop-blur-md border-b border-border" : "bg-transparent"
       } ${className}`}>
 
       {/* 1. CONTAINER COM PADDING COERENTE (px-6 ou px-8) */}
@@ -138,7 +138,7 @@ export function EasyHeader({
         <a href="/" className="flex items-center gap-3 no-underline shrink-0 mr-4">
           <Logo variant={logoVariant} width={108} />
           {logoSuffix && (
-            <div className="flex items-center gap-2 font-mono text-sm border-l border-white/10 pl-3">
+            <div className="flex items-center gap-2 font-mono text-sm border-l border-border/40 pl-3">
               <span className="opacity-40">{logoSuffix}</span>
             </div>
           )}
@@ -151,7 +151,7 @@ export function EasyHeader({
               <a
                 key={href}
                 href={href}
-                className="text-sm font-medium text-white/55 no-underline transition-all hover:text-white hover:scale-105"
+                className="text-sm font-medium text-foreground/55 no-underline transition-all hover:text-foreground hover:scale-105"
               >
                 {label}
               </a>
