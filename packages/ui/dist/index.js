@@ -9,7 +9,6 @@ var classVarianceAuthority = require('class-variance-authority');
 var clsx = require('clsx');
 var tailwindMerge = require('tailwind-merge');
 
-// src/components/Header/Header.tsx
 var TEXT_COLOR = {
   dark: "#FAFAFA",
   light: "#09090B",
