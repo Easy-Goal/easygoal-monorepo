@@ -20,7 +20,7 @@ export interface HeaderNavLink {
 
 export interface EasyHeaderProps {
   logoSuffix?: string;
-  logoVariant?: "dark" | "light";
+  logoVariant?: "dark" | "light" | "theme";
   navLinks?: HeaderNavLink[];
   ctaSlot?: React.ReactNode;
   className?: string;
