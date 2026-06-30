@@ -12,12 +12,14 @@ import { twMerge } from 'tailwind-merge';
 var TEXT_COLOR = {
   dark: "#FAFAFA",
   light: "#09090B",
-  white: "#FFFFFF"
+  white: "#FFFFFF",
+  theme: "currentColor"
 };
 var ACCENT_COLOR = {
   dark: "#F97316",
   light: "#F97316",
-  white: "#FFFFFF"
+  white: "#FFFFFF",
+  theme: "#F97316"
 };
 function Logo({ variant = "dark", width = 133, className }) {
   const height = Math.round(width * 37 / 133);

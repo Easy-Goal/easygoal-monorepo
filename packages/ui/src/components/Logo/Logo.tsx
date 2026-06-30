@@ -1,8 +1,10 @@
-import React from "react";
-
 interface LogoProps {
-  /** Variante de cor: "dark" = texto branco + marca laranja, "light" = texto escuro + marca laranja, "white" = tudo branco */
-  variant?: "dark" | "light" | "white";
+  /** Variante de cor:
+   *  "dark"  — texto branco + acento laranja (para fundos escuros)
+   *  "light" — texto escuro + acento laranja (para fundos claros)
+   *  "white" — tudo branco (para fundos coloridos)
+   *  "theme" — texto currentColor + acento laranja (adapta ao tema via CSS) */
+  variant?: "dark" | "light" | "white" | "theme";
   /** Largura em px. A altura é proporcional ao viewBox 133×37. */
   width?: number;
   className?: string;
@@ -12,12 +14,14 @@ const TEXT_COLOR = {
   dark: "#FAFAFA",
   light: "#09090B",
   white: "#FFFFFF",
+  theme: "currentColor",
 } as const;
 
 const ACCENT_COLOR = {
   dark: "#F97316",
   light: "#F97316",
   white: "#FFFFFF",
+  theme: "#F97316",
 } as const;
 
 /**
