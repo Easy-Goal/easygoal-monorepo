@@ -15,6 +15,11 @@
       "import": "./dist/tokens/index.mjs",
       "require": "./dist/tokens/index.js"
     },
+    "./script": {
+      "types": "./dist/script.d.ts",
+      "import": "./dist/script.mjs",
+      "require": "./dist/script.js"
+    },
     "./styles": "./src/globals.css",
     "./theme-styles": "./src/theme/tokens.css"
   },
