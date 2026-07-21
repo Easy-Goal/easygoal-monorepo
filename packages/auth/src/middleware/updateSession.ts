@@ -3,17 +3,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const EG_SESSION_COOKIE = "eg_session";
 
-// Sem api_key, o SSO não sabe emitir o eg_token de troca cross-domain e cai
-// direto na sessão Supabase interna dele — o app externo nunca recebe a volta.
-// Essencial em dev (localhost não compartilha o cookie .easygoal.com.br).
-function buildLoginUrl(request: NextRequest): URL {
-  const loginUrl = new URL("/auth/login", process.env.NEXT_PUBLIC_SSO_URL!);
-  loginUrl.searchParams.set("redirect_to", request.nextUrl.href);
-  const apiKey = process.env.NEXT_PUBLIC_EASY_API_KEY;
-  if (apiKey) loginUrl.searchParams.set("api_key", apiKey);
-  return loginUrl;
-}
-
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -26,7 +15,9 @@ export async function updateSession(request: NextRequest) {
   const egSession = request.cookies.get(EG_SESSION_COOKIE)?.value;
 
   if (!egSession) {
-    return NextResponse.redirect(buildLoginUrl(request));
+    const loginUrl = new URL("/auth/login", process.env.NEXT_PUBLIC_SSO_URL!);
+    loginUrl.searchParams.set("redirect_to", request.nextUrl.href);
+    return NextResponse.redirect(loginUrl);
   }
 
   try {
@@ -53,7 +44,10 @@ export async function updateSession(request: NextRequest) {
     // Se o token for inválido/expirado, ou a secret estiver errada:
     console.error("Sessão inválida:", error);
 
-    const response = NextResponse.redirect(buildLoginUrl(request));
+    const loginUrl = new URL("/auth/login", process.env.NEXT_PUBLIC_SSO_URL!);
+    loginUrl.searchParams.set("redirect_to", request.nextUrl.href);
+
+    const response = NextResponse.redirect(loginUrl);
 
     // Já aproveita e limpa o cookie inválido
     response.cookies.set(EG_SESSION_COOKIE, "", {

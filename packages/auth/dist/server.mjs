@@ -127,13 +127,6 @@ function createSessionRoute() {
 import { jwtVerify } from "jose";
 import { NextResponse as NextResponse4 } from "next/server";
 var EG_SESSION_COOKIE3 = "eg_session";
-function buildLoginUrl(request) {
-  const loginUrl = new URL("/auth/login", process.env.NEXT_PUBLIC_SSO_URL);
-  loginUrl.searchParams.set("redirect_to", request.nextUrl.href);
-  const apiKey = process.env.NEXT_PUBLIC_EASY_API_KEY;
-  if (apiKey) loginUrl.searchParams.set("api_key", apiKey);
-  return loginUrl;
-}
 async function updateSession(request) {
   const { pathname } = request.nextUrl;
   if (pathname.startsWith("/auth") || pathname.startsWith("/api/auth")) {
@@ -141,7 +134,9 @@ async function updateSession(request) {
   }
   const egSession = request.cookies.get(EG_SESSION_COOKIE3)?.value;
   if (!egSession) {
-    return NextResponse4.redirect(buildLoginUrl(request));
+    const loginUrl = new URL("/auth/login", process.env.NEXT_PUBLIC_SSO_URL);
+    loginUrl.searchParams.set("redirect_to", request.nextUrl.href);
+    return NextResponse4.redirect(loginUrl);
   }
   try {
     const secret = new TextEncoder().encode(process.env.SSO_JWT_SECRET);
@@ -157,7 +152,9 @@ async function updateSession(request) {
     });
   } catch (error) {
     console.error("Sess\xE3o inv\xE1lida:", error);
-    const response = NextResponse4.redirect(buildLoginUrl(request));
+    const loginUrl = new URL("/auth/login", process.env.NEXT_PUBLIC_SSO_URL);
+    loginUrl.searchParams.set("redirect_to", request.nextUrl.href);
+    const response = NextResponse4.redirect(loginUrl);
     response.cookies.set(EG_SESSION_COOKIE3, "", {
       maxAge: 0,
       domain: process.env.NODE_ENV === "production" ? ".easygoal.com.br" : void 0,
