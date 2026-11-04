@@ -9,6 +9,7 @@ Pacotes npm compartilhados do ecossistema Easy Goal.
 | `@easygoal/ui` | Design system — componentes React com Tailwind CSS + CVA |
 | `@easygoal/auth` | Autenticação SSO — providers, hooks e handlers |
 | `@easygoal/core` | Interfaces TypeScript compartilhadas |
+| `@easygoal/observability` | Logs JSON, dados de requisição (IP/geo/bot) e envio OTLP ao OpenObserve (ADR 066) |
 
 ## Instalação
 
@@ -220,3 +221,56 @@ cd packages/core && npm run build
 
 - Node.js 18+
 - npm 9+
+
+## @easygoal/observability
+
+Logs estruturados para todas as apps (ADR 066 no `easy-labs`). Sem variáveis, escreve só JSON no stdout,
+o que já melhora os logs da Vercel, Railway e Coolify. Com `OBS_OTLP_ENDPOINT`, também envia (OTLP/HTTP, em
+lote, sem atrasar a resposta) para o OpenObserve do control plane. Falha de envio nunca derruba a app, e
+campos com cara de segredo saem como `[redacted]`.
+
+| Variável (vem do cofre pelo `cp-secrets sync`) | Para quê |
+|---|---|
+| `OBS_SERVICE`, `OBS_ENV` | nome do serviço e ambiente (padrão: `VERCEL_ENV`/`NODE_ENV`) |
+| `OBS_OTLP_ENDPOINT`, `OBS_OTLP_AUTHORIZATION` | gateway de ingestão + token do app/ambiente |
+| `OBS_IP_MODE` | `hash` (padrão com salt), `truncate` (/24, padrão sem salt), `full`, `none` |
+| `OBS_IP_SALT` | salt do hash do IP (mesmo IP → mesmo hash, sem guardar o IP) |
+| `OBS_LEVEL`, `OBS_STDOUT=0` | nível mínimo; desligar o stdout |
+
+Cada requisição vira um `http.request` com método, host, caminho (sem query), status, latência, IP conforme o
+modo, geo (`x-vercel-ip-*`), user agent, `device`, `is_bot`/`bot`, `scan` (caminhos típicos de varredura),
+`referer_host`, `request_id` e `user_id`.
+
+**Next (middleware):**
+
+```ts
+import { loggerFromEnv, ipOptionsFromEnv } from "@easygoal/packages/observability";
+import { observeRequest } from "@easygoal/packages/observability/next";
+
+const log = loggerFromEnv({ service: "app-front" });
+
+export async function middleware(req: NextRequest, event: NextFetchEvent) {
+  const session = await getSession(req);            // o que o app já faz
+  observeRequest(log, req, event, { userId: session?.sub, ...ipOptionsFromEnv() });
+  return NextResponse.next();
+}
+```
+
+**Next (route handler, com status e latência):**
+
+```ts
+import { after } from "next/server";
+import { withObservability } from "@easygoal/packages/observability/next";
+export const POST = withObservability(log, async (req) => { /* ... */ }, { after });
+```
+
+**Nest/Express:**
+
+```ts
+import { createNodeLogger, requestLogger, flushOnShutdown } from "@easygoal/packages/observability/node";
+const log = createNodeLogger({ service: "api-backend" });
+app.use(requestLogger(log, { userId: (req) => req.user?.id }));
+flushOnShutdown(log);
+```
+
+Testes: `npm run test:observability`.

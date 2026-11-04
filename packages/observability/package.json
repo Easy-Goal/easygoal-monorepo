@@ -1,0 +1,24 @@
+{
+  "name": "@easygoal/observability",
+  "version": "0.1.0",
+  "description": "Logs estruturados, dados de requisição (IP/geo/bot) e envio OTLP para o OpenObserve do control plane (ADR 066)",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.mjs", "require": "./dist/index.js" },
+    "./next": { "types": "./dist/next.d.ts", "import": "./dist/next.mjs", "require": "./dist/next.js" },
+    "./node": { "types": "./dist/node.d.ts", "import": "./dist/node.mjs", "require": "./dist/node.js" }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsup": "^8",
+    "typescript": "^5"
+  }
+}
