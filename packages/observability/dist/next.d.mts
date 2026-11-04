@@ -27,7 +27,7 @@ interface ObserveOptions extends IpOptions {
 }
 /**
  * Chamar no `middleware.ts`, depois de resolver a sessão (para ter o userId):
- *   observeRequest(log, req, event, { userId, ...ipOptionsFromEnv() })
+ *   observeRequest(log, req, event, { userId })   (IP/plataforma: OBS_IP_MODE, OBS_IP_SALT, OBS_PLATFORM/VERCEL)
  * O envio roda em `event.waitUntil`, sem atrasar a resposta.
  */
 declare function observeRequest(log: Logger, req: NextLikeRequest, event?: WaitUntil, opts?: ObserveOptions): void;

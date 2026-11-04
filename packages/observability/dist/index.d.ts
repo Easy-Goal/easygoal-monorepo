@@ -107,12 +107,26 @@ interface HeaderGetter {
 }
 type IpMode = "full" | "hash" | "truncate" | "none";
 /**
- * IP do cliente. Ordem: headers que a borda REESCREVE (não dá para forjar) antes do X-Forwarded-For, cujo
- * primeiro item o próprio cliente pode inventar quando a borda só acrescenta (Traefik/Coolify).
+ * Em quem confiar para IP e geo. Header de IP/geo só vale quando a borda que o escreve está mesmo na frente:
+ * fora da Vercel, qualquer cliente manda `x-vercel-ip-country: BR` ou `x-vercel-forwarded-for` forjados.
+ *   vercel      x-vercel-forwarded-for / x-real-ip (a Vercel reescreve) + geo x-vercel-ip-* + JA4
+ *   cloudflare  cf-connecting-ip + cf-ipcountry
+ *   proxy       x-real-ip (Traefik/Coolify reescreve) → último salto do X-Forwarded-For (o que o proxy
+ *               acrescentou; o primeiro o cliente inventa) → socket. Sem geo
+ *   direct      só o socket
+ * Padrão (ipOptionsFromEnv): OBS_PLATFORM, senão "vercel" quando VERCEL=1, senão "proxy".
  */
-declare function clientIp(h: HeaderGetter, remoteAddress?: string): string | undefined;
-/** IPv4 → /24, IPv6 → /48. Mantém país/provedor aproximados sem identificar a pessoa. */
-declare function truncateIp(ip: string): string;
+type Platform = "vercel" | "cloudflare" | "proxy" | "direct";
+declare function clientIp(h: HeaderGetter, remoteAddress?: string, platform?: Platform): string | undefined;
+interface ParsedIp {
+    v: 4 | 6;
+    parts: number[];
+    text: string;
+}
+/** Parser estrito: aceita [v6]:porta, v4:porta, ::ffff:v4 e zona (%eth0). Qualquer outra coisa → undefined. */
+declare function parseIp(raw: string): ParsedIp | undefined;
+/** IPv4 → /24, IPv6 → /48. Mantém país/provedor aproximados sem identificar a pessoa. Inválido → undefined. */
+declare function truncateIp(ip: string): string | undefined;
 /** SHA-256(salt:ip), 16 hex. Mesmo IP → mesmo hash (dá para contar e bloquear), sem guardar o IP. */
 declare function hashIp(ip: string, salt: string): Promise<string>;
 interface Geo {
@@ -120,8 +134,8 @@ interface Geo {
     region?: string;
     city?: string;
 }
-/** Geo que a Vercel (x-vercel-ip-*) e a Cloudflare (cf-ipcountry) já mandam em toda requisição, de graça. */
-declare function geoFromHeaders(h: HeaderGetter): Geo;
+/** Geo grátis da borda: Vercel (x-vercel-ip-*) ou Cloudflare (cf-ipcountry). Em outra plataforma: nada. */
+declare function geoFromHeaders(h: HeaderGetter, platform?: Platform): Geo;
 interface Classification {
     is_bot: boolean;
     bot?: string;
@@ -132,6 +146,7 @@ declare function classify(ua: string | null | undefined, path: string): Classifi
 interface IpOptions {
     ipMode?: IpMode;
     ipSalt?: string;
+    platform?: Platform;
 }
 interface HttpInput {
     method: string;
@@ -150,7 +165,7 @@ declare function levelForStatus(status?: number): Level;
 type Env = Record<string, string | undefined>;
 /**
  * OBS_SERVICE, OBS_ENV, OBS_VERSION, OBS_LEVEL, OBS_STDOUT ("0" desliga), OBS_OTLP_ENDPOINT,
- * OBS_OTLP_AUTHORIZATION, OBS_OTLP_STREAM, OBS_IP_MODE, OBS_IP_SALT. Sem OBS_OTLP_ENDPOINT: só stdout.
+ * OBS_OTLP_AUTHORIZATION, OBS_OTLP_STREAM, OBS_IP_MODE, OBS_IP_SALT, OBS_PLATFORM. Sem OBS_OTLP_ENDPOINT: só stdout.
  */
 interface FromEnvOptions {
     service?: string;
@@ -162,4 +177,4 @@ interface FromEnvOptions {
 declare function loggerFromEnv(defaults?: FromEnvOptions): Logger;
 declare function ipOptionsFromEnv(env?: Env): IpOptions;
 
-export { type Classification, type Fields, type FromEnvOptions, type Geo, type HeaderGetter, type HttpInput, type IpMode, type IpOptions, type Level, type LogRecord, type Logger, type LoggerOptions, type OtlpOptions, type Resource, type Sink, classify, clientIp, createLogger, flatten, geoFromHeaders, hashIp, httpEvent, ipOptionsFromEnv, levelForStatus, loggerFromEnv, otlpSink, redact, stdoutSink, toOtlpLogs, truncateIp };
+export { type Classification, type Fields, type FromEnvOptions, type Geo, type HeaderGetter, type HttpInput, type IpMode, type IpOptions, type Level, type LogRecord, type Logger, type LoggerOptions, type OtlpOptions, type Platform, type Resource, type Sink, classify, clientIp, createLogger, flatten, geoFromHeaders, hashIp, httpEvent, ipOptionsFromEnv, levelForStatus, loggerFromEnv, otlpSink, parseIp, redact, stdoutSink, toOtlpLogs, truncateIp };

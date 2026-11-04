@@ -5,7 +5,7 @@
  * ali (a resposta ainda não foi gerada); status e latência vêm do `withObservability` nos route handlers e,
  * para páginas, do log da própria Vercel.
  */
-import { type HeaderGetter, type IpOptions, type Logger, httpEvent, levelForStatus } from "./index";
+import { type HeaderGetter, type IpOptions, type Logger, httpEvent, ipOptionsFromEnv, levelForStatus } from "./index";
 
 export interface NextLikeRequest {
   method: string;
@@ -41,13 +41,14 @@ function parts(req: NextLikeRequest) {
 
 /**
  * Chamar no `middleware.ts`, depois de resolver a sessão (para ter o userId):
- *   observeRequest(log, req, event, { userId, ...ipOptionsFromEnv() })
+ *   observeRequest(log, req, event, { userId })   (IP/plataforma: OBS_IP_MODE, OBS_IP_SALT, OBS_PLATFORM/VERCEL)
  * O envio roda em `event.waitUntil`, sem atrasar a resposta.
  */
 export function observeRequest(log: Logger, req: NextLikeRequest, event?: WaitUntil, opts: ObserveOptions = {}): void {
   const { host, path } = parts(req);
   if ((opts.skip ?? ((p: string) => STATIC.test(p)))(path)) return;
-  const p = httpEvent({ method: req.method, host, path, headers: req.headers, userId: opts.userId }, opts)
+  const p = httpEvent({ method: req.method, host, path, headers: req.headers, userId: opts.userId },
+    { ...ipOptionsFromEnv(), ...opts })
     .then((f) => log.info("http.request", { ...f, stage: "edge" }))
     .then(() => log.flush())
     .catch(() => undefined);
@@ -88,7 +89,7 @@ export function withObservability<A extends unknown[]>(
         const f = await httpEvent({
           method: req.method, host: u.host, path: u.pathname, headers: req.headers, status,
           durationMs: Date.now() - start, userId,
-        }, opts);
+        }, { ...ipOptionsFromEnv(), ...opts });
         if (error) log.error("http.error", { ...f, err: error });
         else log[levelForStatus(status)]("http.request", { ...f, stage: "handler" });
         await log.flush();

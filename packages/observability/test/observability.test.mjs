@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import {
-  clientIp, classify, createLogger, geoFromHeaders, hashIp, httpEvent, loggerFromEnv, otlpSink, redact, toOtlpLogs,
+  clientIp, classify, parseIp, createLogger, geoFromHeaders, hashIp, httpEvent, loggerFromEnv, otlpSink, redact, toOtlpLogs,
   truncateIp,
 } from "../dist/index.mjs";
 import { observeRequest, withObservability } from "../dist/next.mjs";
@@ -31,24 +31,42 @@ test("logger respeita o nível e o child soma campos", () => {
   assert.equal(s.rows[0].fields.cookie, "[redacted]");
 });
 
-test("clientIp prefere header reescrito pela borda ao X-Forwarded-For", () => {
-  assert.equal(clientIp(H({ "x-forwarded-for": "6.6.6.6, 10.0.0.1", "x-real-ip": "1.2.3.4" })), "1.2.3.4");
-  assert.equal(clientIp(H({ "x-forwarded-for": "6.6.6.6, 10.0.0.1" })), "6.6.6.6");
-  assert.equal(clientIp(H({}), "::ffff:9.9.9.9"), "9.9.9.9");
+test("clientIp confia só na borda da plataforma configurada", () => {
+  const forged = H({ "x-vercel-forwarded-for": "6.6.6.6", "cf-connecting-ip": "6.6.6.6", "x-forwarded-for": "6.6.6.6, 1.2.3.4" });
+  assert.equal(clientIp(forged, undefined, "proxy"), "1.2.3.4"); // último salto, o que o proxy acrescentou
+  assert.equal(clientIp(H({ "x-real-ip": "1.2.3.4", "x-forwarded-for": "6.6.6.6" }), undefined, "proxy"), "1.2.3.4");
+  assert.equal(clientIp(H({ "x-vercel-forwarded-for": "5.5.5.5" }), undefined, "vercel"), "5.5.5.5");
+  assert.equal(clientIp(H({ "x-real-ip": "6.6.6.6" }), "::ffff:9.9.9.9", "direct"), "9.9.9.9");
+  assert.equal(clientIp(H({ "x-real-ip": "<script>" }), undefined, "proxy"), undefined);
+});
+
+test("parseIp: estrito, com porta, colchetes, zona e ::", () => {
+  assert.equal(parseIp("1.2.3.4:5678").text, "1.2.3.4");
+  assert.equal(parseIp("[2001:db8::1]:443").text, "2001:db8:0:0:0:0:0:1");
+  assert.equal(parseIp("fe80::1%eth0").text, "fe80:0:0:0:0:0:0:1");
+  assert.equal(parseIp("::ffff:8.8.8.8").text, "8.8.8.8");
+  for (const bad of ["999.1.1.1", "1.2.3", "abc", "1::2::3", "1:2:3:4:5:6:7:8:9", "", "2001:db8::zz"]) {
+    assert.equal(parseIp(bad), undefined, bad);
+  }
 });
 
 test("truncateIp e hashIp", async () => {
   assert.equal(truncateIp("200.150.10.7"), "200.150.10.0/24");
   assert.equal(truncateIp("2804:14c:65:1234::1"), "2804:14c:65::/48");
+  assert.equal(truncateIp("::1"), "0:0:0::/48");
+  assert.equal(truncateIp("10.0.0.1:8080"), "10.0.0.0/24");
+  assert.equal(truncateIp("não-é-ip"), undefined);
   const a = await hashIp("1.2.3.4", "s"), b = await hashIp("1.2.3.4", "s"), c = await hashIp("1.2.3.4", "t");
   assert.equal(a, b);
   assert.notEqual(a, c);
   assert.match(a, /^[0-9a-f]{16}$/);
 });
 
-test("geo da Vercel com cidade codificada", () => {
-  assert.deepEqual(geoFromHeaders(H({ "x-vercel-ip-country": "BR", "x-vercel-ip-country-region": "SP", "x-vercel-ip-city": "S%C3%A3o%20Paulo" })),
-    { country: "BR", region: "SP", city: "São Paulo" });
+test("geo só da borda certa (header forjado fora da Vercel é ignorado)", () => {
+  const h = H({ "x-vercel-ip-country": "BR", "x-vercel-ip-country-region": "SP", "x-vercel-ip-city": "S%C3%A3o%20Paulo" });
+  assert.deepEqual(geoFromHeaders(h, "vercel"), { country: "BR", region: "SP", city: "São Paulo" });
+  assert.deepEqual(geoFromHeaders(h, "proxy"), {});
+  assert.deepEqual(geoFromHeaders(H({ "cf-ipcountry": "US" }), "cloudflare"), { country: "US" });
 });
 
 test("classify: crawler, ferramenta, varredura, navegador", () => {
@@ -64,7 +82,7 @@ test("classify: crawler, ferramenta, varredura, navegador", () => {
 test("httpEvent: sem query, ip conforme o modo, hash sem salt cai para truncate", async () => {
   const headers = H({ "x-real-ip": "200.1.2.3", "user-agent": "Mozilla/5.0 (Windows NT 10.0)", referer: "https://google.com/search?q=x" });
   const base = { method: "GET", host: "app.easygoal.com.br", path: "/login?token=abc", headers, status: 200, durationMs: 12.6, userId: "u1" };
-  const full = await httpEvent(base, { ipMode: "full" });
+  const full = await httpEvent(base, { ipMode: "full", platform: "proxy" });
   assert.equal(full.http_path, "/login");
   assert.equal(full.ip, "200.1.2.3");
   assert.equal(full.referer_host, "google.com");
@@ -128,6 +146,7 @@ test("next: observeRequest usa waitUntil e pula estáticos", async () => {
   const log = createLogger({ service: "s", env: "e", sinks: [s] });
   const pending = [];
   const ev = { waitUntil: (p) => pending.push(p) };
+  process.env.VERCEL = "1";
   const req = (path) => ({ method: "GET", headers: H({ "x-vercel-ip-country": "BR", "user-agent": "Mozilla/5.0 (Macintosh)" }), url: `https://x.com${path}`, nextUrl: { pathname: path } });
   observeRequest(log, req("/_next/static/a.js"), ev);
   observeRequest(log, req("/planos"), ev, { userId: "u9" });
@@ -136,6 +155,7 @@ test("next: observeRequest usa waitUntil e pula estáticos", async () => {
   assert.equal(s.rows[0].fields.http_path, "/planos");
   assert.equal(s.rows[0].fields.user_id, "u9");
   assert.equal(s.rows[0].fields.geo.country, "BR");
+  delete process.env.VERCEL;
 });
 
 test("next: withObservability registra status e relança erro", async () => {
@@ -158,7 +178,7 @@ test("next: withObservability registra status e relança erro", async () => {
 test("node: requestLogger registra no finish com status, latência e usuário; pula health", async () => {
   const s = memSink();
   const log = createLogger({ service: "s", env: "e", sinks: [s] });
-  const mw = requestLogger(log, { userId: (r) => r.user?.id, ipMode: "full" });
+  const mw = requestLogger(log, { userId: (r) => r.user?.id, ipMode: "full", platform: "direct" });
   const run = (url, status, method = "POST") => new Promise((resolve) => {
     const res = Object.assign(new EventEmitter(), { statusCode: status });
     const req = { method, url, headers: { "user-agent": "okhttp/4.9", host: "api.x" }, socket: { remoteAddress: "::ffff:8.8.8.8" } };

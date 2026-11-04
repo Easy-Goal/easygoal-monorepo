@@ -165,33 +165,60 @@ function otlpSink(opts) {
     dropped: () => dropped
   };
 }
-function clientIp(h, remoteAddress) {
-  const pick = (n) => h.get(n)?.split(",")[0]?.trim() || void 0;
-  return pick("x-vercel-forwarded-for") ?? pick("cf-connecting-ip") ?? pick("x-real-ip") ?? pick("x-forwarded-for") ?? remoteAddress?.replace(/^::ffff:/, "") ?? void 0;
+function clientIp(h, remoteAddress, platform = "proxy") {
+  const first = (n) => h.get(n)?.split(",")[0]?.trim() || void 0;
+  const last = (n) => h.get(n)?.split(",").map((x) => x.trim()).filter(Boolean).pop();
+  const raw = platform === "vercel" ? first("x-vercel-forwarded-for") ?? first("x-real-ip") : platform === "cloudflare" ? first("cf-connecting-ip") : platform === "proxy" ? first("x-real-ip") ?? last("x-forwarded-for") ?? remoteAddress : remoteAddress;
+  return raw ? parseIp(raw)?.text : void 0;
+}
+function parseIp(raw) {
+  let s = raw.trim();
+  const br = s.match(/^\[([^\]]+)\](?::\d{1,5})?$/);
+  if (br) s = br[1];
+  s = s.replace(/%[\w.-]+$/, "");
+  const mapped = s.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  if (mapped) s = mapped[1];
+  const v4 = s.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?::\d{1,5})?$/);
+  if (v4) {
+    const parts2 = v4.slice(1, 5).map(Number);
+    return parts2.every((n) => n <= 255) ? { v: 4, parts: parts2, text: parts2.join(".") } : void 0;
+  }
+  if (!/^[0-9a-f:]+$/i.test(s) || s.split("::").length > 2) return void 0;
+  const [head, tail] = s.includes("::") ? s.split("::") : [s, void 0];
+  const hs = head ? head.split(":") : [];
+  const ts = tail ? tail.split(":") : [];
+  const missing = 8 - hs.length - ts.length;
+  if (tail === void 0 ? missing !== 0 : missing < 1) return void 0;
+  const groups = [...hs, ...Array(tail === void 0 ? 0 : missing).fill("0"), ...ts];
+  if (groups.some((g) => !/^[0-9a-f]{1,4}$/i.test(g))) return void 0;
+  const parts = groups.map((g) => parseInt(g, 16));
+  return { v: 6, parts, text: parts.map((n) => n.toString(16)).join(":") };
 }
 function truncateIp(ip) {
-  if (ip.includes(":")) return ip.split(":").slice(0, 3).join(":") + "::/48";
-  const p = ip.split(".");
-  return p.length === 4 ? `${p[0]}.${p[1]}.${p[2]}.0/24` : ip;
+  const p = parseIp(ip);
+  if (!p) return void 0;
+  return p.v === 4 ? `${p.parts[0]}.${p.parts[1]}.${p.parts[2]}.0/24` : `${p.parts.slice(0, 3).map((n) => n.toString(16)).join(":")}::/48`;
 }
 async function hashIp(ip, salt) {
-  const data = new TextEncoder().encode(`${salt}:${ip}`);
+  const data = new TextEncoder().encode(`${salt}:${parseIp(ip)?.text ?? ip}`);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(digest).slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
 }
-function geoFromHeaders(h) {
-  const city = h.get("x-vercel-ip-city");
-  let decoded;
-  try {
-    decoded = city ? decodeURIComponent(city) : void 0;
-  } catch {
-    decoded = city ?? void 0;
-  }
-  const g = {
-    country: h.get("x-vercel-ip-country") ?? h.get("cf-ipcountry") ?? void 0,
-    region: h.get("x-vercel-ip-country-region") ?? void 0,
-    city: decoded
+function geoFromHeaders(h, platform = "proxy") {
+  const clean = (v, max) => {
+    if (!v) return void 0;
+    let d = v;
+    try {
+      d = decodeURIComponent(v);
+    } catch {
+    }
+    return d.slice(0, max);
   };
+  const g = platform === "vercel" ? {
+    country: clean(h.get("x-vercel-ip-country"), 2),
+    region: clean(h.get("x-vercel-ip-country-region"), 8),
+    city: clean(h.get("x-vercel-ip-city"), 80)
+  } : platform === "cloudflare" ? { country: clean(h.get("cf-ipcountry"), 2) } : {};
   return Object.fromEntries(Object.entries(g).filter(([, v]) => v));
 }
 var CRAWLERS = /(googlebot|bingbot|yandex(bot)?|duckduckbot|baiduspider|applebot|facebookexternalhit|meta-externalagent|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-user|perplexitybot|ahrefsbot|semrushbot|mj12bot|dotbot|petalbot|bytespider|uptime-kuma|vercel-(screenshot|favicon))/i;
@@ -215,7 +242,8 @@ async function httpEvent(input, opts = {}) {
   const h = input.headers;
   const path = input.path.split("?")[0].slice(0, 300);
   const ua = h.get("user-agent");
-  const ip = clientIp(h, input.remoteAddress);
+  const platform = opts.platform ?? "proxy";
+  const ip = clientIp(h, input.remoteAddress, platform);
   let mode = opts.ipMode ?? (opts.ipSalt ? "hash" : "truncate");
   if (mode === "hash" && !opts.ipSalt) mode = "truncate";
   const ipFields = !ip || mode === "none" ? {} : mode === "full" ? { ip } : mode === "truncate" ? { ip_prefix: truncateIp(ip) } : { ip_hash: await hashIp(ip, opts.ipSalt), ip_prefix: truncateIp(ip) };
@@ -238,10 +266,10 @@ async function httpEvent(input, opts = {}) {
     ua: ua?.slice(0, 300) ?? void 0,
     ...classify(ua, path),
     ...ipFields,
-    geo: geoFromHeaders(h),
-    request_id: h.get("x-request-id") ?? h.get("x-vercel-id") ?? void 0,
+    geo: geoFromHeaders(h, platform),
+    request_id: (h.get("x-request-id") ?? (platform === "vercel" ? h.get("x-vercel-id") : void 0))?.slice(0, 128) ?? void 0,
     user_id: input.userId ?? void 0,
-    tls_ja4: h.get("x-vercel-ja4-digest") ?? void 0
+    tls_ja4: platform === "vercel" ? h.get("x-vercel-ja4-digest")?.slice(0, 64) ?? void 0 : void 0
   };
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== void 0));
 }
@@ -274,7 +302,12 @@ function loggerFromEnv(defaults = {}) {
 }
 function ipOptionsFromEnv(env = readEnv()) {
   const m = env.OBS_IP_MODE;
-  return { ipMode: m && ["full", "hash", "truncate", "none"].includes(m) ? m : void 0, ipSalt: env.OBS_IP_SALT };
+  const p = env.OBS_PLATFORM;
+  return {
+    ipMode: m && ["full", "hash", "truncate", "none"].includes(m) ? m : void 0,
+    ipSalt: env.OBS_IP_SALT,
+    platform: p && ["vercel", "cloudflare", "proxy", "direct"].includes(p) ? p : env.VERCEL === "1" ? "vercel" : "proxy"
+  };
 }
 
 // src/node.ts

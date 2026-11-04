@@ -235,6 +235,7 @@ campos com cara de segredo saem como `[redacted]`.
 | `OBS_OTLP_ENDPOINT`, `OBS_OTLP_AUTHORIZATION` | gateway de ingestão + token do app/ambiente |
 | `OBS_IP_MODE` | `hash` (padrão com salt), `truncate` (/24, padrão sem salt), `full`, `none` |
 | `OBS_IP_SALT` | salt do hash do IP (mesmo IP → mesmo hash, sem guardar o IP) |
+| `OBS_PLATFORM` | em qual borda confiar para IP/geo: `vercel` (padrão quando `VERCEL=1`), `cloudflare`, `proxy` (Traefik/Coolify/Railway: `x-real-ip` ou último salto do XFF, padrão), `direct`. Header de outra borda é ignorado (forjável) |
 | `OBS_LEVEL`, `OBS_STDOUT=0` | nível mínimo; desligar o stdout |
 
 Cada requisição vira um `http.request` com método, host, caminho (sem query), status, latência, IP conforme o
@@ -244,14 +245,14 @@ modo, geo (`x-vercel-ip-*`), user agent, `device`, `is_bot`/`bot`, `scan` (camin
 **Next (middleware):**
 
 ```ts
-import { loggerFromEnv, ipOptionsFromEnv } from "@easygoal/packages/observability";
+import { loggerFromEnv } from "@easygoal/packages/observability";
 import { observeRequest } from "@easygoal/packages/observability/next";
 
 const log = loggerFromEnv({ service: "app-front" });
 
 export async function middleware(req: NextRequest, event: NextFetchEvent) {
   const session = await getSession(req);            // o que o app já faz
-  observeRequest(log, req, event, { userId: session?.sub, ...ipOptionsFromEnv() });
+  observeRequest(log, req, event, { userId: session?.sub });
   return NextResponse.next();
 }
 ```

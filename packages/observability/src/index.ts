@@ -256,25 +256,69 @@ export interface HeaderGetter {
 export type IpMode = "full" | "hash" | "truncate" | "none";
 
 /**
- * IP do cliente. Ordem: headers que a borda REESCREVE (não dá para forjar) antes do X-Forwarded-For, cujo
- * primeiro item o próprio cliente pode inventar quando a borda só acrescenta (Traefik/Coolify).
+ * Em quem confiar para IP e geo. Header de IP/geo só vale quando a borda que o escreve está mesmo na frente:
+ * fora da Vercel, qualquer cliente manda `x-vercel-ip-country: BR` ou `x-vercel-forwarded-for` forjados.
+ *   vercel      x-vercel-forwarded-for / x-real-ip (a Vercel reescreve) + geo x-vercel-ip-* + JA4
+ *   cloudflare  cf-connecting-ip + cf-ipcountry
+ *   proxy       x-real-ip (Traefik/Coolify reescreve) → último salto do X-Forwarded-For (o que o proxy
+ *               acrescentou; o primeiro o cliente inventa) → socket. Sem geo
+ *   direct      só o socket
+ * Padrão (ipOptionsFromEnv): OBS_PLATFORM, senão "vercel" quando VERCEL=1, senão "proxy".
  */
-export function clientIp(h: HeaderGetter, remoteAddress?: string): string | undefined {
-  const pick = (n: string) => h.get(n)?.split(",")[0]?.trim() || undefined;
-  return pick("x-vercel-forwarded-for") ?? pick("cf-connecting-ip") ?? pick("x-real-ip")
-    ?? pick("x-forwarded-for") ?? remoteAddress?.replace(/^::ffff:/, "") ?? undefined;
+export type Platform = "vercel" | "cloudflare" | "proxy" | "direct";
+
+export function clientIp(h: HeaderGetter, remoteAddress?: string, platform: Platform = "proxy"): string | undefined {
+  const first = (n: string) => h.get(n)?.split(",")[0]?.trim() || undefined;
+  const last = (n: string) => h.get(n)?.split(",").map((x) => x.trim()).filter(Boolean).pop();
+  const raw = platform === "vercel" ? first("x-vercel-forwarded-for") ?? first("x-real-ip")
+    : platform === "cloudflare" ? first("cf-connecting-ip")
+    : platform === "proxy" ? first("x-real-ip") ?? last("x-forwarded-for") ?? remoteAddress
+    : remoteAddress;
+  return raw ? parseIp(raw)?.text : undefined;
 }
 
-/** IPv4 → /24, IPv6 → /48. Mantém país/provedor aproximados sem identificar a pessoa. */
-export function truncateIp(ip: string): string {
-  if (ip.includes(":")) return ip.split(":").slice(0, 3).join(":") + "::/48";
-  const p = ip.split(".");
-  return p.length === 4 ? `${p[0]}.${p[1]}.${p[2]}.0/24` : ip;
+interface ParsedIp {
+  v: 4 | 6;
+  parts: number[]; // 4 octetos ou 8 grupos de 16 bits
+  text: string; // forma canônica (IPv4 pontuado; IPv6 com os 8 grupos)
+}
+
+/** Parser estrito: aceita [v6]:porta, v4:porta, ::ffff:v4 e zona (%eth0). Qualquer outra coisa → undefined. */
+export function parseIp(raw: string): ParsedIp | undefined {
+  let s = raw.trim();
+  const br = s.match(/^\[([^\]]+)\](?::\d{1,5})?$/);
+  if (br) s = br[1];
+  s = s.replace(/%[\w.-]+$/, "");
+  const mapped = s.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  if (mapped) s = mapped[1];
+  const v4 = s.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?::\d{1,5})?$/);
+  if (v4) {
+    const parts = v4.slice(1, 5).map(Number);
+    return parts.every((n) => n <= 255) ? { v: 4, parts, text: parts.join(".") } : undefined;
+  }
+  if (!/^[0-9a-f:]+$/i.test(s) || s.split("::").length > 2) return undefined;
+  const [head, tail] = s.includes("::") ? s.split("::") : [s, undefined];
+  const hs = head ? head.split(":") : [];
+  const ts = tail ? tail.split(":") : [];
+  const missing = 8 - hs.length - ts.length;
+  if (tail === undefined ? missing !== 0 : missing < 1) return undefined;
+  const groups = [...hs, ...Array(tail === undefined ? 0 : missing).fill("0"), ...ts];
+  if (groups.some((g) => !/^[0-9a-f]{1,4}$/i.test(g))) return undefined;
+  const parts = groups.map((g) => parseInt(g, 16));
+  return { v: 6, parts, text: parts.map((n) => n.toString(16)).join(":") };
+}
+
+/** IPv4 → /24, IPv6 → /48. Mantém país/provedor aproximados sem identificar a pessoa. Inválido → undefined. */
+export function truncateIp(ip: string): string | undefined {
+  const p = parseIp(ip);
+  if (!p) return undefined;
+  return p.v === 4 ? `${p.parts[0]}.${p.parts[1]}.${p.parts[2]}.0/24`
+    : `${p.parts.slice(0, 3).map((n) => n.toString(16)).join(":")}::/48`;
 }
 
 /** SHA-256(salt:ip), 16 hex. Mesmo IP → mesmo hash (dá para contar e bloquear), sem guardar o IP. */
 export async function hashIp(ip: string, salt: string): Promise<string> {
-  const data = new TextEncoder().encode(`${salt}:${ip}`);
+  const data = new TextEncoder().encode(`${salt}:${parseIp(ip)?.text ?? ip}`);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(digest).slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
 }
@@ -285,20 +329,23 @@ export interface Geo {
   city?: string;
 }
 
-/** Geo que a Vercel (x-vercel-ip-*) e a Cloudflare (cf-ipcountry) já mandam em toda requisição, de graça. */
-export function geoFromHeaders(h: HeaderGetter): Geo {
-  const city = h.get("x-vercel-ip-city");
-  let decoded: string | undefined;
-  try {
-    decoded = city ? decodeURIComponent(city) : undefined;
-  } catch {
-    decoded = city ?? undefined;
-  }
-  const g: Geo = {
-    country: h.get("x-vercel-ip-country") ?? h.get("cf-ipcountry") ?? undefined,
-    region: h.get("x-vercel-ip-country-region") ?? undefined,
-    city: decoded,
+/** Geo grátis da borda: Vercel (x-vercel-ip-*) ou Cloudflare (cf-ipcountry). Em outra plataforma: nada. */
+export function geoFromHeaders(h: HeaderGetter, platform: Platform = "proxy"): Geo {
+  const clean = (v: string | null | undefined, max: number) => {
+    if (!v) return undefined;
+    let d = v;
+    try {
+      d = decodeURIComponent(v);
+    } catch {
+      /* fica o valor cru */
+    }
+    return d.slice(0, max);
   };
+  const g: Geo = platform === "vercel" ? {
+    country: clean(h.get("x-vercel-ip-country"), 2),
+    region: clean(h.get("x-vercel-ip-country-region"), 8),
+    city: clean(h.get("x-vercel-ip-city"), 80),
+  } : platform === "cloudflare" ? { country: clean(h.get("cf-ipcountry"), 2) } : {};
   return Object.fromEntries(Object.entries(g).filter(([, v]) => v)) as Geo;
 }
 
@@ -330,8 +377,9 @@ export function classify(ua: string | null | undefined, path: string): Classific
 }
 
 export interface IpOptions {
-  ipMode?: IpMode; // padrão "hash"
+  ipMode?: IpMode; // padrão "hash" com salt, "truncate" sem
   ipSalt?: string; // obrigatório para "hash" (sem salt cai para "truncate")
+  platform?: Platform; // em quem confiar para IP/geo (padrão "proxy")
 }
 
 export interface HttpInput {
@@ -350,9 +398,11 @@ export async function httpEvent(input: HttpInput, opts: IpOptions = {}): Promise
   const h = input.headers;
   const path = input.path.split("?")[0].slice(0, 300);
   const ua = h.get("user-agent");
-  const ip = clientIp(h, input.remoteAddress);
+  const platform = opts.platform ?? "proxy";
+  const ip = clientIp(h, input.remoteAddress, platform);
   let mode: IpMode = opts.ipMode ?? (opts.ipSalt ? "hash" : "truncate");
   if (mode === "hash" && !opts.ipSalt) mode = "truncate"; // hash sem salt seria reversível por força bruta
+  // clientIp só devolve IP já validado (parseIp): valor estranho no header nunca vai cru para o log.
   const ipFields: Fields = !ip || mode === "none" ? {} : mode === "full" ? { ip }
     : mode === "truncate" ? { ip_prefix: truncateIp(ip) }
     : { ip_hash: await hashIp(ip, opts.ipSalt as string), ip_prefix: truncateIp(ip) };
@@ -375,10 +425,11 @@ export async function httpEvent(input: HttpInput, opts: IpOptions = {}): Promise
     ua: ua?.slice(0, 300) ?? undefined,
     ...classify(ua, path),
     ...ipFields,
-    geo: geoFromHeaders(h),
-    request_id: h.get("x-request-id") ?? h.get("x-vercel-id") ?? undefined,
+    geo: geoFromHeaders(h, platform),
+    request_id: (h.get("x-request-id") ?? (platform === "vercel" ? h.get("x-vercel-id") : undefined))?.slice(0, 128)
+      ?? undefined,
     user_id: input.userId ?? undefined,
-    tls_ja4: h.get("x-vercel-ja4-digest") ?? undefined,
+    tls_ja4: platform === "vercel" ? h.get("x-vercel-ja4-digest")?.slice(0, 64) ?? undefined : undefined,
   };
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== undefined));
 }
@@ -398,7 +449,7 @@ function readEnv(): Env {
 
 /**
  * OBS_SERVICE, OBS_ENV, OBS_VERSION, OBS_LEVEL, OBS_STDOUT ("0" desliga), OBS_OTLP_ENDPOINT,
- * OBS_OTLP_AUTHORIZATION, OBS_OTLP_STREAM, OBS_IP_MODE, OBS_IP_SALT. Sem OBS_OTLP_ENDPOINT: só stdout.
+ * OBS_OTLP_AUTHORIZATION, OBS_OTLP_STREAM, OBS_IP_MODE, OBS_IP_SALT, OBS_PLATFORM. Sem OBS_OTLP_ENDPOINT: só stdout.
  */
 export interface FromEnvOptions {
   service?: string; // quando OBS_SERVICE não existe
@@ -431,5 +482,10 @@ export function loggerFromEnv(defaults: FromEnvOptions = {}): Logger {
 
 export function ipOptionsFromEnv(env: Env = readEnv()): IpOptions {
   const m = env.OBS_IP_MODE as IpMode | undefined;
-  return { ipMode: m && ["full", "hash", "truncate", "none"].includes(m) ? m : undefined, ipSalt: env.OBS_IP_SALT };
+  const p = env.OBS_PLATFORM as Platform | undefined;
+  return {
+    ipMode: m && ["full", "hash", "truncate", "none"].includes(m) ? m : undefined,
+    ipSalt: env.OBS_IP_SALT,
+    platform: p && ["vercel", "cloudflare", "proxy", "direct"].includes(p) ? p : env.VERCEL === "1" ? "vercel" : "proxy",
+  };
 }
