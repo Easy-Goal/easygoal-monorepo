@@ -19,6 +19,15 @@
       ],
       "core": [
         "./packages/core/dist/index.d.ts"
+      ],
+      "observability": [
+        "./packages/observability/dist/index.d.ts"
+      ],
+      "observability/next": [
+        "./packages/observability/dist/next.d.ts"
+      ],
+      "observability/node": [
+        "./packages/observability/dist/node.d.ts"
       ]
     }
   },
@@ -54,20 +63,38 @@
       "types": "./packages/core/dist/index.d.ts",
       "import": "./packages/core/dist/index.mjs",
       "require": "./packages/core/dist/index.js"
+    },
+    "./observability": {
+      "types": "./packages/observability/dist/index.d.ts",
+      "import": "./packages/observability/dist/index.mjs",
+      "require": "./packages/observability/dist/index.js"
+    },
+    "./observability/next": {
+      "types": "./packages/observability/dist/next.d.ts",
+      "import": "./packages/observability/dist/next.mjs",
+      "require": "./packages/observability/dist/next.js"
+    },
+    "./observability/node": {
+      "types": "./packages/observability/dist/node.d.ts",
+      "import": "./packages/observability/dist/node.mjs",
+      "require": "./packages/observability/dist/node.js"
     }
   },
   "scripts": {
     "prepare": "npm run build",
-    "build": "npm install --prefix packages/core && npm run build --prefix packages/core && npm install --prefix packages/ui && npm run build --prefix packages/ui && npm install --prefix packages/auth && npm run build --prefix packages/auth",
+    "build": "npm install --prefix packages/core && npm run build --prefix packages/core && npm install --prefix packages/ui && npm run build --prefix packages/ui && npm install --prefix packages/auth && npm run build --prefix packages/auth && npm install --prefix packages/observability && npm run build --prefix packages/observability",
     "build:ui": "npm install --prefix packages/ui && npm run build --prefix packages/ui",
     "build:auth": "npm install --prefix packages/auth && npm run build --prefix packages/auth",
     "build:core": "npm install --prefix packages/core && npm run build --prefix packages/core",
     "dev:ui": "npm run dev --prefix packages/ui",
     "dev:auth": "npm run dev --prefix packages/auth",
     "dev:core": "npm run dev --prefix packages/core",
-    "type-check": "npm run type-check --prefix packages/core && npm run type-check --prefix packages/ui && npm run type-check --prefix packages/auth",
+    "type-check": "npm run type-check --prefix packages/core && npm run type-check --prefix packages/ui && npm run type-check --prefix packages/auth && npm run type-check --prefix packages/observability",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "build:observability": "npm install --prefix packages/observability && npm run build --prefix packages/observability",
+    "dev:observability": "npm run dev --prefix packages/observability",
+    "test:observability": "npm test --prefix packages/observability"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
