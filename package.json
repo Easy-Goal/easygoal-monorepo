@@ -80,6 +80,15 @@
       "require": "./packages/observability/dist/node.js"
     }
   },
+  "files": [
+    "packages/core/dist",
+    "packages/ui/dist",
+    "packages/auth/dist",
+    "packages/observability/dist",
+    "packages/ui/src/globals.css",
+    "packages/ui/src/theme/tokens.css",
+    "README.md"
+  ],
   "scripts": {
     "prepare": "npm run build",
     "build": "npm install --prefix packages/core && npm run build --prefix packages/core && npm install --prefix packages/ui && npm run build --prefix packages/ui && npm install --prefix packages/auth && npm run build --prefix packages/auth && npm install --prefix packages/observability && npm run build --prefix packages/observability",
@@ -106,6 +115,42 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "jose": "^6.2.0"
+    "@radix-ui/react-slot": "^1.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "jose": "^6.2.0",
+    "tailwind-merge": "^3.5.0"
+  },
+  "peerDependencies": {
+    "next": ">=14",
+    "react": ">=18",
+    "react-dom": ">=18",
+    "lucide-react": ">=0.400.0",
+    "@supabase/ssr": ">=0.5",
+    "@supabase/supabase-js": ">=2",
+    "zod": "^3.22.4"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "lucide-react": {
+      "optional": true
+    },
+    "@supabase/ssr": {
+      "optional": true
+    },
+    "@supabase/supabase-js": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    }
   }
 }
