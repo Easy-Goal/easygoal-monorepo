@@ -164,6 +164,19 @@ function createSessionRoute() {
 var import_jose = require("jose");
 var import_server4 = require("next/server");
 var EG_SESSION_COOKIE3 = "eg_session";
+async function verifyEgSession(token) {
+  const secrets = [process.env.SSO_JWT_SECRET, process.env.SSO_JWT_SECRET_PREVIOUS].filter(Boolean);
+  let lastError = new Error("SSO_JWT_SECRET n\xE3o configurado");
+  for (const s of secrets) {
+    try {
+      return await (0, import_jose.jwtVerify)(token, new TextEncoder().encode(s), { audience: "eg_session" });
+    } catch (err) {
+      if (!(err instanceof import_jose.errors.JWSSignatureVerificationFailed)) throw err;
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
 async function updateSession(request) {
   const { pathname } = request.nextUrl;
   if (pathname.startsWith("/auth") || pathname.startsWith("/api/auth")) {
@@ -176,10 +189,7 @@ async function updateSession(request) {
     return import_server4.NextResponse.redirect(loginUrl);
   }
   try {
-    const secret = new TextEncoder().encode(process.env.SSO_JWT_SECRET);
-    const { payload } = await (0, import_jose.jwtVerify)(egSession, secret, {
-      audience: "eg_session"
-    });
+    const { payload } = await verifyEgSession(egSession);
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-eg-user", JSON.stringify(payload));
     return import_server4.NextResponse.next({

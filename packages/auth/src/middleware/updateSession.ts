@@ -1,7 +1,25 @@
-import { jwtVerify } from 'jose';
+import { errors, jwtVerify } from 'jose';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const EG_SESSION_COOKIE = "eg_session";
+
+/**
+ * Verifica o eg_session com SSO_JWT_SECRET e, durante uma rotação, com SSO_JWT_SECRET_PREVIOUS.
+ * O anterior só é tentado quando a falha é de assinatura (expirado/audience errado não passam).
+ */
+async function verifyEgSession(token: string) {
+  const secrets = [process.env.SSO_JWT_SECRET, process.env.SSO_JWT_SECRET_PREVIOUS].filter(Boolean) as string[];
+  let lastError: unknown = new Error("SSO_JWT_SECRET não configurado");
+  for (const s of secrets) {
+    try {
+      return await jwtVerify(token, new TextEncoder().encode(s), { audience: "eg_session" });
+    } catch (err) {
+      if (!(err instanceof errors.JWSSignatureVerificationFailed)) throw err;
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
 
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,10 +40,7 @@ export async function updateSession(request: NextRequest) {
 
   try {
     // 1. Decodifica e valida o JWT
-    const secret = new TextEncoder().encode(process.env.SSO_JWT_SECRET!);
-    const { payload } = await jwtVerify(egSession, secret, {
-      audience: "eg_session",
-    });
+    const { payload } = await verifyEgSession(egSession);
 
     // 2. Clona os headers da requisição
     const requestHeaders = new Headers(request.headers);
