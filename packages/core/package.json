@@ -19,6 +19,10 @@
   },
   "devDependencies": {
     "tsup": "^8",
-    "typescript": "^5"
+    "typescript": "^5",
+    "zod": "^3.25.76"
+  },
+  "peerDependencies": {
+    "zod": "^3.22.4"
   }
 }

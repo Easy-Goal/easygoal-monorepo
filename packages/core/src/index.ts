@@ -29,3 +29,6 @@ export type {
   NotificationActions,
   NotificationStore,
 } from './types/notifications';
+
+// ─── Contratos (zod) ─────────────────────────────────────────────────────────
+export * from './contracts';
