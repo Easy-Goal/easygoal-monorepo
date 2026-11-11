@@ -361,6 +361,8 @@ var UpdateObjectiveStatusSchema = z8.object({
 });
 var PLAN_FREQUENCIES = ["monthly", "quarterly", "yearly", "one_time"];
 var CheckoutUrlSchema = z8.string().trim().max(2e3).url("Link inv\xE1lido").refine((value) => value.startsWith("https://"), "O link precisa come\xE7ar com https://");
+var EntitlementKeySchema = z8.string().trim().regex(/^[a-z0-9_]{2,60}$/, "Use letras min\xFAsculas, n\xFAmeros e _ (ex.: vaygo_pro)");
+var GatewayOfferIdSchema = z8.string().trim().min(1).max(200);
 var CreatePlanLinkSchema = z8.object({
   name: z8.string().trim().min(1).max(120),
   checkout_url: CheckoutUrlSchema,
@@ -369,7 +371,9 @@ var CreatePlanLinkSchema = z8.object({
   frequency: z8.enum(PLAN_FREQUENCIES).optional(),
   plan_type: z8.string().trim().max(40).optional(),
   position: z8.number().int().min(0).optional(),
-  is_sandbox: z8.boolean().optional()
+  is_sandbox: z8.boolean().optional(),
+  entitlement_key: EntitlementKeySchema.optional(),
+  gateway_offer_id: GatewayOfferIdSchema.optional()
 });
 var UpdatePlanLinkSchema = z8.object({
   name: z8.string().trim().min(1).max(120),
@@ -378,7 +382,9 @@ var UpdatePlanLinkSchema = z8.object({
   price: z8.number().positive().nullable(),
   frequency: z8.enum(PLAN_FREQUENCIES).nullable(),
   position: z8.number().int().min(0),
-  is_active: z8.boolean()
+  is_active: z8.boolean(),
+  entitlement_key: EntitlementKeySchema.nullable(),
+  gateway_offer_id: GatewayOfferIdSchema.nullable()
 }).partial().refine((value) => Object.keys(value).length > 0, "Nenhum campo para atualizar");
 var GatewayDomainSchema = z8.object({
   domain: z8.string().trim().toLowerCase().max(253).regex(/^(?!-)[a-z0-9-]{1,63}(\.(?!-)[a-z0-9-]{1,63})+$/, "Dom\xEDnio inv\xE1lido"),
@@ -535,6 +541,7 @@ export {
   DeleteVoteSchema,
   ENTITLEMENT_STATUSES,
   ENTRY_PROFILES,
+  EntitlementKeySchema,
   EntitlementSchema,
   EntitlementStatusSchema,
   EntryProfileSchema,

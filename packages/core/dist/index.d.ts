@@ -1231,6 +1231,8 @@ declare const UpdateObjectiveStatusSchema: z.ZodObject<{
 }>;
 type UpdateObjectiveStatusDto = z.infer<typeof UpdateObjectiveStatusSchema>;
 declare const PLAN_FREQUENCIES: readonly ["monthly", "quarterly", "yearly", "one_time"];
+/** Acesso que o plano libera no SaaS (ex.: vaygo_pro). Vem para entitlements quando o gateway avisa a venda. */
+declare const EntitlementKeySchema: z.ZodString;
 /** Plano do produto como link do gateway: o preço é opcional, porque fica no gateway. */
 declare const CreatePlanLinkSchema: z.ZodObject<{
     name: z.ZodString;
@@ -1241,6 +1243,8 @@ declare const CreatePlanLinkSchema: z.ZodObject<{
     plan_type: z.ZodOptional<z.ZodString>;
     position: z.ZodOptional<z.ZodNumber>;
     is_sandbox: z.ZodOptional<z.ZodBoolean>;
+    entitlement_key: z.ZodOptional<z.ZodString>;
+    gateway_offer_id: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     name: string;
     checkout_url: string;
@@ -1250,6 +1254,8 @@ declare const CreatePlanLinkSchema: z.ZodObject<{
     plan_type?: string | undefined;
     position?: number | undefined;
     is_sandbox?: boolean | undefined;
+    entitlement_key?: string | undefined;
+    gateway_offer_id?: string | undefined;
 }, {
     name: string;
     checkout_url: string;
@@ -1259,6 +1265,8 @@ declare const CreatePlanLinkSchema: z.ZodObject<{
     plan_type?: string | undefined;
     position?: number | undefined;
     is_sandbox?: boolean | undefined;
+    entitlement_key?: string | undefined;
+    gateway_offer_id?: string | undefined;
 }>;
 type CreatePlanLinkDto = z.infer<typeof CreatePlanLinkSchema>;
 declare const UpdatePlanLinkSchema: z.ZodEffects<z.ZodObject<{
@@ -1269,6 +1277,8 @@ declare const UpdatePlanLinkSchema: z.ZodEffects<z.ZodObject<{
     frequency: z.ZodOptional<z.ZodNullable<z.ZodEnum<["monthly", "quarterly", "yearly", "one_time"]>>>;
     position: z.ZodOptional<z.ZodNumber>;
     is_active: z.ZodOptional<z.ZodBoolean>;
+    entitlement_key: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    gateway_offer_id: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
     name?: string | undefined;
     description?: string | null | undefined;
@@ -1276,6 +1286,8 @@ declare const UpdatePlanLinkSchema: z.ZodEffects<z.ZodObject<{
     price?: number | null | undefined;
     frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | null | undefined;
     position?: number | undefined;
+    entitlement_key?: string | null | undefined;
+    gateway_offer_id?: string | null | undefined;
     is_active?: boolean | undefined;
 }, {
     name?: string | undefined;
@@ -1284,6 +1296,8 @@ declare const UpdatePlanLinkSchema: z.ZodEffects<z.ZodObject<{
     price?: number | null | undefined;
     frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | null | undefined;
     position?: number | undefined;
+    entitlement_key?: string | null | undefined;
+    gateway_offer_id?: string | null | undefined;
     is_active?: boolean | undefined;
 }>, {
     name?: string | undefined;
@@ -1292,6 +1306,8 @@ declare const UpdatePlanLinkSchema: z.ZodEffects<z.ZodObject<{
     price?: number | null | undefined;
     frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | null | undefined;
     position?: number | undefined;
+    entitlement_key?: string | null | undefined;
+    gateway_offer_id?: string | null | undefined;
     is_active?: boolean | undefined;
 }, {
     name?: string | undefined;
@@ -1300,6 +1316,8 @@ declare const UpdatePlanLinkSchema: z.ZodEffects<z.ZodObject<{
     price?: number | null | undefined;
     frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | null | undefined;
     position?: number | undefined;
+    entitlement_key?: string | null | undefined;
+    gateway_offer_id?: string | null | undefined;
     is_active?: boolean | undefined;
 }>;
 type UpdatePlanLinkDto = z.infer<typeof UpdatePlanLinkSchema>;
@@ -1486,16 +1504,16 @@ declare const EntitlementSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     status: "active" | "past_due" | "canceled" | "refunded";
     user_id: string;
-    saas_product_id: string;
     entitlement_key: string;
+    saas_product_id: string;
     valid_until: string | null;
     source_event_id: string;
     updated_at: string;
 }, {
     status: "active" | "past_due" | "canceled" | "refunded";
     user_id: string;
-    saas_product_id: string;
     entitlement_key: string;
+    saas_product_id: string;
     valid_until: string | null;
     source_event_id: string;
     updated_at: string;
@@ -1504,4 +1522,4 @@ type Entitlement = z.infer<typeof EntitlementSchema>;
 /** Estados que liberam o SaaS. `past_due` mantém acesso até o gateway cancelar. */
 declare function entitlementGrantsAccess(status: EntitlementStatus): boolean;
 
-export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, type Entitlement, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, decodeAttribution, encodeAttribution, entitlementGrantsAccess, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, readAttributionFromUrl, withAttribution };
+export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, decodeAttribution, encodeAttribution, entitlementGrantsAccess, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, readAttributionFromUrl, withAttribution };
