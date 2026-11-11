@@ -209,25 +209,25 @@ declare const RegisterSchema: z.ZodObject<{
     cnpj_company: z.ZodOptional<z.ZodString>;
     cpf: z.ZodOptional<z.ZodString>;
     phone: z.ZodOptional<z.ZodString>;
-    plan_slug: z.ZodString;
+    plan_slug: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     email: string;
     name_company: string;
     password: string;
     name: string;
-    plan_slug: string;
     cnpj_company?: string | undefined;
     cpf?: string | undefined;
     phone?: string | undefined;
+    plan_slug?: string | undefined;
 }, {
     email: string;
     name_company: string;
     password: string;
     name: string;
-    plan_slug: string;
     cnpj_company?: string | undefined;
     cpf?: string | undefined;
     phone?: string | undefined;
+    plan_slug?: string | undefined;
 }>;
 type RegisterDto = z.infer<typeof RegisterSchema>;
 declare const ResetPasswordSchema: z.ZodObject<{
@@ -1055,4 +1055,290 @@ type ServiceRequestStatus = z.infer<typeof ServiceRequestStatusSchema>;
 declare const SaasSubscriptionStatusSchema: z.ZodEnum<["pending", "active", "cancelled", "suspended", "expired", "failed"]>;
 type SaasSubscriptionStatus = z.infer<typeof SaasSubscriptionStatusSchema>;
 
-export { type BulkDeleteUsersDto, BulkDeleteUsersSchema, type CancelSubscriptionDto, CancelSubscriptionSchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, type ForgotPasswordDto, ForgotPasswordSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, type PatchFeedbackDto, PatchFeedbackSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, hasPermission, isProducer, isSuperAdmin };
+/** Telefone brasileiro com DDD, com ou sem +55 e máscara. Ex.: (11) 99999-9999. */
+declare const PhoneSchema: z.ZodString;
+/** Origem do primeiro toque (UTM e página de entrada), gravada uma vez por usuário. */
+declare const EntrySourceSchema: z.ZodObject<{
+    utm_source: z.ZodOptional<z.ZodString>;
+    utm_medium: z.ZodOptional<z.ZodString>;
+    utm_campaign: z.ZodOptional<z.ZodString>;
+    utm_content: z.ZodOptional<z.ZodString>;
+    utm_term: z.ZodOptional<z.ZodString>;
+    referrer: z.ZodOptional<z.ZodString>;
+    landing: z.ZodOptional<z.ZodString>;
+    first_touch_at: z.ZodOptional<z.ZodString>;
+}, "strict", z.ZodTypeAny, {
+    utm_source?: string | undefined;
+    utm_medium?: string | undefined;
+    utm_campaign?: string | undefined;
+    utm_content?: string | undefined;
+    utm_term?: string | undefined;
+    referrer?: string | undefined;
+    landing?: string | undefined;
+    first_touch_at?: string | undefined;
+}, {
+    utm_source?: string | undefined;
+    utm_medium?: string | undefined;
+    utm_campaign?: string | undefined;
+    utm_content?: string | undefined;
+    utm_term?: string | undefined;
+    referrer?: string | undefined;
+    landing?: string | undefined;
+    first_touch_at?: string | undefined;
+}>;
+type EntrySource = z.infer<typeof EntrySourceSchema>;
+declare const ENTRY_PROFILES: readonly ["comprador", "builder"];
+declare const EntryProfileSchema: z.ZodEnum<["comprador", "builder"]>;
+type EntryProfile = z.infer<typeof EntryProfileSchema>;
+/** Versão vigente dos termos do builder. Termos novos exigem versão nova e revisão jurídica. */
+declare const PRODUCER_TERMS_VERSION = "2.0";
+declare const ProducerJoinSchema: z.ZodObject<{
+    terms_version: z.ZodLiteral<"2.0">;
+    phone: z.ZodString;
+    source: z.ZodOptional<z.ZodObject<{
+        utm_source: z.ZodOptional<z.ZodString>;
+        utm_medium: z.ZodOptional<z.ZodString>;
+        utm_campaign: z.ZodOptional<z.ZodString>;
+        utm_content: z.ZodOptional<z.ZodString>;
+        utm_term: z.ZodOptional<z.ZodString>;
+        referrer: z.ZodOptional<z.ZodString>;
+        landing: z.ZodOptional<z.ZodString>;
+        first_touch_at: z.ZodOptional<z.ZodString>;
+    }, "strict", z.ZodTypeAny, {
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        first_touch_at?: string | undefined;
+    }, {
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        first_touch_at?: string | undefined;
+    }>>;
+}, "strip", z.ZodTypeAny, {
+    phone: string;
+    terms_version: "2.0";
+    source?: {
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        first_touch_at?: string | undefined;
+    } | undefined;
+}, {
+    phone: string;
+    terms_version: "2.0";
+    source?: {
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        first_touch_at?: string | undefined;
+    } | undefined;
+}>;
+type ProducerJoinDto = z.infer<typeof ProducerJoinSchema>;
+declare const ObjectiveDescriptionSchema: z.ZodString;
+declare const BuyerJoinSchema: z.ZodObject<{
+    phone: z.ZodString;
+    objective: z.ZodString;
+    source: z.ZodOptional<z.ZodObject<{
+        utm_source: z.ZodOptional<z.ZodString>;
+        utm_medium: z.ZodOptional<z.ZodString>;
+        utm_campaign: z.ZodOptional<z.ZodString>;
+        utm_content: z.ZodOptional<z.ZodString>;
+        utm_term: z.ZodOptional<z.ZodString>;
+        referrer: z.ZodOptional<z.ZodString>;
+        landing: z.ZodOptional<z.ZodString>;
+        first_touch_at: z.ZodOptional<z.ZodString>;
+    }, "strict", z.ZodTypeAny, {
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        first_touch_at?: string | undefined;
+    }, {
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        first_touch_at?: string | undefined;
+    }>>;
+}, "strip", z.ZodTypeAny, {
+    phone: string;
+    objective: string;
+    source?: {
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        first_touch_at?: string | undefined;
+    } | undefined;
+}, {
+    phone: string;
+    objective: string;
+    source?: {
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        first_touch_at?: string | undefined;
+    } | undefined;
+}>;
+type BuyerJoinDto = z.infer<typeof BuyerJoinSchema>;
+declare const OBJECTIVE_STATUSES: readonly ["new", "in_review", "proposal_sent", "closed"];
+declare const ObjectiveStatusSchema: z.ZodEnum<["new", "in_review", "proposal_sent", "closed"]>;
+type ObjectiveStatus = z.infer<typeof ObjectiveStatusSchema>;
+declare const CreateObjectiveSchema: z.ZodObject<{
+    description: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    description: string;
+}, {
+    description: string;
+}>;
+type CreateObjectiveDto = z.infer<typeof CreateObjectiveSchema>;
+declare const UpdateObjectiveStatusSchema: z.ZodObject<{
+    status: z.ZodEnum<["new", "in_review", "proposal_sent", "closed"]>;
+}, "strip", z.ZodTypeAny, {
+    status: "new" | "in_review" | "proposal_sent" | "closed";
+}, {
+    status: "new" | "in_review" | "proposal_sent" | "closed";
+}>;
+type UpdateObjectiveStatusDto = z.infer<typeof UpdateObjectiveStatusSchema>;
+declare const PLAN_FREQUENCIES: readonly ["monthly", "quarterly", "yearly", "one_time"];
+/** Plano do produto como link do gateway: o preço é opcional, porque fica no gateway. */
+declare const CreatePlanLinkSchema: z.ZodObject<{
+    name: z.ZodString;
+    checkout_url: z.ZodEffects<z.ZodString, string, string>;
+    description: z.ZodOptional<z.ZodString>;
+    price: z.ZodOptional<z.ZodNumber>;
+    frequency: z.ZodOptional<z.ZodEnum<["monthly", "quarterly", "yearly", "one_time"]>>;
+    plan_type: z.ZodOptional<z.ZodString>;
+    position: z.ZodOptional<z.ZodNumber>;
+    is_sandbox: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    checkout_url: string;
+    description?: string | undefined;
+    price?: number | undefined;
+    frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | undefined;
+    plan_type?: string | undefined;
+    position?: number | undefined;
+    is_sandbox?: boolean | undefined;
+}, {
+    name: string;
+    checkout_url: string;
+    description?: string | undefined;
+    price?: number | undefined;
+    frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | undefined;
+    plan_type?: string | undefined;
+    position?: number | undefined;
+    is_sandbox?: boolean | undefined;
+}>;
+type CreatePlanLinkDto = z.infer<typeof CreatePlanLinkSchema>;
+declare const UpdatePlanLinkSchema: z.ZodEffects<z.ZodObject<{
+    name: z.ZodOptional<z.ZodString>;
+    checkout_url: z.ZodOptional<z.ZodEffects<z.ZodString, string, string>>;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    price: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    frequency: z.ZodOptional<z.ZodNullable<z.ZodEnum<["monthly", "quarterly", "yearly", "one_time"]>>>;
+    position: z.ZodOptional<z.ZodNumber>;
+    is_active: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    checkout_url?: string | undefined;
+    price?: number | null | undefined;
+    frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | null | undefined;
+    position?: number | undefined;
+    is_active?: boolean | undefined;
+}, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    checkout_url?: string | undefined;
+    price?: number | null | undefined;
+    frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | null | undefined;
+    position?: number | undefined;
+    is_active?: boolean | undefined;
+}>, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    checkout_url?: string | undefined;
+    price?: number | null | undefined;
+    frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | null | undefined;
+    position?: number | undefined;
+    is_active?: boolean | undefined;
+}, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    checkout_url?: string | undefined;
+    price?: number | null | undefined;
+    frequency?: "monthly" | "quarterly" | "yearly" | "one_time" | null | undefined;
+    position?: number | undefined;
+    is_active?: boolean | undefined;
+}>;
+type UpdatePlanLinkDto = z.infer<typeof UpdatePlanLinkSchema>;
+/** Domínio de checkout aceito (sem protocolo nem caminho), configurável no backoffice. */
+declare const GatewayDomainSchema: z.ZodObject<{
+    domain: z.ZodString;
+    gateway: z.ZodString;
+    is_active: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    domain: string;
+    gateway: string;
+    is_active?: boolean | undefined;
+}, {
+    domain: string;
+    gateway: string;
+    is_active?: boolean | undefined;
+}>;
+type GatewayDomainDto = z.infer<typeof GatewayDomainSchema>;
+declare const UpdateGatewayDomainSchema: z.ZodEffects<z.ZodObject<{
+    domain: z.ZodOptional<z.ZodString>;
+    gateway: z.ZodOptional<z.ZodString>;
+    is_active: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+}, "strip", z.ZodTypeAny, {
+    is_active?: boolean | undefined;
+    domain?: string | undefined;
+    gateway?: string | undefined;
+}, {
+    is_active?: boolean | undefined;
+    domain?: string | undefined;
+    gateway?: string | undefined;
+}>, {
+    is_active?: boolean | undefined;
+    domain?: string | undefined;
+    gateway?: string | undefined;
+}, {
+    is_active?: boolean | undefined;
+    domain?: string | undefined;
+    gateway?: string | undefined;
+}>;
+type UpdateGatewayDomainDto = z.infer<typeof UpdateGatewayDomainSchema>;
+
+export { type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, type CancelSubscriptionDto, CancelSubscriptionSchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, ENTRY_PROFILES, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, hasPermission, isProducer, isSuperAdmin };

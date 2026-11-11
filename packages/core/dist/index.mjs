@@ -40,7 +40,8 @@ var RegisterSchema = z.object({
   cnpj_company: z.string().optional(),
   cpf: z.string().optional(),
   phone: z.string().optional(),
-  plan_slug: z.string().min(1)
+  // Opcional desde o ADR 072: o cadastro não escolhe plano.
+  plan_slug: z.string().min(1).optional()
 });
 var ResetPasswordSchema = z.object({
   token: z.string().min(1),
@@ -322,8 +323,75 @@ var ServiceRequestStatusSchema = z7.enum([
   "cancelled"
 ]);
 var SaasSubscriptionStatusSchema = z7.enum(["pending", "active", "cancelled", "suspended", "expired", "failed"]);
+
+// src/contracts/join.ts
+import { z as z8 } from "zod";
+var PhoneSchema = z8.string().trim().regex(/^(\+?55\s?)?\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}$/, "Telefone inv\xE1lido");
+var EntrySourceSchema = z8.object({
+  utm_source: z8.string().trim().max(200).optional(),
+  utm_medium: z8.string().trim().max(200).optional(),
+  utm_campaign: z8.string().trim().max(200).optional(),
+  utm_content: z8.string().trim().max(200).optional(),
+  utm_term: z8.string().trim().max(200).optional(),
+  referrer: z8.string().trim().max(500).optional(),
+  landing: z8.string().trim().max(500).optional(),
+  first_touch_at: z8.string().datetime().optional()
+}).strict();
+var ENTRY_PROFILES = ["comprador", "builder"];
+var EntryProfileSchema = z8.enum(ENTRY_PROFILES);
+var PRODUCER_TERMS_VERSION = "2.0";
+var ProducerJoinSchema = z8.object({
+  terms_version: z8.literal(PRODUCER_TERMS_VERSION),
+  phone: PhoneSchema,
+  source: EntrySourceSchema.optional()
+});
+var ObjectiveDescriptionSchema = z8.string().trim().min(10, "Descreva o objetivo com pelo menos 10 caracteres").max(2e3, "Use no m\xE1ximo 2.000 caracteres");
+var BuyerJoinSchema = z8.object({
+  phone: PhoneSchema,
+  objective: ObjectiveDescriptionSchema,
+  source: EntrySourceSchema.optional()
+});
+var OBJECTIVE_STATUSES = ["new", "in_review", "proposal_sent", "closed"];
+var ObjectiveStatusSchema = z8.enum(OBJECTIVE_STATUSES);
+var CreateObjectiveSchema = z8.object({
+  description: ObjectiveDescriptionSchema
+});
+var UpdateObjectiveStatusSchema = z8.object({
+  status: ObjectiveStatusSchema
+});
+var PLAN_FREQUENCIES = ["monthly", "quarterly", "yearly", "one_time"];
+var CheckoutUrlSchema = z8.string().trim().max(2e3).url("Link inv\xE1lido").refine((value) => value.startsWith("https://"), "O link precisa come\xE7ar com https://");
+var CreatePlanLinkSchema = z8.object({
+  name: z8.string().trim().min(1).max(120),
+  checkout_url: CheckoutUrlSchema,
+  description: z8.string().trim().max(500).optional(),
+  price: z8.number().positive().optional(),
+  frequency: z8.enum(PLAN_FREQUENCIES).optional(),
+  plan_type: z8.string().trim().max(40).optional(),
+  position: z8.number().int().min(0).optional(),
+  is_sandbox: z8.boolean().optional()
+});
+var UpdatePlanLinkSchema = z8.object({
+  name: z8.string().trim().min(1).max(120),
+  checkout_url: CheckoutUrlSchema,
+  description: z8.string().trim().max(500).nullable(),
+  price: z8.number().positive().nullable(),
+  frequency: z8.enum(PLAN_FREQUENCIES).nullable(),
+  position: z8.number().int().min(0),
+  is_active: z8.boolean()
+}).partial().refine((value) => Object.keys(value).length > 0, "Nenhum campo para atualizar");
+var GatewayDomainSchema = z8.object({
+  domain: z8.string().trim().toLowerCase().max(253).regex(/^(?!-)[a-z0-9-]{1,63}(\.(?!-)[a-z0-9-]{1,63})+$/, "Dom\xEDnio inv\xE1lido"),
+  gateway: z8.string().trim().min(1).max(60),
+  is_active: z8.boolean().optional()
+});
+var UpdateGatewayDomainSchema = GatewayDomainSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  "Nenhum campo para atualizar"
+);
 export {
   BulkDeleteUsersSchema,
+  BuyerJoinSchema,
   CancelSubscriptionSchema,
   CompleteProfileSchema,
   CreateAdminFeedbackSchema,
@@ -331,17 +399,30 @@ export {
   CreateCommentSchema,
   CreateCompanySchema,
   CreateFeedbackSchema,
+  CreateObjectiveSchema,
+  CreatePlanLinkSchema,
   CreateProducerSchema,
   CreateSaasProductSchema,
   CreateServiceRequestSchema,
   DeleteVoteSchema,
+  ENTRY_PROFILES,
+  EntryProfileSchema,
+  EntrySourceSchema,
   ForgotPasswordSchema,
+  GatewayDomainSchema,
   InviteProducerAdminSchema,
   InviteProducerSchema,
   KiwifyConfigSchema,
   LoginSchema,
+  OBJECTIVE_STATUSES,
+  ObjectiveDescriptionSchema,
+  ObjectiveStatusSchema,
+  PLAN_FREQUENCIES,
+  PRODUCER_TERMS_VERSION,
   PatchFeedbackSchema,
+  PhoneSchema,
   PreviewCampaignSchema,
+  ProducerJoinSchema,
   RegisterSchema,
   RejectProductSchema,
   ReopenProductSchema,
@@ -358,8 +439,11 @@ export {
   UpdateCampaignSchema,
   UpdateCompanySchema,
   UpdateEmailSchema,
+  UpdateGatewayDomainSchema,
+  UpdateObjectiveStatusSchema,
   UpdatePasswordSchema,
   UpdatePaymentSettingsSchema,
+  UpdatePlanLinkSchema,
   UpdateProducerSchema,
   UpdateSaasProductSchema,
   UpdateUserSchema,

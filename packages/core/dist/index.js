@@ -21,6 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var index_exports = {};
 __export(index_exports, {
   BulkDeleteUsersSchema: () => BulkDeleteUsersSchema,
+  BuyerJoinSchema: () => BuyerJoinSchema,
   CancelSubscriptionSchema: () => CancelSubscriptionSchema,
   CompleteProfileSchema: () => CompleteProfileSchema,
   CreateAdminFeedbackSchema: () => CreateAdminFeedbackSchema,
@@ -28,17 +29,30 @@ __export(index_exports, {
   CreateCommentSchema: () => CreateCommentSchema,
   CreateCompanySchema: () => CreateCompanySchema,
   CreateFeedbackSchema: () => CreateFeedbackSchema,
+  CreateObjectiveSchema: () => CreateObjectiveSchema,
+  CreatePlanLinkSchema: () => CreatePlanLinkSchema,
   CreateProducerSchema: () => CreateProducerSchema,
   CreateSaasProductSchema: () => CreateSaasProductSchema,
   CreateServiceRequestSchema: () => CreateServiceRequestSchema,
   DeleteVoteSchema: () => DeleteVoteSchema,
+  ENTRY_PROFILES: () => ENTRY_PROFILES,
+  EntryProfileSchema: () => EntryProfileSchema,
+  EntrySourceSchema: () => EntrySourceSchema,
   ForgotPasswordSchema: () => ForgotPasswordSchema,
+  GatewayDomainSchema: () => GatewayDomainSchema,
   InviteProducerAdminSchema: () => InviteProducerAdminSchema,
   InviteProducerSchema: () => InviteProducerSchema,
   KiwifyConfigSchema: () => KiwifyConfigSchema,
   LoginSchema: () => LoginSchema,
+  OBJECTIVE_STATUSES: () => OBJECTIVE_STATUSES,
+  ObjectiveDescriptionSchema: () => ObjectiveDescriptionSchema,
+  ObjectiveStatusSchema: () => ObjectiveStatusSchema,
+  PLAN_FREQUENCIES: () => PLAN_FREQUENCIES,
+  PRODUCER_TERMS_VERSION: () => PRODUCER_TERMS_VERSION,
   PatchFeedbackSchema: () => PatchFeedbackSchema,
+  PhoneSchema: () => PhoneSchema,
   PreviewCampaignSchema: () => PreviewCampaignSchema,
+  ProducerJoinSchema: () => ProducerJoinSchema,
   RegisterSchema: () => RegisterSchema,
   RejectProductSchema: () => RejectProductSchema,
   ReopenProductSchema: () => ReopenProductSchema,
@@ -55,8 +69,11 @@ __export(index_exports, {
   UpdateCampaignSchema: () => UpdateCampaignSchema,
   UpdateCompanySchema: () => UpdateCompanySchema,
   UpdateEmailSchema: () => UpdateEmailSchema,
+  UpdateGatewayDomainSchema: () => UpdateGatewayDomainSchema,
+  UpdateObjectiveStatusSchema: () => UpdateObjectiveStatusSchema,
   UpdatePasswordSchema: () => UpdatePasswordSchema,
   UpdatePaymentSettingsSchema: () => UpdatePaymentSettingsSchema,
+  UpdatePlanLinkSchema: () => UpdatePlanLinkSchema,
   UpdateProducerSchema: () => UpdateProducerSchema,
   UpdateSaasProductSchema: () => UpdateSaasProductSchema,
   UpdateUserSchema: () => UpdateUserSchema,
@@ -110,7 +127,8 @@ var RegisterSchema = import_zod.z.object({
   cnpj_company: import_zod.z.string().optional(),
   cpf: import_zod.z.string().optional(),
   phone: import_zod.z.string().optional(),
-  plan_slug: import_zod.z.string().min(1)
+  // Opcional desde o ADR 072: o cadastro não escolhe plano.
+  plan_slug: import_zod.z.string().min(1).optional()
 });
 var ResetPasswordSchema = import_zod.z.object({
   token: import_zod.z.string().min(1),
@@ -392,9 +410,76 @@ var ServiceRequestStatusSchema = import_zod7.z.enum([
   "cancelled"
 ]);
 var SaasSubscriptionStatusSchema = import_zod7.z.enum(["pending", "active", "cancelled", "suspended", "expired", "failed"]);
+
+// src/contracts/join.ts
+var import_zod8 = require("zod");
+var PhoneSchema = import_zod8.z.string().trim().regex(/^(\+?55\s?)?\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}$/, "Telefone inv\xE1lido");
+var EntrySourceSchema = import_zod8.z.object({
+  utm_source: import_zod8.z.string().trim().max(200).optional(),
+  utm_medium: import_zod8.z.string().trim().max(200).optional(),
+  utm_campaign: import_zod8.z.string().trim().max(200).optional(),
+  utm_content: import_zod8.z.string().trim().max(200).optional(),
+  utm_term: import_zod8.z.string().trim().max(200).optional(),
+  referrer: import_zod8.z.string().trim().max(500).optional(),
+  landing: import_zod8.z.string().trim().max(500).optional(),
+  first_touch_at: import_zod8.z.string().datetime().optional()
+}).strict();
+var ENTRY_PROFILES = ["comprador", "builder"];
+var EntryProfileSchema = import_zod8.z.enum(ENTRY_PROFILES);
+var PRODUCER_TERMS_VERSION = "2.0";
+var ProducerJoinSchema = import_zod8.z.object({
+  terms_version: import_zod8.z.literal(PRODUCER_TERMS_VERSION),
+  phone: PhoneSchema,
+  source: EntrySourceSchema.optional()
+});
+var ObjectiveDescriptionSchema = import_zod8.z.string().trim().min(10, "Descreva o objetivo com pelo menos 10 caracteres").max(2e3, "Use no m\xE1ximo 2.000 caracteres");
+var BuyerJoinSchema = import_zod8.z.object({
+  phone: PhoneSchema,
+  objective: ObjectiveDescriptionSchema,
+  source: EntrySourceSchema.optional()
+});
+var OBJECTIVE_STATUSES = ["new", "in_review", "proposal_sent", "closed"];
+var ObjectiveStatusSchema = import_zod8.z.enum(OBJECTIVE_STATUSES);
+var CreateObjectiveSchema = import_zod8.z.object({
+  description: ObjectiveDescriptionSchema
+});
+var UpdateObjectiveStatusSchema = import_zod8.z.object({
+  status: ObjectiveStatusSchema
+});
+var PLAN_FREQUENCIES = ["monthly", "quarterly", "yearly", "one_time"];
+var CheckoutUrlSchema = import_zod8.z.string().trim().max(2e3).url("Link inv\xE1lido").refine((value) => value.startsWith("https://"), "O link precisa come\xE7ar com https://");
+var CreatePlanLinkSchema = import_zod8.z.object({
+  name: import_zod8.z.string().trim().min(1).max(120),
+  checkout_url: CheckoutUrlSchema,
+  description: import_zod8.z.string().trim().max(500).optional(),
+  price: import_zod8.z.number().positive().optional(),
+  frequency: import_zod8.z.enum(PLAN_FREQUENCIES).optional(),
+  plan_type: import_zod8.z.string().trim().max(40).optional(),
+  position: import_zod8.z.number().int().min(0).optional(),
+  is_sandbox: import_zod8.z.boolean().optional()
+});
+var UpdatePlanLinkSchema = import_zod8.z.object({
+  name: import_zod8.z.string().trim().min(1).max(120),
+  checkout_url: CheckoutUrlSchema,
+  description: import_zod8.z.string().trim().max(500).nullable(),
+  price: import_zod8.z.number().positive().nullable(),
+  frequency: import_zod8.z.enum(PLAN_FREQUENCIES).nullable(),
+  position: import_zod8.z.number().int().min(0),
+  is_active: import_zod8.z.boolean()
+}).partial().refine((value) => Object.keys(value).length > 0, "Nenhum campo para atualizar");
+var GatewayDomainSchema = import_zod8.z.object({
+  domain: import_zod8.z.string().trim().toLowerCase().max(253).regex(/^(?!-)[a-z0-9-]{1,63}(\.(?!-)[a-z0-9-]{1,63})+$/, "Dom\xEDnio inv\xE1lido"),
+  gateway: import_zod8.z.string().trim().min(1).max(60),
+  is_active: import_zod8.z.boolean().optional()
+});
+var UpdateGatewayDomainSchema = GatewayDomainSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  "Nenhum campo para atualizar"
+);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   BulkDeleteUsersSchema,
+  BuyerJoinSchema,
   CancelSubscriptionSchema,
   CompleteProfileSchema,
   CreateAdminFeedbackSchema,
@@ -402,17 +487,30 @@ var SaasSubscriptionStatusSchema = import_zod7.z.enum(["pending", "active", "can
   CreateCommentSchema,
   CreateCompanySchema,
   CreateFeedbackSchema,
+  CreateObjectiveSchema,
+  CreatePlanLinkSchema,
   CreateProducerSchema,
   CreateSaasProductSchema,
   CreateServiceRequestSchema,
   DeleteVoteSchema,
+  ENTRY_PROFILES,
+  EntryProfileSchema,
+  EntrySourceSchema,
   ForgotPasswordSchema,
+  GatewayDomainSchema,
   InviteProducerAdminSchema,
   InviteProducerSchema,
   KiwifyConfigSchema,
   LoginSchema,
+  OBJECTIVE_STATUSES,
+  ObjectiveDescriptionSchema,
+  ObjectiveStatusSchema,
+  PLAN_FREQUENCIES,
+  PRODUCER_TERMS_VERSION,
   PatchFeedbackSchema,
+  PhoneSchema,
   PreviewCampaignSchema,
+  ProducerJoinSchema,
   RegisterSchema,
   RejectProductSchema,
   ReopenProductSchema,
@@ -429,8 +527,11 @@ var SaasSubscriptionStatusSchema = import_zod7.z.enum(["pending", "active", "can
   UpdateCampaignSchema,
   UpdateCompanySchema,
   UpdateEmailSchema,
+  UpdateGatewayDomainSchema,
+  UpdateObjectiveStatusSchema,
   UpdatePasswordSchema,
   UpdatePaymentSettingsSchema,
+  UpdatePlanLinkSchema,
   UpdateProducerSchema,
   UpdateSaasProductSchema,
   UpdateUserSchema,

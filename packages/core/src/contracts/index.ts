@@ -5,3 +5,4 @@ export * from './saas';
 export * from './admin';
 export * from './community';
 export * from './status';
+export * from './join';

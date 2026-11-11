@@ -41,7 +41,8 @@ export const RegisterSchema = z.object({
   cnpj_company: z.string().optional(),
   cpf: z.string().optional(),
   phone: z.string().optional(),
-  plan_slug: z.string().min(1),
+  // Opcional desde o ADR 072: o cadastro não escolhe plano.
+  plan_slug: z.string().min(1).optional(),
 });
 
 export type RegisterDto = z.infer<typeof RegisterSchema>;
