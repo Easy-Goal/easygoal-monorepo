@@ -389,10 +389,138 @@ var UpdateGatewayDomainSchema = GatewayDomainSchema.partial().refine(
   (value) => Object.keys(value).length > 0,
   "Nenhum campo para atualizar"
 );
+
+// src/contracts/attribution.ts
+import { z as z9 } from "zod";
+var ATTRIBUTION_PARAM = "att";
+var ATTRIBUTION_MAX_LENGTH = 2048;
+var UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+var CLICK_ID_KEYS = ["gclid", "gbraid", "wbraid", "fbclid", "ttclid", "msclkid"];
+var shortText = z9.string().trim().min(1).max(200);
+var longText = z9.string().trim().min(1).max(500);
+var AttributionTouchSchema = z9.object({
+  utm_source: shortText.optional(),
+  utm_medium: shortText.optional(),
+  utm_campaign: shortText.optional(),
+  utm_content: shortText.optional(),
+  utm_term: shortText.optional(),
+  gclid: shortText.optional(),
+  gbraid: shortText.optional(),
+  wbraid: shortText.optional(),
+  fbclid: shortText.optional(),
+  ttclid: shortText.optional(),
+  msclkid: shortText.optional(),
+  referrer: longText.optional(),
+  landing: longText.optional(),
+  at: z9.string().datetime()
+}).strip();
+function isCampaignTouch(touch) {
+  return [...UTM_KEYS, ...CLICK_ID_KEYS].some((key) => Boolean(touch[key]));
+}
+function readAttributionFromUrl(pageUrl, options = {}) {
+  let url;
+  try {
+    url = new URL(pageUrl);
+  } catch {
+    return null;
+  }
+  const raw = {};
+  for (const key of [...UTM_KEYS, ...CLICK_ID_KEYS]) {
+    const value = url.searchParams.get(key);
+    if (value) raw[key] = value;
+  }
+  if (Object.keys(raw).length === 0) return null;
+  raw.landing = `${url.origin}${url.pathname}`;
+  if (options.referrer) raw.referrer = options.referrer;
+  raw.at = (options.now ?? /* @__PURE__ */ new Date()).toISOString();
+  const parsed = AttributionTouchSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+function encodeAttribution(touch) {
+  const value = JSON.stringify(touch);
+  return value.length <= ATTRIBUTION_MAX_LENGTH ? value : "";
+}
+function decodeAttribution(value) {
+  if (!value || value.length > ATTRIBUTION_MAX_LENGTH) return null;
+  try {
+    const parsed = AttributionTouchSchema.safeParse(JSON.parse(value));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+function withAttribution(loginUrl, touch) {
+  if (!touch) return loginUrl;
+  const encoded = encodeAttribution(touch);
+  if (!encoded) return loginUrl;
+  const url = new URL(loginUrl);
+  url.searchParams.set(ATTRIBUTION_PARAM, encoded);
+  return url.toString();
+}
+
+// src/contracts/commerce.ts
+import { z as z10 } from "zod";
+var COMMERCE_GATEWAYS = ["abacatepay", "kiwify", "hotmart", "mercadopago", "custom"];
+var CommerceGatewaySchema = z10.enum(COMMERCE_GATEWAYS);
+var COMMERCE_EVENT_TYPES = [
+  "sale.approved",
+  "sale.refunded",
+  "sale.chargeback",
+  "subscription.started",
+  "subscription.renewed",
+  "subscription.past_due",
+  "subscription.canceled"
+];
+var CommerceEventTypeSchema = z10.enum(COMMERCE_EVENT_TYPES);
+var COMMERCE_EVENT_VERIFICATION = ["verified", "unverified"];
+var CommerceEventVerificationSchema = z10.enum(COMMERCE_EVENT_VERIFICATION);
+var COMMERCE_REF_PARAM = "eg_ref";
+var CommerceEventSchema = z10.object({
+  id: z10.string().uuid(),
+  saas_product_id: z10.string().uuid(),
+  gateway: CommerceGatewaySchema,
+  gateway_event_id: z10.string().min(1).max(200),
+  type: CommerceEventTypeSchema,
+  verification: CommerceEventVerificationSchema,
+  occurred_at: z10.string().datetime(),
+  amount_cents: z10.number().int().nullable(),
+  currency: z10.string().length(3).default("BRL"),
+  customer_email: z10.string().email().nullable(),
+  user_id: z10.string().uuid().nullable(),
+  plan_id: z10.string().uuid().nullable(),
+  eg_ref: z10.string().max(200).nullable(),
+  received_at: z10.string().datetime()
+});
+var ENTITLEMENT_STATUSES = ["active", "past_due", "canceled", "refunded"];
+var EntitlementStatusSchema = z10.enum(ENTITLEMENT_STATUSES);
+var EntitlementSchema = z10.object({
+  user_id: z10.string().uuid(),
+  saas_product_id: z10.string().uuid(),
+  entitlement_key: z10.string().regex(/^[a-z0-9_]{2,60}$/),
+  status: EntitlementStatusSchema,
+  valid_until: z10.string().datetime().nullable(),
+  source_event_id: z10.string().uuid(),
+  updated_at: z10.string().datetime()
+});
+function entitlementGrantsAccess(status) {
+  return status === "active" || status === "past_due";
+}
 export {
+  ATTRIBUTION_MAX_LENGTH,
+  ATTRIBUTION_PARAM,
+  AttributionTouchSchema,
   BulkDeleteUsersSchema,
   BuyerJoinSchema,
+  CLICK_ID_KEYS,
+  COMMERCE_EVENT_TYPES,
+  COMMERCE_EVENT_VERIFICATION,
+  COMMERCE_GATEWAYS,
+  COMMERCE_REF_PARAM,
   CancelSubscriptionSchema,
+  CommerceEventSchema,
+  CommerceEventTypeSchema,
+  CommerceEventVerificationSchema,
+  CommerceGatewaySchema,
   CompleteProfileSchema,
   CreateAdminFeedbackSchema,
   CreateCampaignSchema,
@@ -405,7 +533,10 @@ export {
   CreateSaasProductSchema,
   CreateServiceRequestSchema,
   DeleteVoteSchema,
+  ENTITLEMENT_STATUSES,
   ENTRY_PROFILES,
+  EntitlementSchema,
+  EntitlementStatusSchema,
   EntryProfileSchema,
   EntrySourceSchema,
   ForgotPasswordSchema,
@@ -435,6 +566,7 @@ export {
   SwitchCompanySchema,
   TokenRequestSchema,
   TourProgressSchema,
+  UTM_KEYS,
   UpdateAccountSchema,
   UpdateCampaignSchema,
   UpdateCompanySchema,
@@ -449,8 +581,14 @@ export {
   UpdateUserSchema,
   VerifyTokenSchema,
   VoteItemSchema,
+  decodeAttribution,
+  encodeAttribution,
+  entitlementGrantsAccess,
   hasPermission,
+  isCampaignTouch,
   isProducer,
-  isSuperAdmin
+  isSuperAdmin,
+  readAttributionFromUrl,
+  withAttribution
 };
 //# sourceMappingURL=index.mjs.map
