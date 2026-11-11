@@ -1341,4 +1341,167 @@ declare const UpdateGatewayDomainSchema: z.ZodEffects<z.ZodObject<{
 }>;
 type UpdateGatewayDomainDto = z.infer<typeof UpdateGatewayDomainSchema>;
 
-export { type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, type CancelSubscriptionDto, CancelSubscriptionSchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, ENTRY_PROFILES, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, hasPermission, isProducer, isSuperAdmin };
+/** Nome do parâmetro de query que leva a atribuição ao SSO. */
+declare const ATTRIBUTION_PARAM = "att";
+/** Tamanho máximo aceito do `att` serializado. O resto é descartado. */
+declare const ATTRIBUTION_MAX_LENGTH = 2048;
+declare const UTM_KEYS: readonly ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+declare const CLICK_ID_KEYS: readonly ["gclid", "gbraid", "wbraid", "fbclid", "ttclid", "msclkid"];
+/** Um toque de atribuição: de onde a pessoa veio e quando. */
+declare const AttributionTouchSchema: z.ZodObject<{
+    utm_source: z.ZodOptional<z.ZodString>;
+    utm_medium: z.ZodOptional<z.ZodString>;
+    utm_campaign: z.ZodOptional<z.ZodString>;
+    utm_content: z.ZodOptional<z.ZodString>;
+    utm_term: z.ZodOptional<z.ZodString>;
+    gclid: z.ZodOptional<z.ZodString>;
+    gbraid: z.ZodOptional<z.ZodString>;
+    wbraid: z.ZodOptional<z.ZodString>;
+    fbclid: z.ZodOptional<z.ZodString>;
+    ttclid: z.ZodOptional<z.ZodString>;
+    msclkid: z.ZodOptional<z.ZodString>;
+    referrer: z.ZodOptional<z.ZodString>;
+    landing: z.ZodOptional<z.ZodString>;
+    at: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    at: string;
+    utm_source?: string | undefined;
+    utm_medium?: string | undefined;
+    utm_campaign?: string | undefined;
+    utm_content?: string | undefined;
+    utm_term?: string | undefined;
+    referrer?: string | undefined;
+    landing?: string | undefined;
+    gclid?: string | undefined;
+    gbraid?: string | undefined;
+    wbraid?: string | undefined;
+    fbclid?: string | undefined;
+    ttclid?: string | undefined;
+    msclkid?: string | undefined;
+}, {
+    at: string;
+    utm_source?: string | undefined;
+    utm_medium?: string | undefined;
+    utm_campaign?: string | undefined;
+    utm_content?: string | undefined;
+    utm_term?: string | undefined;
+    referrer?: string | undefined;
+    landing?: string | undefined;
+    gclid?: string | undefined;
+    gbraid?: string | undefined;
+    wbraid?: string | undefined;
+    fbclid?: string | undefined;
+    ttclid?: string | undefined;
+    msclkid?: string | undefined;
+}>;
+type AttributionTouch = z.infer<typeof AttributionTouchSchema>;
+/** Tem UTM ou click ID? Toque só com referrer não sobrescreve o último toque de campanha. */
+declare function isCampaignTouch(touch: AttributionTouch): boolean;
+/**
+ * Lê a atribuição de uma URL de entrada (a página que a pessoa abriu).
+ * Devolve `null` se não houver UTM nem click ID, para não gravar visita direta como campanha.
+ */
+declare function readAttributionFromUrl(pageUrl: string, options?: {
+    referrer?: string;
+    now?: Date;
+}): AttributionTouch | null;
+/** Serializa para o parâmetro `att`. URLSearchParams cuida da codificação. */
+declare function encodeAttribution(touch: AttributionTouch): string;
+/** Lê o `att` recebido. Valor inválido, grande demais ou sem campanha vira `null`, sem erro. */
+declare function decodeAttribution(value: string | null | undefined): AttributionTouch | null;
+/** Acrescenta `att` ao link de login do SSO, preservando os demais parâmetros. */
+declare function withAttribution(loginUrl: string, touch: AttributionTouch | null): string;
+
+declare const COMMERCE_GATEWAYS: readonly ["abacatepay", "kiwify", "hotmart", "mercadopago", "custom"];
+declare const CommerceGatewaySchema: z.ZodEnum<["abacatepay", "kiwify", "hotmart", "mercadopago", "custom"]>;
+type CommerceGateway = z.infer<typeof CommerceGatewaySchema>;
+declare const COMMERCE_EVENT_TYPES: readonly ["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled"];
+declare const CommerceEventTypeSchema: z.ZodEnum<["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled"]>;
+type CommerceEventType = z.infer<typeof CommerceEventTypeSchema>;
+/** `verified`: assinatura do gateway conferida. `unverified` é gravado, mas não muda acesso. */
+declare const COMMERCE_EVENT_VERIFICATION: readonly ["verified", "unverified"];
+declare const CommerceEventVerificationSchema: z.ZodEnum<["verified", "unverified"]>;
+/** Nome do parâmetro que liga o checkout ao usuário do SSO (vai no link do gateway). */
+declare const COMMERCE_REF_PARAM = "eg_ref";
+/** Evento já normalizado, como gravado em `commerce_events` e devolvido pela API. */
+declare const CommerceEventSchema: z.ZodObject<{
+    id: z.ZodString;
+    saas_product_id: z.ZodString;
+    gateway: z.ZodEnum<["abacatepay", "kiwify", "hotmart", "mercadopago", "custom"]>;
+    gateway_event_id: z.ZodString;
+    type: z.ZodEnum<["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled"]>;
+    verification: z.ZodEnum<["verified", "unverified"]>;
+    occurred_at: z.ZodString;
+    amount_cents: z.ZodNullable<z.ZodNumber>;
+    currency: z.ZodDefault<z.ZodString>;
+    customer_email: z.ZodNullable<z.ZodString>;
+    user_id: z.ZodNullable<z.ZodString>;
+    plan_id: z.ZodNullable<z.ZodString>;
+    eg_ref: z.ZodNullable<z.ZodString>;
+    received_at: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    type: "sale.approved" | "sale.refunded" | "sale.chargeback" | "subscription.started" | "subscription.renewed" | "subscription.past_due" | "subscription.canceled";
+    user_id: string | null;
+    gateway: "custom" | "abacatepay" | "kiwify" | "hotmart" | "mercadopago";
+    eg_ref: string | null;
+    id: string;
+    saas_product_id: string;
+    gateway_event_id: string;
+    verification: "verified" | "unverified";
+    occurred_at: string;
+    amount_cents: number | null;
+    currency: string;
+    customer_email: string | null;
+    plan_id: string | null;
+    received_at: string;
+}, {
+    type: "sale.approved" | "sale.refunded" | "sale.chargeback" | "subscription.started" | "subscription.renewed" | "subscription.past_due" | "subscription.canceled";
+    user_id: string | null;
+    gateway: "custom" | "abacatepay" | "kiwify" | "hotmart" | "mercadopago";
+    eg_ref: string | null;
+    id: string;
+    saas_product_id: string;
+    gateway_event_id: string;
+    verification: "verified" | "unverified";
+    occurred_at: string;
+    amount_cents: number | null;
+    customer_email: string | null;
+    plan_id: string | null;
+    received_at: string;
+    currency?: string | undefined;
+}>;
+type CommerceEvent = z.infer<typeof CommerceEventSchema>;
+declare const ENTITLEMENT_STATUSES: readonly ["active", "past_due", "canceled", "refunded"];
+declare const EntitlementStatusSchema: z.ZodEnum<["active", "past_due", "canceled", "refunded"]>;
+type EntitlementStatus = z.infer<typeof EntitlementStatusSchema>;
+/** Acesso derivado dos eventos. `entitlement_key` vem do plano (ex.: `vaygo_pro`). */
+declare const EntitlementSchema: z.ZodObject<{
+    user_id: z.ZodString;
+    saas_product_id: z.ZodString;
+    entitlement_key: z.ZodString;
+    status: z.ZodEnum<["active", "past_due", "canceled", "refunded"]>;
+    valid_until: z.ZodNullable<z.ZodString>;
+    source_event_id: z.ZodString;
+    updated_at: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    status: "active" | "past_due" | "canceled" | "refunded";
+    user_id: string;
+    saas_product_id: string;
+    entitlement_key: string;
+    valid_until: string | null;
+    source_event_id: string;
+    updated_at: string;
+}, {
+    status: "active" | "past_due" | "canceled" | "refunded";
+    user_id: string;
+    saas_product_id: string;
+    entitlement_key: string;
+    valid_until: string | null;
+    source_event_id: string;
+    updated_at: string;
+}>;
+type Entitlement = z.infer<typeof EntitlementSchema>;
+/** Estados que liberam o SaaS. `past_due` mantém acesso até o gateway cancelar. */
+declare function entitlementGrantsAccess(status: EntitlementStatus): boolean;
+
+export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, type Entitlement, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, decodeAttribution, encodeAttribution, entitlementGrantsAccess, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, readAttributionFromUrl, withAttribution };
