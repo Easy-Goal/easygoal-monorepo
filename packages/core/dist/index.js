@@ -49,6 +49,7 @@ __export(index_exports, {
   DeleteVoteSchema: () => DeleteVoteSchema,
   ENTITLEMENT_STATUSES: () => ENTITLEMENT_STATUSES,
   ENTRY_PROFILES: () => ENTRY_PROFILES,
+  EntitlementKeySchema: () => EntitlementKeySchema,
   EntitlementSchema: () => EntitlementSchema,
   EntitlementStatusSchema: () => EntitlementStatusSchema,
   EntryProfileSchema: () => EntryProfileSchema,
@@ -470,6 +471,8 @@ var UpdateObjectiveStatusSchema = import_zod8.z.object({
 });
 var PLAN_FREQUENCIES = ["monthly", "quarterly", "yearly", "one_time"];
 var CheckoutUrlSchema = import_zod8.z.string().trim().max(2e3).url("Link inv\xE1lido").refine((value) => value.startsWith("https://"), "O link precisa come\xE7ar com https://");
+var EntitlementKeySchema = import_zod8.z.string().trim().regex(/^[a-z0-9_]{2,60}$/, "Use letras min\xFAsculas, n\xFAmeros e _ (ex.: vaygo_pro)");
+var GatewayOfferIdSchema = import_zod8.z.string().trim().min(1).max(200);
 var CreatePlanLinkSchema = import_zod8.z.object({
   name: import_zod8.z.string().trim().min(1).max(120),
   checkout_url: CheckoutUrlSchema,
@@ -478,7 +481,9 @@ var CreatePlanLinkSchema = import_zod8.z.object({
   frequency: import_zod8.z.enum(PLAN_FREQUENCIES).optional(),
   plan_type: import_zod8.z.string().trim().max(40).optional(),
   position: import_zod8.z.number().int().min(0).optional(),
-  is_sandbox: import_zod8.z.boolean().optional()
+  is_sandbox: import_zod8.z.boolean().optional(),
+  entitlement_key: EntitlementKeySchema.optional(),
+  gateway_offer_id: GatewayOfferIdSchema.optional()
 });
 var UpdatePlanLinkSchema = import_zod8.z.object({
   name: import_zod8.z.string().trim().min(1).max(120),
@@ -487,7 +492,9 @@ var UpdatePlanLinkSchema = import_zod8.z.object({
   price: import_zod8.z.number().positive().nullable(),
   frequency: import_zod8.z.enum(PLAN_FREQUENCIES).nullable(),
   position: import_zod8.z.number().int().min(0),
-  is_active: import_zod8.z.boolean()
+  is_active: import_zod8.z.boolean(),
+  entitlement_key: EntitlementKeySchema.nullable(),
+  gateway_offer_id: GatewayOfferIdSchema.nullable()
 }).partial().refine((value) => Object.keys(value).length > 0, "Nenhum campo para atualizar");
 var GatewayDomainSchema = import_zod8.z.object({
   domain: import_zod8.z.string().trim().toLowerCase().max(253).regex(/^(?!-)[a-z0-9-]{1,63}(\.(?!-)[a-z0-9-]{1,63})+$/, "Dom\xEDnio inv\xE1lido"),
@@ -645,6 +652,7 @@ function entitlementGrantsAccess(status) {
   DeleteVoteSchema,
   ENTITLEMENT_STATUSES,
   ENTRY_PROFILES,
+  EntitlementKeySchema,
   EntitlementSchema,
   EntitlementStatusSchema,
   EntryProfileSchema,

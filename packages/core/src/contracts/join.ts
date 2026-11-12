@@ -74,6 +74,15 @@ const CheckoutUrlSchema = z
   .url('Link inválido')
   .refine((value) => value.startsWith('https://'), 'O link precisa começar com https://');
 
+/** Acesso que o plano libera no SaaS (ex.: vaygo_pro). Vem para entitlements quando o gateway avisa a venda. */
+export const EntitlementKeySchema = z
+  .string()
+  .trim()
+  .regex(/^[a-z0-9_]{2,60}$/, 'Use letras minúsculas, números e _ (ex.: vaygo_pro)');
+
+/** Id do produto ou da oferta no gateway, para saber qual plano o webhook está pagando. */
+const GatewayOfferIdSchema = z.string().trim().min(1).max(200);
+
 /** Plano do produto como link do gateway: o preço é opcional, porque fica no gateway. */
 export const CreatePlanLinkSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -84,6 +93,8 @@ export const CreatePlanLinkSchema = z.object({
   plan_type: z.string().trim().max(40).optional(),
   position: z.number().int().min(0).optional(),
   is_sandbox: z.boolean().optional(),
+  entitlement_key: EntitlementKeySchema.optional(),
+  gateway_offer_id: GatewayOfferIdSchema.optional(),
 });
 export type CreatePlanLinkDto = z.infer<typeof CreatePlanLinkSchema>;
 
@@ -96,6 +107,8 @@ export const UpdatePlanLinkSchema = z
     frequency: z.enum(PLAN_FREQUENCIES).nullable(),
     position: z.number().int().min(0),
     is_active: z.boolean(),
+    entitlement_key: EntitlementKeySchema.nullable(),
+    gateway_offer_id: GatewayOfferIdSchema.nullable(),
   })
   .partial()
   .refine((value) => Object.keys(value).length > 0, 'Nenhum campo para atualizar');
