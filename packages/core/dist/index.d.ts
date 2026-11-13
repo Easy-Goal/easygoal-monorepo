@@ -1521,5 +1521,75 @@ declare const EntitlementSchema: z.ZodObject<{
 type Entitlement = z.infer<typeof EntitlementSchema>;
 /** Estados que liberam o SaaS. `past_due` mantém acesso até o gateway cancelar. */
 declare function entitlementGrantsAccess(status: EntitlementStatus): boolean;
+/** Como o produtor classifica cada produto/oferta do gateway dele. Obrigatório no onboarding. */
+declare const OFFER_KINDS: readonly ["recurring", "one_time", "order_bump", "upsell"];
+declare const OfferKindSchema: z.ZodEnum<["recurring", "one_time", "order_bump", "upsell"]>;
+type OfferKind = z.infer<typeof OfferKindSchema>;
+declare const OFFER_KIND_LABELS: Record<OfferKind, string>;
+/**
+ * Etapas que o onboarding valida com dados reais. Nenhuma bloqueia o SaaS (decisão 2 da s361):
+ * elas mostram o que já foi visto funcionando. Só `human_approval` depende de uma pessoa.
+ */
+declare const VALIDATION_STEPS: readonly ["webhook_verified", "offers_categorized", "page_visit", "login", "sale", "subscription", "human_approval"];
+declare const ValidationStepSchema: z.ZodEnum<["webhook_verified", "offers_categorized", "page_visit", "login", "sale", "subscription", "human_approval"]>;
+type ValidationStep = z.infer<typeof ValidationStepSchema>;
+declare const VALIDATION_STEP_STATUSES: readonly ["pending", "ok", "not_applicable"];
+declare const ValidationStepStateSchema: z.ZodObject<{
+    step: z.ZodEnum<["webhook_verified", "offers_categorized", "page_visit", "login", "sale", "subscription", "human_approval"]>;
+    status: z.ZodEnum<["pending", "ok", "not_applicable"]>;
+    /** Quando foi visto pela primeira vez (ISO) — ou null se pendente. */
+    seen_at: z.ZodNullable<z.ZodString>;
+    /** Detalhe curto para o produtor (ex.: "3 de 4 ofertas categorizadas"). */
+    detail: z.ZodNullable<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    status: "pending" | "ok" | "not_applicable";
+    step: "webhook_verified" | "offers_categorized" | "page_visit" | "login" | "sale" | "subscription" | "human_approval";
+    seen_at: string | null;
+    detail: string | null;
+}, {
+    status: "pending" | "ok" | "not_applicable";
+    step: "webhook_verified" | "offers_categorized" | "page_visit" | "login" | "sale" | "subscription" | "human_approval";
+    seen_at: string | null;
+    detail: string | null;
+}>;
+type ValidationStepState = z.infer<typeof ValidationStepStateSchema>;
+/** Gateway liberado para o produtor escolher: só os que têm adaptador na API (decisão 9). */
+declare const GatewayOptionSchema: z.ZodObject<{
+    gateway: z.ZodEnum<["abacatepay", "kiwify", "hotmart", "mercadopago", "custom"]>;
+    label: z.ZodString;
+    /** URL que o produtor cola no painel do gateway, já com o gateway e a chave do produto. */
+    webhook_path: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    gateway: "custom" | "abacatepay" | "kiwify" | "hotmart" | "mercadopago";
+    label: string;
+    webhook_path: string;
+}, {
+    gateway: "custom" | "abacatepay" | "kiwify" | "hotmart" | "mercadopago";
+    label: string;
+    webhook_path: string;
+}>;
+type GatewayOption = z.infer<typeof GatewayOptionSchema>;
 
-export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, decodeAttribution, encodeAttribution, entitlementGrantsAccess, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, readAttributionFromUrl, withAttribution };
+/** Centavos inteiros. Alias documental — o compilador aceita `number`. */
+type Cents = number;
+/** Garante centavos inteiros e finitos; qualquer outra coisa vira 0. */
+declare function toCents(value: number | null | undefined): Cents;
+/** Reais (ex.: 197.9 ou "197,90") → centavos. Usar só na fronteira com dados em reais. */
+declare function reaisToCents(reais: number | string | null | undefined): Cents;
+/** Centavos → reais (número), para APIs externas que exigem reais. */
+declare function centsToReais(cents: Cents | null | undefined): number;
+/**
+ * Centavos → "R$ 1.234,56". O espaço entre "R$" e o número é inquebrável,
+ * então o valor nunca quebra linha no meio.
+ */
+declare function formatBRL(cents: Cents | null | undefined): string;
+/** Centavos → "R$ 1,2 mil" / "R$ 3,4 mi" para cards estreitos. */
+declare function formatBRLCompact(cents: Cents | null | undefined): string;
+/** Máscara de input estilo caixa eletrônico: "4999" → "49,99". */
+declare function maskBRLInput(raw: string): string;
+/** Texto mascarado ("49,99") → centavos (4999). */
+declare function brlInputToCents(display: string): Cents;
+/** Valor de um período convertido para o mês (MRR). */
+declare function monthlyCents(cents: Cents | null | undefined, frequency: string | null | undefined): Cents;
+
+export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type Cents, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type GatewayOption, GatewayOptionSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, OFFER_KINDS, OFFER_KIND_LABELS, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, type OfferKind, OfferKindSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, VALIDATION_STEPS, VALIDATION_STEP_STATUSES, type ValidationStep, ValidationStepSchema, type ValidationStepState, ValidationStepStateSchema, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, brlInputToCents, centsToReais, decodeAttribution, encodeAttribution, entitlementGrantsAccess, formatBRL, formatBRLCompact, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, maskBRLInput, monthlyCents, readAttributionFromUrl, reaisToCents, toCents, withAttribution };

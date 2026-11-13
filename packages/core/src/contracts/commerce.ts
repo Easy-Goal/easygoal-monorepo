@@ -66,3 +66,54 @@ export type Entitlement = z.infer<typeof EntitlementSchema>;
 export function entitlementGrantsAccess(status: EntitlementStatus): boolean {
   return status === 'active' || status === 'past_due';
 }
+
+// ─── Categorização das ofertas e validação de ponta a ponta (plano s361, F3) ──
+
+/** Como o produtor classifica cada produto/oferta do gateway dele. Obrigatório no onboarding. */
+export const OFFER_KINDS = ['recurring', 'one_time', 'order_bump', 'upsell'] as const;
+export const OfferKindSchema = z.enum(OFFER_KINDS);
+export type OfferKind = z.infer<typeof OfferKindSchema>;
+
+export const OFFER_KIND_LABELS: Record<OfferKind, string> = {
+  recurring: 'Assinatura recorrente',
+  one_time: 'Venda avulsa',
+  order_bump: 'Order bump',
+  upsell: 'Upsell',
+};
+
+/**
+ * Etapas que o onboarding valida com dados reais. Nenhuma bloqueia o SaaS (decisão 2 da s361):
+ * elas mostram o que já foi visto funcionando. Só `human_approval` depende de uma pessoa.
+ */
+export const VALIDATION_STEPS = [
+  'webhook_verified',   // chegou um evento com assinatura do gateway conferida
+  'offers_categorized', // toda oferta vista nos eventos tem plano e tipo
+  'page_visit',         // visita registrada na página do SaaS antes da contratação
+  'login',              // comprador entrou no SaaS pelo SSO
+  'sale',               // sale.approved verificado
+  'subscription',       // subscription.started verificado (só se houver oferta recorrente)
+  'human_approval',     // aprovação final por um admin da Easy Goal
+] as const;
+export const ValidationStepSchema = z.enum(VALIDATION_STEPS);
+export type ValidationStep = z.infer<typeof ValidationStepSchema>;
+
+export const VALIDATION_STEP_STATUSES = ['pending', 'ok', 'not_applicable'] as const;
+
+export const ValidationStepStateSchema = z.object({
+  step: ValidationStepSchema,
+  status: z.enum(VALIDATION_STEP_STATUSES),
+  /** Quando foi visto pela primeira vez (ISO) — ou null se pendente. */
+  seen_at: z.string().datetime().nullable(),
+  /** Detalhe curto para o produtor (ex.: "3 de 4 ofertas categorizadas"). */
+  detail: z.string().max(200).nullable(),
+});
+export type ValidationStepState = z.infer<typeof ValidationStepStateSchema>;
+
+/** Gateway liberado para o produtor escolher: só os que têm adaptador na API (decisão 9). */
+export const GatewayOptionSchema = z.object({
+  gateway: CommerceGatewaySchema,
+  label: z.string(),
+  /** URL que o produtor cola no painel do gateway, já com o gateway e a chave do produto. */
+  webhook_path: z.string(),
+});
+export type GatewayOption = z.infer<typeof GatewayOptionSchema>;

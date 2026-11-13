@@ -32,3 +32,6 @@ export type {
 
 // ─── Contratos (zod) ─────────────────────────────────────────────────────────
 export * from './contracts';
+
+// ─── Dinheiro (centavos inteiros) ────────────────────────────────────────────
+export * from './money';
