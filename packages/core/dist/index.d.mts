@@ -1522,4 +1522,259 @@ type Entitlement = z.infer<typeof EntitlementSchema>;
 /** Estados que liberam o SaaS. `past_due` mantém acesso até o gateway cancelar. */
 declare function entitlementGrantsAccess(status: EntitlementStatus): boolean;
 
-export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type DeleteVoteDto, DeleteVoteSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, decodeAttribution, encodeAttribution, entitlementGrantsAccess, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, readAttributionFromUrl, withAttribution };
+declare const DELIVERABLE_GOALS: readonly ["sell_more", "operate_with_less_effort", "launch_or_scale_product", "strategy"];
+declare const DeliverableGoalSchema: z.ZodEnum<["sell_more", "operate_with_less_effort", "launch_or_scale_product", "strategy"]>;
+type DeliverableGoal = z.infer<typeof DeliverableGoalSchema>;
+declare const DELIVERABLE_GOAL_LABELS: Record<DeliverableGoal, string>;
+declare const DELIVERABLE_MODALITIES: readonly ["one_off", "setup", "implementation", "recurring"];
+declare const DeliverableModalitySchema: z.ZodEnum<["one_off", "setup", "implementation", "recurring"]>;
+type DeliverableModality = z.infer<typeof DeliverableModalitySchema>;
+declare const DELIVERABLE_MODALITY_LABELS: Record<DeliverableModality, string>;
+declare const RECURRENCE_INTERVALS: readonly ["monthly", "quarterly"];
+declare const RecurrenceIntervalSchema: z.ZodEnum<["monthly", "quarterly"]>;
+type RecurrenceInterval = z.infer<typeof RecurrenceIntervalSchema>;
+declare const RECURRENCE_INTERVAL_LABELS: Record<RecurrenceInterval, string>;
+declare const DELIVERABLE_EXECUTORS: readonly ["easy_goal", "builder", "both"];
+declare const DeliverableExecutorSchema: z.ZodEnum<["easy_goal", "builder", "both"]>;
+type DeliverableExecutor = z.infer<typeof DeliverableExecutorSchema>;
+declare const DELIVERABLE_EXECUTOR_LABELS: Record<DeliverableExecutor, string>;
+/** Sentido em que a métrica de resultado do cliente melhora (custo por lead cai; conversão sobe). */
+declare const METRIC_DIRECTIONS: readonly ["up", "down"];
+declare const MetricDirectionSchema: z.ZodEnum<["up", "down"]>;
+type MetricDirection = z.infer<typeof MetricDirectionSchema>;
+declare const DeliverableCategorySchema: z.ZodObject<{
+    slug: z.ZodString;
+    name: z.ZodString;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    goals: z.ZodArray<z.ZodEnum<["sell_more", "operate_with_less_effort", "launch_or_scale_product", "strategy"]>, "many">;
+    result_metric_name: z.ZodString;
+    result_metric_unit: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    result_metric_direction: z.ZodDefault<z.ZodEnum<["up", "down"]>>;
+    is_active: z.ZodDefault<z.ZodBoolean>;
+    sort_order: z.ZodDefault<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    slug: string;
+    is_active: boolean;
+    goals: ("sell_more" | "operate_with_less_effort" | "launch_or_scale_product" | "strategy")[];
+    result_metric_name: string;
+    result_metric_direction: "up" | "down";
+    sort_order: number;
+    description?: string | null | undefined;
+    result_metric_unit?: string | null | undefined;
+}, {
+    name: string;
+    slug: string;
+    goals: ("sell_more" | "operate_with_less_effort" | "launch_or_scale_product" | "strategy")[];
+    result_metric_name: string;
+    description?: string | null | undefined;
+    is_active?: boolean | undefined;
+    result_metric_unit?: string | null | undefined;
+    result_metric_direction?: "up" | "down" | undefined;
+    sort_order?: number | undefined;
+}>;
+type DeliverableCategoryDto = z.infer<typeof DeliverableCategorySchema>;
+declare const UpdateDeliverableCategorySchema: z.ZodObject<Omit<{
+    slug: z.ZodOptional<z.ZodString>;
+    name: z.ZodOptional<z.ZodString>;
+    description: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+    goals: z.ZodOptional<z.ZodArray<z.ZodEnum<["sell_more", "operate_with_less_effort", "launch_or_scale_product", "strategy"]>, "many">>;
+    result_metric_name: z.ZodOptional<z.ZodString>;
+    result_metric_unit: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+    result_metric_direction: z.ZodOptional<z.ZodDefault<z.ZodEnum<["up", "down"]>>>;
+    is_active: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
+    sort_order: z.ZodOptional<z.ZodDefault<z.ZodNumber>>;
+}, "slug">, "strip", z.ZodTypeAny, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    is_active?: boolean | undefined;
+    goals?: ("sell_more" | "operate_with_less_effort" | "launch_or_scale_product" | "strategy")[] | undefined;
+    result_metric_name?: string | undefined;
+    result_metric_unit?: string | null | undefined;
+    result_metric_direction?: "up" | "down" | undefined;
+    sort_order?: number | undefined;
+}, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    is_active?: boolean | undefined;
+    goals?: ("sell_more" | "operate_with_less_effort" | "launch_or_scale_product" | "strategy")[] | undefined;
+    result_metric_name?: string | undefined;
+    result_metric_unit?: string | null | undefined;
+    result_metric_direction?: "up" | "down" | undefined;
+    sort_order?: number | undefined;
+}>;
+type UpdateDeliverableCategoryDto = z.infer<typeof UpdateDeliverableCategorySchema>;
+/** Ferramenta que o entregável exige, sempre com o motivo (ADR 070). */
+declare const RequiredToolSchema: z.ZodObject<{
+    name: z.ZodString;
+    reason: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    reason: string;
+}, {
+    name: string;
+    reason: string;
+}>;
+type RequiredTool = z.infer<typeof RequiredToolSchema>;
+/** Regra da ficha: recorrência tem ciclo e não tem prazo; as demais modalidades têm prazo e não têm ciclo. */
+declare function checkTemplateTiming(t: {
+    modality: DeliverableModality;
+    default_lead_time_days?: number | null;
+    recurrence_interval?: RecurrenceInterval | null;
+}, ctx: z.RefinementCtx): void;
+declare const DeliverableTemplateSchema: z.ZodEffects<z.ZodObject<{
+    category_id: z.ZodString;
+    name: z.ZodString;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    modality: z.ZodEnum<["one_off", "setup", "implementation", "recurring"]>;
+    /** Dias úteis até a entrega. Obrigatório fora da recorrência; na recorrência vale o ciclo. */
+    default_lead_time_days: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    recurrence_interval: z.ZodOptional<z.ZodNullable<z.ZodEnum<["monthly", "quarterly"]>>>;
+    default_effort_hours: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    acceptance_criteria: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
+    required_tools: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        name: z.ZodString;
+        reason: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        reason: string;
+    }, {
+        name: string;
+        reason: string;
+    }>, "many">>;
+    base_price_cents: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    executor: z.ZodDefault<z.ZodEnum<["easy_goal", "builder", "both"]>>;
+    is_active: z.ZodDefault<z.ZodBoolean>;
+    sort_order: z.ZodDefault<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    is_active: boolean;
+    sort_order: number;
+    category_id: string;
+    modality: "one_off" | "setup" | "implementation" | "recurring";
+    acceptance_criteria: string[];
+    required_tools: {
+        name: string;
+        reason: string;
+    }[];
+    executor: "builder" | "easy_goal" | "both";
+    description?: string | null | undefined;
+    default_lead_time_days?: number | null | undefined;
+    recurrence_interval?: "monthly" | "quarterly" | null | undefined;
+    default_effort_hours?: number | null | undefined;
+    base_price_cents?: number | null | undefined;
+}, {
+    name: string;
+    category_id: string;
+    modality: "one_off" | "setup" | "implementation" | "recurring";
+    description?: string | null | undefined;
+    is_active?: boolean | undefined;
+    sort_order?: number | undefined;
+    default_lead_time_days?: number | null | undefined;
+    recurrence_interval?: "monthly" | "quarterly" | null | undefined;
+    default_effort_hours?: number | null | undefined;
+    acceptance_criteria?: string[] | undefined;
+    required_tools?: {
+        name: string;
+        reason: string;
+    }[] | undefined;
+    base_price_cents?: number | null | undefined;
+    executor?: "builder" | "easy_goal" | "both" | undefined;
+}>, {
+    name: string;
+    is_active: boolean;
+    sort_order: number;
+    category_id: string;
+    modality: "one_off" | "setup" | "implementation" | "recurring";
+    acceptance_criteria: string[];
+    required_tools: {
+        name: string;
+        reason: string;
+    }[];
+    executor: "builder" | "easy_goal" | "both";
+    description?: string | null | undefined;
+    default_lead_time_days?: number | null | undefined;
+    recurrence_interval?: "monthly" | "quarterly" | null | undefined;
+    default_effort_hours?: number | null | undefined;
+    base_price_cents?: number | null | undefined;
+}, {
+    name: string;
+    category_id: string;
+    modality: "one_off" | "setup" | "implementation" | "recurring";
+    description?: string | null | undefined;
+    is_active?: boolean | undefined;
+    sort_order?: number | undefined;
+    default_lead_time_days?: number | null | undefined;
+    recurrence_interval?: "monthly" | "quarterly" | null | undefined;
+    default_effort_hours?: number | null | undefined;
+    acceptance_criteria?: string[] | undefined;
+    required_tools?: {
+        name: string;
+        reason: string;
+    }[] | undefined;
+    base_price_cents?: number | null | undefined;
+    executor?: "builder" | "easy_goal" | "both" | undefined;
+}>;
+type DeliverableTemplateDto = z.infer<typeof DeliverableTemplateSchema>;
+/** PATCH parcial; a API junta com a ficha atual e valida o resultado com `DeliverableTemplateSchema`. */
+declare const UpdateDeliverableTemplateSchema: z.ZodObject<{
+    category_id: z.ZodOptional<z.ZodString>;
+    name: z.ZodOptional<z.ZodString>;
+    description: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+    modality: z.ZodOptional<z.ZodEnum<["one_off", "setup", "implementation", "recurring"]>>;
+    default_lead_time_days: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
+    recurrence_interval: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodEnum<["monthly", "quarterly"]>>>>;
+    default_effort_hours: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
+    acceptance_criteria: z.ZodOptional<z.ZodDefault<z.ZodArray<z.ZodString, "many">>>;
+    required_tools: z.ZodOptional<z.ZodDefault<z.ZodArray<z.ZodObject<{
+        name: z.ZodString;
+        reason: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        reason: string;
+    }, {
+        name: string;
+        reason: string;
+    }>, "many">>>;
+    base_price_cents: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
+    executor: z.ZodOptional<z.ZodDefault<z.ZodEnum<["easy_goal", "builder", "both"]>>>;
+    is_active: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
+    sort_order: z.ZodOptional<z.ZodDefault<z.ZodNumber>>;
+}, "strip", z.ZodTypeAny, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    is_active?: boolean | undefined;
+    sort_order?: number | undefined;
+    category_id?: string | undefined;
+    modality?: "one_off" | "setup" | "implementation" | "recurring" | undefined;
+    default_lead_time_days?: number | null | undefined;
+    recurrence_interval?: "monthly" | "quarterly" | null | undefined;
+    default_effort_hours?: number | null | undefined;
+    acceptance_criteria?: string[] | undefined;
+    required_tools?: {
+        name: string;
+        reason: string;
+    }[] | undefined;
+    base_price_cents?: number | null | undefined;
+    executor?: "builder" | "easy_goal" | "both" | undefined;
+}, {
+    name?: string | undefined;
+    description?: string | null | undefined;
+    is_active?: boolean | undefined;
+    sort_order?: number | undefined;
+    category_id?: string | undefined;
+    modality?: "one_off" | "setup" | "implementation" | "recurring" | undefined;
+    default_lead_time_days?: number | null | undefined;
+    recurrence_interval?: "monthly" | "quarterly" | null | undefined;
+    default_effort_hours?: number | null | undefined;
+    acceptance_criteria?: string[] | undefined;
+    required_tools?: {
+        name: string;
+        reason: string;
+    }[] | undefined;
+    base_price_cents?: number | null | undefined;
+    executor?: "builder" | "easy_goal" | "both" | undefined;
+}>;
+type UpdateDeliverableTemplateDto = z.infer<typeof UpdateDeliverableTemplateSchema>;
+
+export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerJoinDto, BuyerJoinSchema, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, DELIVERABLE_EXECUTORS, DELIVERABLE_EXECUTOR_LABELS, DELIVERABLE_GOALS, DELIVERABLE_GOAL_LABELS, DELIVERABLE_MODALITIES, DELIVERABLE_MODALITY_LABELS, type DeleteVoteDto, DeleteVoteSchema, type DeliverableCategoryDto, DeliverableCategorySchema, type DeliverableExecutor, DeliverableExecutorSchema, type DeliverableGoal, DeliverableGoalSchema, type DeliverableModality, DeliverableModalitySchema, type DeliverableTemplateDto, DeliverableTemplateSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type LoginDto, LoginSchema, METRIC_DIRECTIONS, type MetricDirection, MetricDirectionSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, RECURRENCE_INTERVALS, RECURRENCE_INTERVAL_LABELS, type RecurrenceInterval, RecurrenceIntervalSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type RequiredTool, RequiredToolSchema, type ResetPasswordDto, ResetPasswordSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateDeliverableCategoryDto, UpdateDeliverableCategorySchema, type UpdateDeliverableTemplateDto, UpdateDeliverableTemplateSchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, checkTemplateTiming, decodeAttribution, encodeAttribution, entitlementGrantsAccess, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, readAttributionFromUrl, withAttribution };

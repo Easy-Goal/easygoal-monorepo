@@ -511,6 +511,78 @@ var EntitlementSchema = z10.object({
 function entitlementGrantsAccess(status) {
   return status === "active" || status === "past_due";
 }
+
+// src/contracts/deliverables.ts
+import { z as z11 } from "zod";
+var DELIVERABLE_GOALS = ["sell_more", "operate_with_less_effort", "launch_or_scale_product", "strategy"];
+var DeliverableGoalSchema = z11.enum(DELIVERABLE_GOALS);
+var DELIVERABLE_GOAL_LABELS = {
+  sell_more: "Vender mais",
+  operate_with_less_effort: "Operar com menos esfor\xE7o",
+  launch_or_scale_product: "Lan\xE7ar ou escalar um produto",
+  strategy: "Estrat\xE9gia e consultoria"
+};
+var DELIVERABLE_MODALITIES = ["one_off", "setup", "implementation", "recurring"];
+var DeliverableModalitySchema = z11.enum(DELIVERABLE_MODALITIES);
+var DELIVERABLE_MODALITY_LABELS = {
+  one_off: "Avulso",
+  setup: "Setup",
+  implementation: "Implementa\xE7\xE3o",
+  recurring: "Recorr\xEAncia"
+};
+var RECURRENCE_INTERVALS = ["monthly", "quarterly"];
+var RecurrenceIntervalSchema = z11.enum(RECURRENCE_INTERVALS);
+var RECURRENCE_INTERVAL_LABELS = { monthly: "Mensal", quarterly: "Trimestral" };
+var DELIVERABLE_EXECUTORS = ["easy_goal", "builder", "both"];
+var DeliverableExecutorSchema = z11.enum(DELIVERABLE_EXECUTORS);
+var DELIVERABLE_EXECUTOR_LABELS = {
+  easy_goal: "Easy Goal",
+  builder: "Builder",
+  both: "Easy Goal + builder"
+};
+var METRIC_DIRECTIONS = ["up", "down"];
+var MetricDirectionSchema = z11.enum(METRIC_DIRECTIONS);
+var slug = z11.string().trim().min(2).max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use letras min\xFAsculas, n\xFAmeros e h\xEDfen");
+var text = (max) => z11.string().trim().min(1).max(max);
+var DeliverableCategorySchema = z11.object({
+  slug,
+  name: text(80),
+  description: z11.string().trim().max(500).nullish(),
+  goals: z11.array(DeliverableGoalSchema).min(1, "Escolha ao menos um objetivo").max(DELIVERABLE_GOALS.length),
+  result_metric_name: text(120),
+  result_metric_unit: z11.string().trim().max(20).nullish(),
+  result_metric_direction: MetricDirectionSchema.default("up"),
+  is_active: z11.boolean().default(true),
+  sort_order: z11.number().int().min(0).max(1e3).default(0)
+});
+var UpdateDeliverableCategorySchema = DeliverableCategorySchema.partial().omit({ slug: true });
+var RequiredToolSchema = z11.object({ name: text(80), reason: text(200) });
+var templateFields = z11.object({
+  category_id: z11.string().uuid(),
+  name: text(120),
+  description: z11.string().trim().max(1e3).nullish(),
+  modality: DeliverableModalitySchema,
+  /** Dias úteis até a entrega. Obrigatório fora da recorrência; na recorrência vale o ciclo. */
+  default_lead_time_days: z11.number().int().min(1).max(365).nullish(),
+  recurrence_interval: RecurrenceIntervalSchema.nullish(),
+  default_effort_hours: z11.number().min(0).max(2e3).nullish(),
+  acceptance_criteria: z11.array(text(300)).max(20).default([]),
+  required_tools: z11.array(RequiredToolSchema).max(20).default([]),
+  base_price_cents: z11.number().int().min(0).nullish(),
+  executor: DeliverableExecutorSchema.default("easy_goal"),
+  is_active: z11.boolean().default(true),
+  sort_order: z11.number().int().min(0).max(1e3).default(0)
+});
+function checkTemplateTiming(t, ctx) {
+  if (t.modality === "recurring") {
+    if (!t.recurrence_interval) ctx.addIssue({ code: z11.ZodIssueCode.custom, path: ["recurrence_interval"], message: "Recorr\xEAncia precisa do ciclo" });
+  } else {
+    if (!t.default_lead_time_days) ctx.addIssue({ code: z11.ZodIssueCode.custom, path: ["default_lead_time_days"], message: "Informe o prazo em dias \xFAteis" });
+    if (t.recurrence_interval) ctx.addIssue({ code: z11.ZodIssueCode.custom, path: ["recurrence_interval"], message: "S\xF3 a recorr\xEAncia tem ciclo" });
+  }
+}
+var DeliverableTemplateSchema = templateFields.superRefine(checkTemplateTiming);
+var UpdateDeliverableTemplateSchema = templateFields.partial();
 export {
   ATTRIBUTION_MAX_LENGTH,
   ATTRIBUTION_PARAM,
@@ -538,7 +610,18 @@ export {
   CreateProducerSchema,
   CreateSaasProductSchema,
   CreateServiceRequestSchema,
+  DELIVERABLE_EXECUTORS,
+  DELIVERABLE_EXECUTOR_LABELS,
+  DELIVERABLE_GOALS,
+  DELIVERABLE_GOAL_LABELS,
+  DELIVERABLE_MODALITIES,
+  DELIVERABLE_MODALITY_LABELS,
   DeleteVoteSchema,
+  DeliverableCategorySchema,
+  DeliverableExecutorSchema,
+  DeliverableGoalSchema,
+  DeliverableModalitySchema,
+  DeliverableTemplateSchema,
   ENTITLEMENT_STATUSES,
   ENTRY_PROFILES,
   EntitlementKeySchema,
@@ -552,6 +635,8 @@ export {
   InviteProducerSchema,
   KiwifyConfigSchema,
   LoginSchema,
+  METRIC_DIRECTIONS,
+  MetricDirectionSchema,
   OBJECTIVE_STATUSES,
   ObjectiveDescriptionSchema,
   ObjectiveStatusSchema,
@@ -561,9 +646,13 @@ export {
   PhoneSchema,
   PreviewCampaignSchema,
   ProducerJoinSchema,
+  RECURRENCE_INTERVALS,
+  RECURRENCE_INTERVAL_LABELS,
+  RecurrenceIntervalSchema,
   RegisterSchema,
   RejectProductSchema,
   ReopenProductSchema,
+  RequiredToolSchema,
   ResetPasswordSchema,
   SaasSubscriptionStatusSchema,
   ServiceRequestStatusSchema,
@@ -577,6 +666,8 @@ export {
   UpdateAccountSchema,
   UpdateCampaignSchema,
   UpdateCompanySchema,
+  UpdateDeliverableCategorySchema,
+  UpdateDeliverableTemplateSchema,
   UpdateEmailSchema,
   UpdateGatewayDomainSchema,
   UpdateObjectiveStatusSchema,
@@ -588,6 +679,7 @@ export {
   UpdateUserSchema,
   VerifyTokenSchema,
   VoteItemSchema,
+  checkTemplateTiming,
   decodeAttribution,
   encodeAttribution,
   entitlementGrantsAccess,

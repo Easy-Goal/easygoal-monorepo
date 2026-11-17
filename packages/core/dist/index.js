@@ -46,7 +46,18 @@ __export(index_exports, {
   CreateProducerSchema: () => CreateProducerSchema,
   CreateSaasProductSchema: () => CreateSaasProductSchema,
   CreateServiceRequestSchema: () => CreateServiceRequestSchema,
+  DELIVERABLE_EXECUTORS: () => DELIVERABLE_EXECUTORS,
+  DELIVERABLE_EXECUTOR_LABELS: () => DELIVERABLE_EXECUTOR_LABELS,
+  DELIVERABLE_GOALS: () => DELIVERABLE_GOALS,
+  DELIVERABLE_GOAL_LABELS: () => DELIVERABLE_GOAL_LABELS,
+  DELIVERABLE_MODALITIES: () => DELIVERABLE_MODALITIES,
+  DELIVERABLE_MODALITY_LABELS: () => DELIVERABLE_MODALITY_LABELS,
   DeleteVoteSchema: () => DeleteVoteSchema,
+  DeliverableCategorySchema: () => DeliverableCategorySchema,
+  DeliverableExecutorSchema: () => DeliverableExecutorSchema,
+  DeliverableGoalSchema: () => DeliverableGoalSchema,
+  DeliverableModalitySchema: () => DeliverableModalitySchema,
+  DeliverableTemplateSchema: () => DeliverableTemplateSchema,
   ENTITLEMENT_STATUSES: () => ENTITLEMENT_STATUSES,
   ENTRY_PROFILES: () => ENTRY_PROFILES,
   EntitlementKeySchema: () => EntitlementKeySchema,
@@ -60,6 +71,8 @@ __export(index_exports, {
   InviteProducerSchema: () => InviteProducerSchema,
   KiwifyConfigSchema: () => KiwifyConfigSchema,
   LoginSchema: () => LoginSchema,
+  METRIC_DIRECTIONS: () => METRIC_DIRECTIONS,
+  MetricDirectionSchema: () => MetricDirectionSchema,
   OBJECTIVE_STATUSES: () => OBJECTIVE_STATUSES,
   ObjectiveDescriptionSchema: () => ObjectiveDescriptionSchema,
   ObjectiveStatusSchema: () => ObjectiveStatusSchema,
@@ -69,9 +82,13 @@ __export(index_exports, {
   PhoneSchema: () => PhoneSchema,
   PreviewCampaignSchema: () => PreviewCampaignSchema,
   ProducerJoinSchema: () => ProducerJoinSchema,
+  RECURRENCE_INTERVALS: () => RECURRENCE_INTERVALS,
+  RECURRENCE_INTERVAL_LABELS: () => RECURRENCE_INTERVAL_LABELS,
+  RecurrenceIntervalSchema: () => RecurrenceIntervalSchema,
   RegisterSchema: () => RegisterSchema,
   RejectProductSchema: () => RejectProductSchema,
   ReopenProductSchema: () => ReopenProductSchema,
+  RequiredToolSchema: () => RequiredToolSchema,
   ResetPasswordSchema: () => ResetPasswordSchema,
   SaasSubscriptionStatusSchema: () => SaasSubscriptionStatusSchema,
   ServiceRequestStatusSchema: () => ServiceRequestStatusSchema,
@@ -85,6 +102,8 @@ __export(index_exports, {
   UpdateAccountSchema: () => UpdateAccountSchema,
   UpdateCampaignSchema: () => UpdateCampaignSchema,
   UpdateCompanySchema: () => UpdateCompanySchema,
+  UpdateDeliverableCategorySchema: () => UpdateDeliverableCategorySchema,
+  UpdateDeliverableTemplateSchema: () => UpdateDeliverableTemplateSchema,
   UpdateEmailSchema: () => UpdateEmailSchema,
   UpdateGatewayDomainSchema: () => UpdateGatewayDomainSchema,
   UpdateObjectiveStatusSchema: () => UpdateObjectiveStatusSchema,
@@ -96,6 +115,7 @@ __export(index_exports, {
   UpdateUserSchema: () => UpdateUserSchema,
   VerifyTokenSchema: () => VerifyTokenSchema,
   VoteItemSchema: () => VoteItemSchema,
+  checkTemplateTiming: () => checkTemplateTiming,
   decodeAttribution: () => decodeAttribution,
   encodeAttribution: () => encodeAttribution,
   entitlementGrantsAccess: () => entitlementGrantsAccess,
@@ -621,6 +641,78 @@ var EntitlementSchema = import_zod10.z.object({
 function entitlementGrantsAccess(status) {
   return status === "active" || status === "past_due";
 }
+
+// src/contracts/deliverables.ts
+var import_zod11 = require("zod");
+var DELIVERABLE_GOALS = ["sell_more", "operate_with_less_effort", "launch_or_scale_product", "strategy"];
+var DeliverableGoalSchema = import_zod11.z.enum(DELIVERABLE_GOALS);
+var DELIVERABLE_GOAL_LABELS = {
+  sell_more: "Vender mais",
+  operate_with_less_effort: "Operar com menos esfor\xE7o",
+  launch_or_scale_product: "Lan\xE7ar ou escalar um produto",
+  strategy: "Estrat\xE9gia e consultoria"
+};
+var DELIVERABLE_MODALITIES = ["one_off", "setup", "implementation", "recurring"];
+var DeliverableModalitySchema = import_zod11.z.enum(DELIVERABLE_MODALITIES);
+var DELIVERABLE_MODALITY_LABELS = {
+  one_off: "Avulso",
+  setup: "Setup",
+  implementation: "Implementa\xE7\xE3o",
+  recurring: "Recorr\xEAncia"
+};
+var RECURRENCE_INTERVALS = ["monthly", "quarterly"];
+var RecurrenceIntervalSchema = import_zod11.z.enum(RECURRENCE_INTERVALS);
+var RECURRENCE_INTERVAL_LABELS = { monthly: "Mensal", quarterly: "Trimestral" };
+var DELIVERABLE_EXECUTORS = ["easy_goal", "builder", "both"];
+var DeliverableExecutorSchema = import_zod11.z.enum(DELIVERABLE_EXECUTORS);
+var DELIVERABLE_EXECUTOR_LABELS = {
+  easy_goal: "Easy Goal",
+  builder: "Builder",
+  both: "Easy Goal + builder"
+};
+var METRIC_DIRECTIONS = ["up", "down"];
+var MetricDirectionSchema = import_zod11.z.enum(METRIC_DIRECTIONS);
+var slug = import_zod11.z.string().trim().min(2).max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use letras min\xFAsculas, n\xFAmeros e h\xEDfen");
+var text = (max) => import_zod11.z.string().trim().min(1).max(max);
+var DeliverableCategorySchema = import_zod11.z.object({
+  slug,
+  name: text(80),
+  description: import_zod11.z.string().trim().max(500).nullish(),
+  goals: import_zod11.z.array(DeliverableGoalSchema).min(1, "Escolha ao menos um objetivo").max(DELIVERABLE_GOALS.length),
+  result_metric_name: text(120),
+  result_metric_unit: import_zod11.z.string().trim().max(20).nullish(),
+  result_metric_direction: MetricDirectionSchema.default("up"),
+  is_active: import_zod11.z.boolean().default(true),
+  sort_order: import_zod11.z.number().int().min(0).max(1e3).default(0)
+});
+var UpdateDeliverableCategorySchema = DeliverableCategorySchema.partial().omit({ slug: true });
+var RequiredToolSchema = import_zod11.z.object({ name: text(80), reason: text(200) });
+var templateFields = import_zod11.z.object({
+  category_id: import_zod11.z.string().uuid(),
+  name: text(120),
+  description: import_zod11.z.string().trim().max(1e3).nullish(),
+  modality: DeliverableModalitySchema,
+  /** Dias úteis até a entrega. Obrigatório fora da recorrência; na recorrência vale o ciclo. */
+  default_lead_time_days: import_zod11.z.number().int().min(1).max(365).nullish(),
+  recurrence_interval: RecurrenceIntervalSchema.nullish(),
+  default_effort_hours: import_zod11.z.number().min(0).max(2e3).nullish(),
+  acceptance_criteria: import_zod11.z.array(text(300)).max(20).default([]),
+  required_tools: import_zod11.z.array(RequiredToolSchema).max(20).default([]),
+  base_price_cents: import_zod11.z.number().int().min(0).nullish(),
+  executor: DeliverableExecutorSchema.default("easy_goal"),
+  is_active: import_zod11.z.boolean().default(true),
+  sort_order: import_zod11.z.number().int().min(0).max(1e3).default(0)
+});
+function checkTemplateTiming(t, ctx) {
+  if (t.modality === "recurring") {
+    if (!t.recurrence_interval) ctx.addIssue({ code: import_zod11.z.ZodIssueCode.custom, path: ["recurrence_interval"], message: "Recorr\xEAncia precisa do ciclo" });
+  } else {
+    if (!t.default_lead_time_days) ctx.addIssue({ code: import_zod11.z.ZodIssueCode.custom, path: ["default_lead_time_days"], message: "Informe o prazo em dias \xFAteis" });
+    if (t.recurrence_interval) ctx.addIssue({ code: import_zod11.z.ZodIssueCode.custom, path: ["recurrence_interval"], message: "S\xF3 a recorr\xEAncia tem ciclo" });
+  }
+}
+var DeliverableTemplateSchema = templateFields.superRefine(checkTemplateTiming);
+var UpdateDeliverableTemplateSchema = templateFields.partial();
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   ATTRIBUTION_MAX_LENGTH,
@@ -649,7 +741,18 @@ function entitlementGrantsAccess(status) {
   CreateProducerSchema,
   CreateSaasProductSchema,
   CreateServiceRequestSchema,
+  DELIVERABLE_EXECUTORS,
+  DELIVERABLE_EXECUTOR_LABELS,
+  DELIVERABLE_GOALS,
+  DELIVERABLE_GOAL_LABELS,
+  DELIVERABLE_MODALITIES,
+  DELIVERABLE_MODALITY_LABELS,
   DeleteVoteSchema,
+  DeliverableCategorySchema,
+  DeliverableExecutorSchema,
+  DeliverableGoalSchema,
+  DeliverableModalitySchema,
+  DeliverableTemplateSchema,
   ENTITLEMENT_STATUSES,
   ENTRY_PROFILES,
   EntitlementKeySchema,
@@ -663,6 +766,8 @@ function entitlementGrantsAccess(status) {
   InviteProducerSchema,
   KiwifyConfigSchema,
   LoginSchema,
+  METRIC_DIRECTIONS,
+  MetricDirectionSchema,
   OBJECTIVE_STATUSES,
   ObjectiveDescriptionSchema,
   ObjectiveStatusSchema,
@@ -672,9 +777,13 @@ function entitlementGrantsAccess(status) {
   PhoneSchema,
   PreviewCampaignSchema,
   ProducerJoinSchema,
+  RECURRENCE_INTERVALS,
+  RECURRENCE_INTERVAL_LABELS,
+  RecurrenceIntervalSchema,
   RegisterSchema,
   RejectProductSchema,
   ReopenProductSchema,
+  RequiredToolSchema,
   ResetPasswordSchema,
   SaasSubscriptionStatusSchema,
   ServiceRequestStatusSchema,
@@ -688,6 +797,8 @@ function entitlementGrantsAccess(status) {
   UpdateAccountSchema,
   UpdateCampaignSchema,
   UpdateCompanySchema,
+  UpdateDeliverableCategorySchema,
+  UpdateDeliverableTemplateSchema,
   UpdateEmailSchema,
   UpdateGatewayDomainSchema,
   UpdateObjectiveStatusSchema,
@@ -699,6 +810,7 @@ function entitlementGrantsAccess(status) {
   UpdateUserSchema,
   VerifyTokenSchema,
   VoteItemSchema,
+  checkTemplateTiming,
   decodeAttribution,
   encodeAttribution,
   entitlementGrantsAccess,
