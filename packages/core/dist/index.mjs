@@ -583,18 +583,167 @@ function checkTemplateTiming(t, ctx) {
 }
 var DeliverableTemplateSchema = templateFields.superRefine(checkTemplateTiming);
 var UpdateDeliverableTemplateSchema = templateFields.partial();
+var NEED_TYPES = ["service", "tool", "tool_with_implementation", "unsure"];
+var NeedTypeSchema = z11.enum(NEED_TYPES);
+var NEED_TYPE_LABELS = {
+  service: "Um servi\xE7o feito por voc\xEAs",
+  tool: "Uma ferramenta",
+  tool_with_implementation: "Ferramenta + implementa\xE7\xE3o",
+  unsure: "Ainda n\xE3o sei (quero diagn\xF3stico)"
+};
+var CATEGORY_STAGES = ["none", "has_not_using", "using_wants_scale"];
+var CategoryStageSchema = z11.enum(CATEGORY_STAGES);
+var CATEGORY_STAGE_LABELS = {
+  none: "N\xE3o tenho nada",
+  has_not_using: "Tenho, mas n\xE3o uso bem",
+  using_wants_scale: "Uso e quero automatizar ou escalar"
+};
+var URGENCIES = ["this_week", "this_month", "next_3_months", "no_rush"];
+var UrgencySchema = z11.enum(URGENCIES);
+var URGENCY_LABELS = {
+  this_week: "Esta semana",
+  this_month: "Este m\xEAs",
+  next_3_months: "Pr\xF3ximos 3 meses",
+  no_rush: "Sem pressa"
+};
+var BUDGET_RANGES = ["up_to_2k", "2k_10k", "10k_30k", "above_30k", "talk"];
+var BudgetRangeSchema = z11.enum(BUDGET_RANGES);
+var BUDGET_RANGE_LABELS = {
+  up_to_2k: "At\xE9 R$ 2 mil",
+  "2k_10k": "R$ 2 mil a R$ 10 mil",
+  "10k_30k": "R$ 10 mil a R$ 30 mil",
+  above_30k: "Acima de R$ 30 mil",
+  talk: "Prefiro conversar"
+};
+var DIAGNOSTIC_CHANNELS = ["app", "typebot", "crm", "admin"];
+var DiagnosticChannelSchema = z11.enum(DIAGNOSTIC_CHANNELS);
+var KpiBaselineSchema = z11.object({
+  category_slug: slug,
+  name: text(120),
+  unit: z11.string().trim().max(20).nullish(),
+  direction: MetricDirectionSchema,
+  value: z11.number().finite().nullish()
+});
+var DiagnosticSchema = z11.object({
+  goal: DeliverableGoalSchema,
+  need_type: NeedTypeSchema,
+  categories: z11.array(z11.object({ slug, stage: CategoryStageSchema })).min(1, "Escolha ao menos uma \xE1rea").max(9).refine((list) => new Set(list.map((c) => c.slug)).size === list.length, "\xC1rea repetida"),
+  urgency: UrgencySchema,
+  budget_range: BudgetRangeSchema,
+  kpi_baseline: KpiBaselineSchema.nullish(),
+  description: z11.string().trim().max(2e3, "Use no m\xE1ximo 2.000 caracteres").nullish()
+});
+var BuyerDiagnosticJoinSchema = z11.object({
+  phone: PhoneSchema,
+  diagnostic: DiagnosticSchema,
+  source: EntrySourceSchema.optional()
+});
+var ExternalDiagnosticSchema = z11.object({
+  channel: z11.enum(["typebot", "crm"]),
+  contact: z11.object({
+    name: text(120),
+    email: z11.string().trim().toLowerCase().email("E-mail inv\xE1lido").max(200).nullish(),
+    phone: PhoneSchema.nullish()
+  }).refine((c) => Boolean(c.email || c.phone), "Informe e-mail ou telefone"),
+  diagnostic: DiagnosticSchema,
+  source: EntrySourceSchema.optional()
+});
+var PROPOSAL_STATUSES = ["draft", "sent", "accepted", "declined", "superseded"];
+var ProposalStatusSchema = z11.enum(PROPOSAL_STATUSES);
+var PROPOSAL_STATUS_LABELS = {
+  draft: "Rascunho",
+  sent: "Enviada",
+  accepted: "Aceita",
+  declined: "Recusada",
+  superseded: "Substitu\xEDda"
+};
+var ProposalItemSchema = z11.object({
+  template_id: z11.string().uuid(),
+  phase: z11.number().int().min(1).max(20),
+  name: text(120),
+  modality: DeliverableModalitySchema,
+  lead_time_days: z11.number().int().min(1).max(365).nullish(),
+  recurrence_interval: RecurrenceIntervalSchema.nullish(),
+  effort_hours: z11.number().min(0).max(2e3).nullish(),
+  price_cents: z11.number().int().min(0).nullish(),
+  acceptance_criteria: z11.array(text(300)).max(20).default([]),
+  required_tools: z11.array(RequiredToolSchema).max(20).default([])
+}).superRefine(
+  (item, ctx) => checkTemplateTiming(
+    { modality: item.modality, default_lead_time_days: item.lead_time_days, recurrence_interval: item.recurrence_interval },
+    ctx
+  )
+);
+var SaveProposalSchema = z11.object({
+  notes: z11.string().trim().max(2e3).nullish(),
+  items: z11.array(ProposalItemSchema).min(1, "A proposta precisa de ao menos um entreg\xE1vel").max(50)
+});
+var DecideProposalSchema = z11.object({ note: z11.string().trim().max(1e3).nullish() });
+var EXECUTION_STATUSES = ["todo", "in_progress", "delivered", "returned", "accepted", "cancelled"];
+var ExecutionStatusSchema = z11.enum(EXECUTION_STATUSES);
+var EXECUTION_STATUS_LABELS = {
+  todo: "A fazer",
+  in_progress: "Em andamento",
+  delivered: "Entregue",
+  returned: "Devolvido",
+  accepted: "Aceito",
+  cancelled: "Cancelado"
+};
+var TRANSITIONS = {
+  todo: { in_progress: ["assignee", "admin"], cancelled: ["admin"] },
+  in_progress: { delivered: ["assignee", "admin"], cancelled: ["admin"] },
+  delivered: { accepted: ["buyer", "admin"], returned: ["buyer", "admin"] },
+  returned: { in_progress: ["assignee", "admin"], delivered: ["assignee", "admin"], cancelled: ["admin"] },
+  accepted: {},
+  cancelled: {}
+};
+function canTransition(from, to, actor, modality) {
+  if (modality === "recurring" && !["in_progress", "cancelled"].includes(to)) return false;
+  return TRANSITIONS[from][to]?.includes(actor) ?? false;
+}
+var UpdateExecutionSchema = z11.object({
+  status: ExecutionStatusSchema.optional(),
+  assignee_id: z11.string().uuid().nullable().optional(),
+  note: z11.string().trim().max(1e3).nullish()
+}).refine((v) => v.status !== void 0 || v.assignee_id !== void 0, "Informe o status ou o respons\xE1vel");
+var ReturnDeliverableSchema = z11.object({ note: text(1e3) });
+var TimeLogSchema = z11.object({
+  hours: z11.number().positive("Informe as horas").max(24),
+  note: z11.string().trim().max(500).nullish(),
+  logged_on: z11.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
+});
+var LEAD_TIME_MIN_SAMPLE = 5;
+var RESULT_CHECKPOINTS = ["d30", "d60", "d90"];
+var ResultCheckpointSchema = z11.enum(RESULT_CHECKPOINTS);
+var RESULT_CHECKPOINT_DAYS = { d30: 30, d60: 60, d90: 90 };
+var ResultMeasurementSchema = z11.object({
+  checkpoint: ResultCheckpointSchema,
+  value: z11.number().finite(),
+  note: z11.string().trim().max(1e3).nullish()
+});
+function kpiImproved(baseline, current, direction) {
+  if (baseline === null || baseline === void 0) return null;
+  return direction === "up" ? current > baseline : current < baseline;
+}
 export {
   ATTRIBUTION_MAX_LENGTH,
   ATTRIBUTION_PARAM,
   AttributionTouchSchema,
+  BUDGET_RANGES,
+  BUDGET_RANGE_LABELS,
+  BudgetRangeSchema,
   BulkDeleteUsersSchema,
+  BuyerDiagnosticJoinSchema,
   BuyerJoinSchema,
+  CATEGORY_STAGES,
+  CATEGORY_STAGE_LABELS,
   CLICK_ID_KEYS,
   COMMERCE_EVENT_TYPES,
   COMMERCE_EVENT_VERIFICATION,
   COMMERCE_GATEWAYS,
   COMMERCE_REF_PARAM,
   CancelSubscriptionSchema,
+  CategoryStageSchema,
   CommerceEventSchema,
   CommerceEventTypeSchema,
   CommerceEventVerificationSchema,
@@ -616,52 +765,78 @@ export {
   DELIVERABLE_GOAL_LABELS,
   DELIVERABLE_MODALITIES,
   DELIVERABLE_MODALITY_LABELS,
+  DIAGNOSTIC_CHANNELS,
+  DecideProposalSchema,
   DeleteVoteSchema,
   DeliverableCategorySchema,
   DeliverableExecutorSchema,
   DeliverableGoalSchema,
   DeliverableModalitySchema,
   DeliverableTemplateSchema,
+  DiagnosticChannelSchema,
+  DiagnosticSchema,
   ENTITLEMENT_STATUSES,
   ENTRY_PROFILES,
+  EXECUTION_STATUSES,
+  EXECUTION_STATUS_LABELS,
   EntitlementKeySchema,
   EntitlementSchema,
   EntitlementStatusSchema,
   EntryProfileSchema,
   EntrySourceSchema,
+  ExecutionStatusSchema,
+  ExternalDiagnosticSchema,
   ForgotPasswordSchema,
   GatewayDomainSchema,
   InviteProducerAdminSchema,
   InviteProducerSchema,
   KiwifyConfigSchema,
+  KpiBaselineSchema,
+  LEAD_TIME_MIN_SAMPLE,
   LoginSchema,
   METRIC_DIRECTIONS,
   MetricDirectionSchema,
+  NEED_TYPES,
+  NEED_TYPE_LABELS,
+  NeedTypeSchema,
   OBJECTIVE_STATUSES,
   ObjectiveDescriptionSchema,
   ObjectiveStatusSchema,
   PLAN_FREQUENCIES,
   PRODUCER_TERMS_VERSION,
+  PROPOSAL_STATUSES,
+  PROPOSAL_STATUS_LABELS,
   PatchFeedbackSchema,
   PhoneSchema,
   PreviewCampaignSchema,
   ProducerJoinSchema,
+  ProposalItemSchema,
+  ProposalStatusSchema,
   RECURRENCE_INTERVALS,
   RECURRENCE_INTERVAL_LABELS,
+  RESULT_CHECKPOINTS,
+  RESULT_CHECKPOINT_DAYS,
   RecurrenceIntervalSchema,
   RegisterSchema,
   RejectProductSchema,
   ReopenProductSchema,
   RequiredToolSchema,
   ResetPasswordSchema,
+  ResultCheckpointSchema,
+  ResultMeasurementSchema,
+  ReturnDeliverableSchema,
   SaasSubscriptionStatusSchema,
+  SaveProposalSchema,
   ServiceRequestStatusSchema,
   SessionExchangeSchema,
   SignServiceRequestSchema,
   SuggestItemSchema,
   SwitchCompanySchema,
+  TimeLogSchema,
   TokenRequestSchema,
   TourProgressSchema,
+  URGENCIES,
+  URGENCY_LABELS,
   UTM_KEYS,
   UpdateAccountSchema,
   UpdateCampaignSchema,
@@ -669,6 +844,7 @@ export {
   UpdateDeliverableCategorySchema,
   UpdateDeliverableTemplateSchema,
   UpdateEmailSchema,
+  UpdateExecutionSchema,
   UpdateGatewayDomainSchema,
   UpdateObjectiveStatusSchema,
   UpdatePasswordSchema,
@@ -677,8 +853,10 @@ export {
   UpdateProducerSchema,
   UpdateSaasProductSchema,
   UpdateUserSchema,
+  UrgencySchema,
   VerifyTokenSchema,
   VoteItemSchema,
+  canTransition,
   checkTemplateTiming,
   decodeAttribution,
   encodeAttribution,
@@ -687,6 +865,7 @@ export {
   isCampaignTouch,
   isProducer,
   isSuperAdmin,
+  kpiImproved,
   readAttributionFromUrl,
   withAttribution
 };
