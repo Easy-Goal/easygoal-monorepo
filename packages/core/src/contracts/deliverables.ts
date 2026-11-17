@@ -144,7 +144,8 @@ export const BUDGET_RANGE_LABELS: Record<BudgetRange, string> = {
   talk: 'Prefiro conversar',
 };
 
-export const DIAGNOSTIC_CHANNELS = ['app', 'typebot', 'crm', 'admin'] as const;
+// 'typebot' fica só por compatibilidade: o Typebot saiu do plano (s367), o site usa o formulário próprio.
+export const DIAGNOSTIC_CHANNELS = ['app', 'site', 'typebot', 'crm', 'admin'] as const;
 export const DiagnosticChannelSchema = z.enum(DIAGNOSTIC_CHANNELS);
 export type DiagnosticChannel = z.infer<typeof DiagnosticChannelSchema>;
 
@@ -158,7 +159,7 @@ export const KpiBaselineSchema = z.object({
 });
 export type KpiBaseline = z.infer<typeof KpiBaselineSchema>;
 
-/** Respostas das 8 perguntas. O mesmo payload vem do app, do Typebot e do CRM. */
+/** Respostas das 8 perguntas. O mesmo payload vem do app, do site e do CRM. */
 export const DiagnosticSchema = z.object({
   goal: DeliverableGoalSchema,
   need_type: NeedTypeSchema,
@@ -182,9 +183,9 @@ export const BuyerDiagnosticJoinSchema = z.object({
 });
 export type BuyerDiagnosticJoinDto = z.infer<typeof BuyerDiagnosticJoinSchema>;
 
-/** Typebot ou CRM: o lead ainda não tem conta; o contato fica no objetivo. */
+/** Site ou CRM: o lead ainda não tem conta; o contato fica no objetivo. */
 export const ExternalDiagnosticSchema = z.object({
-  channel: z.enum(['typebot', 'crm']),
+  channel: z.enum(['site', 'crm']),
   contact: z
     .object({
       name: text(120),
