@@ -542,8 +542,8 @@ var DELIVERABLE_EXECUTOR_LABELS = {
 };
 var METRIC_DIRECTIONS = ["up", "down"];
 var MetricDirectionSchema = z11.enum(METRIC_DIRECTIONS);
-var slug = z11.string().trim().min(2).max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use letras min\xFAsculas, n\xFAmeros e h\xEDfen");
-var text = (max) => z11.string().trim().min(1).max(max);
+var slug = z11.string().trim().min(2, "Nome curto demais para gerar o identificador").max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use letras min\xFAsculas, n\xFAmeros e h\xEDfen");
+var text = (max) => z11.string().trim().min(1, "Preencha os campos obrigat\xF3rios").max(max, `Use no m\xE1ximo ${max} caracteres`);
 var DeliverableCategorySchema = z11.object({
   slug,
   name: text(80),

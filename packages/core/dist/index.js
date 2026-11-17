@@ -672,8 +672,8 @@ var DELIVERABLE_EXECUTOR_LABELS = {
 };
 var METRIC_DIRECTIONS = ["up", "down"];
 var MetricDirectionSchema = import_zod11.z.enum(METRIC_DIRECTIONS);
-var slug = import_zod11.z.string().trim().min(2).max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use letras min\xFAsculas, n\xFAmeros e h\xEDfen");
-var text = (max) => import_zod11.z.string().trim().min(1).max(max);
+var slug = import_zod11.z.string().trim().min(2, "Nome curto demais para gerar o identificador").max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use letras min\xFAsculas, n\xFAmeros e h\xEDfen");
+var text = (max) => import_zod11.z.string().trim().min(1, "Preencha os campos obrigat\xF3rios").max(max, `Use no m\xE1ximo ${max} caracteres`);
 var DeliverableCategorySchema = import_zod11.z.object({
   slug,
   name: text(80),
