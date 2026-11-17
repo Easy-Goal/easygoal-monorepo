@@ -615,7 +615,7 @@ var BUDGET_RANGE_LABELS = {
   above_30k: "Acima de R$ 30 mil",
   talk: "Prefiro conversar"
 };
-var DIAGNOSTIC_CHANNELS = ["app", "typebot", "crm", "admin"];
+var DIAGNOSTIC_CHANNELS = ["app", "site", "typebot", "crm", "admin"];
 var DiagnosticChannelSchema = z11.enum(DIAGNOSTIC_CHANNELS);
 var KpiBaselineSchema = z11.object({
   category_slug: slug,
@@ -639,7 +639,7 @@ var BuyerDiagnosticJoinSchema = z11.object({
   source: EntrySourceSchema.optional()
 });
 var ExternalDiagnosticSchema = z11.object({
-  channel: z11.enum(["typebot", "crm"]),
+  channel: z11.enum(["site", "crm"]),
   contact: z11.object({
     name: text(120),
     email: z11.string().trim().toLowerCase().email("E-mail inv\xE1lido").max(200).nullish(),

@@ -1793,8 +1793,8 @@ declare const BUDGET_RANGES: readonly ["up_to_2k", "2k_10k", "10k_30k", "above_3
 declare const BudgetRangeSchema: z.ZodEnum<["up_to_2k", "2k_10k", "10k_30k", "above_30k", "talk"]>;
 type BudgetRange = z.infer<typeof BudgetRangeSchema>;
 declare const BUDGET_RANGE_LABELS: Record<BudgetRange, string>;
-declare const DIAGNOSTIC_CHANNELS: readonly ["app", "typebot", "crm", "admin"];
-declare const DiagnosticChannelSchema: z.ZodEnum<["app", "typebot", "crm", "admin"]>;
+declare const DIAGNOSTIC_CHANNELS: readonly ["app", "site", "typebot", "crm", "admin"];
+declare const DiagnosticChannelSchema: z.ZodEnum<["app", "site", "typebot", "crm", "admin"]>;
 type DiagnosticChannel = z.infer<typeof DiagnosticChannelSchema>;
 /** Número que o cliente quer mudar (pergunta 7), base da medição do resultado (onda 6). */
 declare const KpiBaselineSchema: z.ZodObject<{
@@ -1817,7 +1817,7 @@ declare const KpiBaselineSchema: z.ZodObject<{
     unit?: string | null | undefined;
 }>;
 type KpiBaseline = z.infer<typeof KpiBaselineSchema>;
-/** Respostas das 8 perguntas. O mesmo payload vem do app, do Typebot e do CRM. */
+/** Respostas das 8 perguntas. O mesmo payload vem do app, do site e do CRM. */
 declare const DiagnosticSchema: z.ZodObject<{
     goal: z.ZodEnum<["sell_more", "operate_with_less_effort", "launch_or_scale_product", "strategy"]>;
     need_type: z.ZodEnum<["service", "tool", "tool_with_implementation", "unsure"]>;
@@ -2064,9 +2064,9 @@ declare const BuyerDiagnosticJoinSchema: z.ZodObject<{
     } | undefined;
 }>;
 type BuyerDiagnosticJoinDto = z.infer<typeof BuyerDiagnosticJoinSchema>;
-/** Typebot ou CRM: o lead ainda não tem conta; o contato fica no objetivo. */
+/** Site ou CRM: o lead ainda não tem conta; o contato fica no objetivo. */
 declare const ExternalDiagnosticSchema: z.ZodObject<{
-    channel: z.ZodEnum<["typebot", "crm"]>;
+    channel: z.ZodEnum<["site", "crm"]>;
     contact: z.ZodEffects<z.ZodObject<{
         name: z.ZodString;
         email: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -2211,7 +2211,7 @@ declare const ExternalDiagnosticSchema: z.ZodObject<{
             unit?: string | null | undefined;
         } | null | undefined;
     };
-    channel: "typebot" | "crm";
+    channel: "site" | "crm";
     contact: {
         name: string;
         email?: string | null | undefined;
@@ -2246,7 +2246,7 @@ declare const ExternalDiagnosticSchema: z.ZodObject<{
             unit?: string | null | undefined;
         } | null | undefined;
     };
-    channel: "typebot" | "crm";
+    channel: "site" | "crm";
     contact: {
         name: string;
         email?: string | null | undefined;

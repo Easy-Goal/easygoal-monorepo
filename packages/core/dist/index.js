@@ -782,7 +782,7 @@ var BUDGET_RANGE_LABELS = {
   above_30k: "Acima de R$ 30 mil",
   talk: "Prefiro conversar"
 };
-var DIAGNOSTIC_CHANNELS = ["app", "typebot", "crm", "admin"];
+var DIAGNOSTIC_CHANNELS = ["app", "site", "typebot", "crm", "admin"];
 var DiagnosticChannelSchema = import_zod11.z.enum(DIAGNOSTIC_CHANNELS);
 var KpiBaselineSchema = import_zod11.z.object({
   category_slug: slug,
@@ -806,7 +806,7 @@ var BuyerDiagnosticJoinSchema = import_zod11.z.object({
   source: EntrySourceSchema.optional()
 });
 var ExternalDiagnosticSchema = import_zod11.z.object({
-  channel: import_zod11.z.enum(["typebot", "crm"]),
+  channel: import_zod11.z.enum(["site", "crm"]),
   contact: import_zod11.z.object({
     name: text(120),
     email: import_zod11.z.string().trim().toLowerCase().email("E-mail inv\xE1lido").max(200).nullish(),
