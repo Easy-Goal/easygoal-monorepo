@@ -56,13 +56,17 @@ __export(index_exports, {
   EntrySourceSchema: () => EntrySourceSchema,
   ForgotPasswordSchema: () => ForgotPasswordSchema,
   GatewayDomainSchema: () => GatewayDomainSchema,
+  GatewayOptionSchema: () => GatewayOptionSchema,
   InviteProducerAdminSchema: () => InviteProducerAdminSchema,
   InviteProducerSchema: () => InviteProducerSchema,
   KiwifyConfigSchema: () => KiwifyConfigSchema,
   LoginSchema: () => LoginSchema,
   OBJECTIVE_STATUSES: () => OBJECTIVE_STATUSES,
+  OFFER_KINDS: () => OFFER_KINDS,
+  OFFER_KIND_LABELS: () => OFFER_KIND_LABELS,
   ObjectiveDescriptionSchema: () => ObjectiveDescriptionSchema,
   ObjectiveStatusSchema: () => ObjectiveStatusSchema,
+  OfferKindSchema: () => OfferKindSchema,
   PLAN_FREQUENCIES: () => PLAN_FREQUENCIES,
   PRODUCER_TERMS_VERSION: () => PRODUCER_TERMS_VERSION,
   PatchFeedbackSchema: () => PatchFeedbackSchema,
@@ -94,16 +98,28 @@ __export(index_exports, {
   UpdateProducerSchema: () => UpdateProducerSchema,
   UpdateSaasProductSchema: () => UpdateSaasProductSchema,
   UpdateUserSchema: () => UpdateUserSchema,
+  VALIDATION_STEPS: () => VALIDATION_STEPS,
+  VALIDATION_STEP_STATUSES: () => VALIDATION_STEP_STATUSES,
+  ValidationStepSchema: () => ValidationStepSchema,
+  ValidationStepStateSchema: () => ValidationStepStateSchema,
   VerifyTokenSchema: () => VerifyTokenSchema,
   VoteItemSchema: () => VoteItemSchema,
+  brlInputToCents: () => brlInputToCents,
+  centsToReais: () => centsToReais,
   decodeAttribution: () => decodeAttribution,
   encodeAttribution: () => encodeAttribution,
   entitlementGrantsAccess: () => entitlementGrantsAccess,
+  formatBRL: () => formatBRL,
+  formatBRLCompact: () => formatBRLCompact,
   hasPermission: () => hasPermission,
   isCampaignTouch: () => isCampaignTouch,
   isProducer: () => isProducer,
   isSuperAdmin: () => isSuperAdmin,
+  maskBRLInput: () => maskBRLInput,
+  monthlyCents: () => monthlyCents,
   readAttributionFromUrl: () => readAttributionFromUrl,
+  reaisToCents: () => reaisToCents,
+  toCents: () => toCents,
   withAttribution: () => withAttribution
 });
 module.exports = __toCommonJS(index_exports);
@@ -621,6 +637,96 @@ var EntitlementSchema = import_zod10.z.object({
 function entitlementGrantsAccess(status) {
   return status === "active" || status === "past_due";
 }
+var OFFER_KINDS = ["recurring", "one_time", "order_bump", "upsell"];
+var OfferKindSchema = import_zod10.z.enum(OFFER_KINDS);
+var OFFER_KIND_LABELS = {
+  recurring: "Assinatura recorrente",
+  one_time: "Venda avulsa",
+  order_bump: "Order bump",
+  upsell: "Upsell"
+};
+var VALIDATION_STEPS = [
+  "webhook_verified",
+  // chegou um evento com assinatura do gateway conferida
+  "offers_categorized",
+  // toda oferta vista nos eventos tem plano e tipo
+  "page_visit",
+  // visita registrada na página do SaaS antes da contratação
+  "login",
+  // comprador entrou no SaaS pelo SSO
+  "sale",
+  // sale.approved verificado
+  "subscription",
+  // subscription.started verificado (só se houver oferta recorrente)
+  "human_approval"
+  // aprovação final por um admin da Easy Goal
+];
+var ValidationStepSchema = import_zod10.z.enum(VALIDATION_STEPS);
+var VALIDATION_STEP_STATUSES = ["pending", "ok", "not_applicable"];
+var ValidationStepStateSchema = import_zod10.z.object({
+  step: ValidationStepSchema,
+  status: import_zod10.z.enum(VALIDATION_STEP_STATUSES),
+  /** Quando foi visto pela primeira vez (ISO) — ou null se pendente. */
+  seen_at: import_zod10.z.string().datetime().nullable(),
+  /** Detalhe curto para o produtor (ex.: "3 de 4 ofertas categorizadas"). */
+  detail: import_zod10.z.string().max(200).nullable()
+});
+var GatewayOptionSchema = import_zod10.z.object({
+  gateway: CommerceGatewaySchema,
+  label: import_zod10.z.string(),
+  /** URL que o produtor cola no painel do gateway, já com o gateway e a chave do produto. */
+  webhook_path: import_zod10.z.string()
+});
+
+// src/money/index.ts
+var BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+var BRL_COMPACT = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  notation: "compact",
+  maximumFractionDigits: 1
+});
+function toCents(value) {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return Math.round(value);
+}
+function reaisToCents(reais) {
+  if (reais == null || reais === "") return 0;
+  const n = typeof reais === "number" ? reais : Number(String(reais).replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+}
+function centsToReais(cents) {
+  return toCents(cents) / 100;
+}
+function formatBRL(cents) {
+  return BRL.format(toCents(cents) / 100);
+}
+function formatBRLCompact(cents) {
+  return BRL_COMPACT.format(toCents(cents) / 100);
+}
+function maskBRLInput(raw) {
+  const digits = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  const cents = digits === "" ? 0 : parseInt(digits, 10);
+  return (cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function brlInputToCents(display) {
+  const digits = display.replace(/\D/g, "");
+  return digits === "" ? 0 : parseInt(digits, 10);
+}
+function monthlyCents(cents, frequency) {
+  const c = toCents(cents);
+  switch (frequency) {
+    case "yearly":
+    case "annual":
+      return Math.round(c / 12);
+    case "semiannual":
+      return Math.round(c / 6);
+    case "quarterly":
+      return Math.round(c / 3);
+    default:
+      return c;
+  }
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   ATTRIBUTION_MAX_LENGTH,
@@ -659,13 +765,17 @@ function entitlementGrantsAccess(status) {
   EntrySourceSchema,
   ForgotPasswordSchema,
   GatewayDomainSchema,
+  GatewayOptionSchema,
   InviteProducerAdminSchema,
   InviteProducerSchema,
   KiwifyConfigSchema,
   LoginSchema,
   OBJECTIVE_STATUSES,
+  OFFER_KINDS,
+  OFFER_KIND_LABELS,
   ObjectiveDescriptionSchema,
   ObjectiveStatusSchema,
+  OfferKindSchema,
   PLAN_FREQUENCIES,
   PRODUCER_TERMS_VERSION,
   PatchFeedbackSchema,
@@ -697,16 +807,28 @@ function entitlementGrantsAccess(status) {
   UpdateProducerSchema,
   UpdateSaasProductSchema,
   UpdateUserSchema,
+  VALIDATION_STEPS,
+  VALIDATION_STEP_STATUSES,
+  ValidationStepSchema,
+  ValidationStepStateSchema,
   VerifyTokenSchema,
   VoteItemSchema,
+  brlInputToCents,
+  centsToReais,
   decodeAttribution,
   encodeAttribution,
   entitlementGrantsAccess,
+  formatBRL,
+  formatBRLCompact,
   hasPermission,
   isCampaignTouch,
   isProducer,
   isSuperAdmin,
+  maskBRLInput,
+  monthlyCents,
   readAttributionFromUrl,
+  reaisToCents,
+  toCents,
   withAttribution
 });
 //# sourceMappingURL=index.js.map
