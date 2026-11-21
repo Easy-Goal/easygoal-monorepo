@@ -16,6 +16,8 @@ export const COMMERCE_EVENT_TYPES = [
   'subscription.renewed',
   'subscription.past_due',
   'subscription.canceled',
+  /** Cobrança criada e não paga (Pix gerado, boleto emitido). Só registra; não libera acesso (s369). */
+  'payment.pending',
 ] as const;
 export const CommerceEventTypeSchema = z.enum(COMMERCE_EVENT_TYPES);
 export type CommerceEventType = z.infer<typeof CommerceEventTypeSchema>;
@@ -42,6 +44,8 @@ export const CommerceEventSchema = z.object({
   user_id: z.string().uuid().nullable(),
   plan_id: z.string().uuid().nullable(),
   eg_ref: z.string().max(200).nullable(),
+  /** Id do lead no Easy CRM, quando o checkout levou `eg_lead` (ver `crm-funnel.ts`). */
+  lead_ref: z.string().max(200).nullable().optional(),
   received_at: z.string().datetime(),
 });
 export type CommerceEvent = z.infer<typeof CommerceEventSchema>;

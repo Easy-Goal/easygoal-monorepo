@@ -475,7 +475,9 @@ var COMMERCE_EVENT_TYPES = [
   "subscription.started",
   "subscription.renewed",
   "subscription.past_due",
-  "subscription.canceled"
+  "subscription.canceled",
+  /** Cobrança criada e não paga (Pix gerado, boleto emitido). Só registra; não libera acesso (s369). */
+  "payment.pending"
 ];
 var CommerceEventTypeSchema = z10.enum(COMMERCE_EVENT_TYPES);
 var COMMERCE_EVENT_VERIFICATION = ["verified", "unverified"];
@@ -495,6 +497,8 @@ var CommerceEventSchema = z10.object({
   user_id: z10.string().uuid().nullable(),
   plan_id: z10.string().uuid().nullable(),
   eg_ref: z10.string().max(200).nullable(),
+  /** Id do lead no Easy CRM, quando o checkout levou `eg_lead` (ver `crm-funnel.ts`). */
+  lead_ref: z10.string().max(200).nullable().optional(),
   received_at: z10.string().datetime()
 });
 var ENTITLEMENT_STATUSES = ["active", "past_due", "canceled", "refunded"];
@@ -766,6 +770,90 @@ function kpiImproved(baseline, current, direction) {
   return direction === "up" ? current > baseline : current < baseline;
 }
 
+// src/contracts/crm-funnel.ts
+import { z as z12 } from "zod";
+var CRM_LEAD_REF_PARAM = "eg_lead";
+var CHECKOUT_ABANDON_HOURS = 24;
+var CRM_FUNNEL_TAGS = {
+  checkoutClicked: "foi ao checkout",
+  paymentPending: "pagamento pendente",
+  checkoutAbandoned: "abandonou checkout",
+  saleWithoutLead: "venda sem lead"
+};
+var CRM_FUNNEL_STAGES = ["Novo", "Checkout", "Fechado Ganho", "Perdido"];
+var shortText2 = z12.string().trim().min(1).max(200);
+var tag = z12.string().trim().min(1).max(60);
+var CrmCaptureExtrasSchema = z12.object({
+  /** Produto dentro da empresa Easy Goal (ex.: "Desafio Builder"). */
+  produto: shortText2.optional(),
+  etiquetas: z12.array(tag).max(10).optional(),
+  /** Primeiro toque (cookie de primeira parte, 90 dias). Uma captura repetida não sobrescreve. */
+  attribution: AttributionTouchSchema.optional(),
+  /** URL da página que capturou. */
+  origem_pagina: z12.string().trim().url().max(500).optional()
+});
+var CheckoutClickSchema = z12.object({
+  produto: shortText2,
+  lead_ref: shortText2.optional(),
+  email: z12.string().trim().toLowerCase().email().optional(),
+  destino_url: z12.string().trim().url().max(1e3),
+  attribution: AttributionTouchSchema.optional(),
+  occurred_at: z12.string().datetime({ offset: true })
+}).refine((c) => Boolean(c.lead_ref || c.email), { message: "lead_ref ou email \xE9 obrigat\xF3rio" });
+var CrmMirrorLeadSchema = z12.object({
+  id: z12.string(),
+  nome: z12.string(),
+  email: z12.string(),
+  telefone: z12.string(),
+  canal: z12.string(),
+  campanha: z12.string(),
+  etapa: z12.string(),
+  aberto: z12.boolean(),
+  criado_em: z12.string(),
+  convertido_em: z12.string().nullable(),
+  crm_url: z12.string(),
+  // Campos do refinamento s369 (C3). Ausentes no CRM antigo: o app trata como nulos.
+  produto: z12.string().nullable().optional(),
+  etiquetas: z12.array(z12.string()).optional(),
+  utm_source: z12.string().nullable().optional(),
+  utm_medium: z12.string().nullable().optional(),
+  utm_campaign: z12.string().nullable().optional(),
+  utm_content: z12.string().nullable().optional(),
+  utm_term: z12.string().nullable().optional(),
+  gclid: z12.string().nullable().optional(),
+  fbclid: z12.string().nullable().optional(),
+  /** Campanha do último toque, quando diferente da primeira. */
+  ultima_utm_campaign: z12.string().nullable().optional(),
+  valor_cents: z12.number().int().nullable().optional(),
+  /** Nome de quem está atendendo (R-D: o produtor vê, sem ver a conversa). */
+  consultor_nome: z12.string().nullable().optional(),
+  ultima_acao_em: z12.string().nullable().optional(),
+  ultima_acao_descricao: z12.string().nullable().optional()
+});
+var CrmMirrorSchema = z12.object({
+  empresa_id: z12.string(),
+  gerado_em: z12.string(),
+  totais: z12.object({
+    leads: z12.number().int(),
+    ultimos_30_dias: z12.number().int(),
+    abertos: z12.number().int(),
+    ganhos: z12.number().int(),
+    perdidos: z12.number().int()
+  }),
+  por_etapa: z12.array(z12.object({ etapa: z12.string(), total: z12.number().int() })),
+  por_campanha: z12.array(
+    z12.object({
+      campanha: z12.string(),
+      total: z12.number().int(),
+      ganhos: z12.number().int(),
+      // s369: funil por campanha para a aba "Campanhas" do app.
+      foram_ao_checkout: z12.number().int().optional(),
+      valor_cents: z12.number().int().optional()
+    })
+  ),
+  leads: z12.array(CrmMirrorLeadSchema)
+});
+
 // src/money/index.ts
 var BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 var BRL_COMPACT = new Intl.NumberFormat("pt-BR", {
@@ -827,13 +915,18 @@ export {
   BuyerJoinSchema,
   CATEGORY_STAGES,
   CATEGORY_STAGE_LABELS,
+  CHECKOUT_ABANDON_HOURS,
   CLICK_ID_KEYS,
   COMMERCE_EVENT_TYPES,
   COMMERCE_EVENT_VERIFICATION,
   COMMERCE_GATEWAYS,
   COMMERCE_REF_PARAM,
+  CRM_FUNNEL_STAGES,
+  CRM_FUNNEL_TAGS,
+  CRM_LEAD_REF_PARAM,
   CancelSubscriptionSchema,
   CategoryStageSchema,
+  CheckoutClickSchema,
   CommerceEventSchema,
   CommerceEventTypeSchema,
   CommerceEventVerificationSchema,
@@ -849,6 +942,9 @@ export {
   CreateProducerSchema,
   CreateSaasProductSchema,
   CreateServiceRequestSchema,
+  CrmCaptureExtrasSchema,
+  CrmMirrorLeadSchema,
+  CrmMirrorSchema,
   DELIVERABLE_EXECUTORS,
   DELIVERABLE_EXECUTOR_LABELS,
   DELIVERABLE_GOALS,

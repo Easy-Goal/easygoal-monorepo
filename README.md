@@ -193,6 +193,29 @@ interface UserProfile {
 }
 ```
 
+### Regra: o que é de mais de um repo mora aqui
+
+Contrato (tipo, schema Zod, nome de parâmetro, etiqueta, enum) ou componente usado por **mais de um repo**
+vem para o monorepo e é documentado neste README, antes de qualquer repo usar. Um repo que precise
+espelhar o contrato localmente (ex.: o Easy CRM, que não importa o pacote) cita o arquivo daqui no comentário.
+
+### Funil do lead (`contracts/crm-funnel.ts`, s369)
+
+Liga LP/site → gateway → API → Easy CRM → app. O produto é um recorte dentro da empresa Easy Goal no CRM.
+
+| Contrato | Quem usa | Para quê |
+|---|---|---|
+| `CrmCaptureExtrasSchema` | LPs e site → CRM (captura pública) | `produto`, `etiquetas`, primeiro toque de UTM, `origem_pagina` |
+| `CheckoutClickSchema` | redirecionador da LP → CRM | registra "foi ao checkout" antes de mandar ao gateway |
+| `CRM_LEAD_REF_PARAM` (`eg_lead`) | LP → gateway → webhook → API | liga o pagamento ao lead certo (`lead_ref` no evento) |
+| `payment.pending` em `COMMERCE_EVENT_TYPES` | API → CRM (fila `crm-events`) | Pix gerado ou boleto emitido; só registra |
+| `CRM_FUNNEL_TAGS`, `CHECKOUT_ABANDON_HOURS` (24) | CRM e app | etiquetas automáticas e prazo de "abandonou checkout" |
+| `CrmMirrorSchema` / `CrmMirrorLeadSchema` | CRM → API → app | espelho com UTMs, valor, consultor e última ação (campos novos opcionais) |
+
+```ts
+import { CRM_LEAD_REF_PARAM, CheckoutClickSchema, CrmMirrorSchema } from '@easygoal/packages/core'
+```
+
 ---
 
 ## Build

@@ -1433,8 +1433,8 @@ declare function withAttribution(loginUrl: string, touch: AttributionTouch | nul
 declare const COMMERCE_GATEWAYS: readonly ["abacatepay", "kiwify", "hotmart", "mercadopago", "custom"];
 declare const CommerceGatewaySchema: z.ZodEnum<["abacatepay", "kiwify", "hotmart", "mercadopago", "custom"]>;
 type CommerceGateway = z.infer<typeof CommerceGatewaySchema>;
-declare const COMMERCE_EVENT_TYPES: readonly ["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled"];
-declare const CommerceEventTypeSchema: z.ZodEnum<["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled"]>;
+declare const COMMERCE_EVENT_TYPES: readonly ["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled", "payment.pending"];
+declare const CommerceEventTypeSchema: z.ZodEnum<["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled", "payment.pending"]>;
 type CommerceEventType = z.infer<typeof CommerceEventTypeSchema>;
 /** `verified`: assinatura do gateway conferida. `unverified` é gravado, mas não muda acesso. */
 declare const COMMERCE_EVENT_VERIFICATION: readonly ["verified", "unverified"];
@@ -1447,7 +1447,7 @@ declare const CommerceEventSchema: z.ZodObject<{
     saas_product_id: z.ZodString;
     gateway: z.ZodEnum<["abacatepay", "kiwify", "hotmart", "mercadopago", "custom"]>;
     gateway_event_id: z.ZodString;
-    type: z.ZodEnum<["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled"]>;
+    type: z.ZodEnum<["sale.approved", "sale.refunded", "sale.chargeback", "subscription.started", "subscription.renewed", "subscription.past_due", "subscription.canceled", "payment.pending"]>;
     verification: z.ZodEnum<["verified", "unverified"]>;
     occurred_at: z.ZodString;
     amount_cents: z.ZodNullable<z.ZodNumber>;
@@ -1456,9 +1456,11 @@ declare const CommerceEventSchema: z.ZodObject<{
     user_id: z.ZodNullable<z.ZodString>;
     plan_id: z.ZodNullable<z.ZodString>;
     eg_ref: z.ZodNullable<z.ZodString>;
+    /** Id do lead no Easy CRM, quando o checkout levou `eg_lead` (ver `crm-funnel.ts`). */
+    lead_ref: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     received_at: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    type: "sale.approved" | "sale.refunded" | "sale.chargeback" | "subscription.started" | "subscription.renewed" | "subscription.past_due" | "subscription.canceled";
+    type: "sale.approved" | "sale.refunded" | "sale.chargeback" | "subscription.started" | "subscription.renewed" | "subscription.past_due" | "subscription.canceled" | "payment.pending";
     user_id: string | null;
     gateway: "custom" | "abacatepay" | "kiwify" | "hotmart" | "mercadopago";
     eg_ref: string | null;
@@ -1472,8 +1474,9 @@ declare const CommerceEventSchema: z.ZodObject<{
     customer_email: string | null;
     plan_id: string | null;
     received_at: string;
+    lead_ref?: string | null | undefined;
 }, {
-    type: "sale.approved" | "sale.refunded" | "sale.chargeback" | "subscription.started" | "subscription.renewed" | "subscription.past_due" | "subscription.canceled";
+    type: "sale.approved" | "sale.refunded" | "sale.chargeback" | "subscription.started" | "subscription.renewed" | "subscription.past_due" | "subscription.canceled" | "payment.pending";
     user_id: string | null;
     gateway: "custom" | "abacatepay" | "kiwify" | "hotmart" | "mercadopago";
     eg_ref: string | null;
@@ -1487,6 +1490,7 @@ declare const CommerceEventSchema: z.ZodObject<{
     plan_id: string | null;
     received_at: string;
     currency?: string | undefined;
+    lead_ref?: string | null | undefined;
 }>;
 type CommerceEvent = z.infer<typeof CommerceEventSchema>;
 declare const ENTITLEMENT_STATUSES: readonly ["active", "past_due", "canceled", "refunded"];
@@ -2592,6 +2596,576 @@ type ResultMeasurementDto = z.infer<typeof ResultMeasurementSchema>;
 /** O número melhorou em relação à partida, no sentido da métrica. Sem partida, não dá para afirmar. */
 declare function kpiImproved(baseline: number | null | undefined, current: number, direction: MetricDirection): boolean | null;
 
+/** Parâmetro que leva o id do lead do CRM até o checkout e volta no webhook como `lead_ref`. */
+declare const CRM_LEAD_REF_PARAM = "eg_lead";
+/** Horas depois do clique no checkout, sem pagamento, para o lead virar "abandonou checkout" (R-C). */
+declare const CHECKOUT_ABANDON_HOURS = 24;
+/** Etiquetas automáticas do funil. O texto é o que aparece no CRM e no app. */
+declare const CRM_FUNNEL_TAGS: {
+    readonly checkoutClicked: "foi ao checkout";
+    readonly paymentPending: "pagamento pendente";
+    readonly checkoutAbandoned: "abandonou checkout";
+    readonly saleWithoutLead: "venda sem lead";
+};
+type CrmFunnelTag = (typeof CRM_FUNNEL_TAGS)[keyof typeof CRM_FUNNEL_TAGS];
+/** Etapas do funil que o espelho e o app conhecem (as do CRM, na ordem). */
+declare const CRM_FUNNEL_STAGES: readonly ["Novo", "Checkout", "Fechado Ganho", "Perdido"];
+/** Campos extras que toda captura pública manda além de nome/e-mail/telefone. */
+declare const CrmCaptureExtrasSchema: z.ZodObject<{
+    /** Produto dentro da empresa Easy Goal (ex.: "Desafio Builder"). */
+    produto: z.ZodOptional<z.ZodString>;
+    etiquetas: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    /** Primeiro toque (cookie de primeira parte, 90 dias). Uma captura repetida não sobrescreve. */
+    attribution: z.ZodOptional<z.ZodObject<{
+        utm_source: z.ZodOptional<z.ZodString>;
+        utm_medium: z.ZodOptional<z.ZodString>;
+        utm_campaign: z.ZodOptional<z.ZodString>;
+        utm_content: z.ZodOptional<z.ZodString>;
+        utm_term: z.ZodOptional<z.ZodString>;
+        gclid: z.ZodOptional<z.ZodString>;
+        gbraid: z.ZodOptional<z.ZodString>;
+        wbraid: z.ZodOptional<z.ZodString>;
+        fbclid: z.ZodOptional<z.ZodString>;
+        ttclid: z.ZodOptional<z.ZodString>;
+        msclkid: z.ZodOptional<z.ZodString>;
+        referrer: z.ZodOptional<z.ZodString>;
+        landing: z.ZodOptional<z.ZodString>;
+        at: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    }, {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    }>>;
+    /** URL da página que capturou. */
+    origem_pagina: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    produto?: string | undefined;
+    etiquetas?: string[] | undefined;
+    attribution?: {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    } | undefined;
+    origem_pagina?: string | undefined;
+}, {
+    produto?: string | undefined;
+    etiquetas?: string[] | undefined;
+    attribution?: {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    } | undefined;
+    origem_pagina?: string | undefined;
+}>;
+type CrmCaptureExtras = z.infer<typeof CrmCaptureExtrasSchema>;
+/**
+ * Clique no botão do checkout, registrado pelo redirecionador da LP antes de mandar ao gateway (R-B).
+ * Precisa de `lead_ref` ou `email`; sem nenhum dos dois, o clique conta só como visita anônima.
+ */
+declare const CheckoutClickSchema: z.ZodEffects<z.ZodObject<{
+    produto: z.ZodString;
+    lead_ref: z.ZodOptional<z.ZodString>;
+    email: z.ZodOptional<z.ZodString>;
+    destino_url: z.ZodString;
+    attribution: z.ZodOptional<z.ZodObject<{
+        utm_source: z.ZodOptional<z.ZodString>;
+        utm_medium: z.ZodOptional<z.ZodString>;
+        utm_campaign: z.ZodOptional<z.ZodString>;
+        utm_content: z.ZodOptional<z.ZodString>;
+        utm_term: z.ZodOptional<z.ZodString>;
+        gclid: z.ZodOptional<z.ZodString>;
+        gbraid: z.ZodOptional<z.ZodString>;
+        wbraid: z.ZodOptional<z.ZodString>;
+        fbclid: z.ZodOptional<z.ZodString>;
+        ttclid: z.ZodOptional<z.ZodString>;
+        msclkid: z.ZodOptional<z.ZodString>;
+        referrer: z.ZodOptional<z.ZodString>;
+        landing: z.ZodOptional<z.ZodString>;
+        at: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    }, {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    }>>;
+    occurred_at: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    occurred_at: string;
+    produto: string;
+    destino_url: string;
+    email?: string | undefined;
+    lead_ref?: string | undefined;
+    attribution?: {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    } | undefined;
+}, {
+    occurred_at: string;
+    produto: string;
+    destino_url: string;
+    email?: string | undefined;
+    lead_ref?: string | undefined;
+    attribution?: {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    } | undefined;
+}>, {
+    occurred_at: string;
+    produto: string;
+    destino_url: string;
+    email?: string | undefined;
+    lead_ref?: string | undefined;
+    attribution?: {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    } | undefined;
+}, {
+    occurred_at: string;
+    produto: string;
+    destino_url: string;
+    email?: string | undefined;
+    lead_ref?: string | undefined;
+    attribution?: {
+        at: string;
+        utm_source?: string | undefined;
+        utm_medium?: string | undefined;
+        utm_campaign?: string | undefined;
+        utm_content?: string | undefined;
+        utm_term?: string | undefined;
+        referrer?: string | undefined;
+        landing?: string | undefined;
+        gclid?: string | undefined;
+        gbraid?: string | undefined;
+        wbraid?: string | undefined;
+        fbclid?: string | undefined;
+        ttclid?: string | undefined;
+        msclkid?: string | undefined;
+    } | undefined;
+}>;
+type CheckoutClick = z.infer<typeof CheckoutClickSchema>;
+/** Um lead como o CRM devolve no espelho (antes do filtro por perfil da API). */
+declare const CrmMirrorLeadSchema: z.ZodObject<{
+    id: z.ZodString;
+    nome: z.ZodString;
+    email: z.ZodString;
+    telefone: z.ZodString;
+    canal: z.ZodString;
+    campanha: z.ZodString;
+    etapa: z.ZodString;
+    aberto: z.ZodBoolean;
+    criado_em: z.ZodString;
+    convertido_em: z.ZodNullable<z.ZodString>;
+    crm_url: z.ZodString;
+    produto: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    etiquetas: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    utm_source: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    utm_medium: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    utm_campaign: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    utm_content: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    utm_term: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    gclid: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    fbclid: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    /** Campanha do último toque, quando diferente da primeira. */
+    ultima_utm_campaign: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    valor_cents: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    /** Nome de quem está atendendo (R-D: o produtor vê, sem ver a conversa). */
+    consultor_nome: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    ultima_acao_em: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    ultima_acao_descricao: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, "strip", z.ZodTypeAny, {
+    email: string;
+    id: string;
+    nome: string;
+    telefone: string;
+    canal: string;
+    campanha: string;
+    etapa: string;
+    aberto: boolean;
+    criado_em: string;
+    convertido_em: string | null;
+    crm_url: string;
+    utm_source?: string | null | undefined;
+    utm_medium?: string | null | undefined;
+    utm_campaign?: string | null | undefined;
+    utm_content?: string | null | undefined;
+    utm_term?: string | null | undefined;
+    gclid?: string | null | undefined;
+    fbclid?: string | null | undefined;
+    produto?: string | null | undefined;
+    etiquetas?: string[] | undefined;
+    ultima_utm_campaign?: string | null | undefined;
+    valor_cents?: number | null | undefined;
+    consultor_nome?: string | null | undefined;
+    ultima_acao_em?: string | null | undefined;
+    ultima_acao_descricao?: string | null | undefined;
+}, {
+    email: string;
+    id: string;
+    nome: string;
+    telefone: string;
+    canal: string;
+    campanha: string;
+    etapa: string;
+    aberto: boolean;
+    criado_em: string;
+    convertido_em: string | null;
+    crm_url: string;
+    utm_source?: string | null | undefined;
+    utm_medium?: string | null | undefined;
+    utm_campaign?: string | null | undefined;
+    utm_content?: string | null | undefined;
+    utm_term?: string | null | undefined;
+    gclid?: string | null | undefined;
+    fbclid?: string | null | undefined;
+    produto?: string | null | undefined;
+    etiquetas?: string[] | undefined;
+    ultima_utm_campaign?: string | null | undefined;
+    valor_cents?: number | null | undefined;
+    consultor_nome?: string | null | undefined;
+    ultima_acao_em?: string | null | undefined;
+    ultima_acao_descricao?: string | null | undefined;
+}>;
+type CrmMirrorLead = z.infer<typeof CrmMirrorLeadSchema>;
+declare const CrmMirrorSchema: z.ZodObject<{
+    empresa_id: z.ZodString;
+    gerado_em: z.ZodString;
+    totais: z.ZodObject<{
+        leads: z.ZodNumber;
+        ultimos_30_dias: z.ZodNumber;
+        abertos: z.ZodNumber;
+        ganhos: z.ZodNumber;
+        perdidos: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        leads: number;
+        ultimos_30_dias: number;
+        abertos: number;
+        ganhos: number;
+        perdidos: number;
+    }, {
+        leads: number;
+        ultimos_30_dias: number;
+        abertos: number;
+        ganhos: number;
+        perdidos: number;
+    }>;
+    por_etapa: z.ZodArray<z.ZodObject<{
+        etapa: z.ZodString;
+        total: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        etapa: string;
+        total: number;
+    }, {
+        etapa: string;
+        total: number;
+    }>, "many">;
+    por_campanha: z.ZodArray<z.ZodObject<{
+        campanha: z.ZodString;
+        total: z.ZodNumber;
+        ganhos: z.ZodNumber;
+        foram_ao_checkout: z.ZodOptional<z.ZodNumber>;
+        valor_cents: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        campanha: string;
+        ganhos: number;
+        total: number;
+        valor_cents?: number | undefined;
+        foram_ao_checkout?: number | undefined;
+    }, {
+        campanha: string;
+        ganhos: number;
+        total: number;
+        valor_cents?: number | undefined;
+        foram_ao_checkout?: number | undefined;
+    }>, "many">;
+    leads: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        nome: z.ZodString;
+        email: z.ZodString;
+        telefone: z.ZodString;
+        canal: z.ZodString;
+        campanha: z.ZodString;
+        etapa: z.ZodString;
+        aberto: z.ZodBoolean;
+        criado_em: z.ZodString;
+        convertido_em: z.ZodNullable<z.ZodString>;
+        crm_url: z.ZodString;
+        produto: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        etiquetas: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        utm_source: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        utm_medium: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        utm_campaign: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        utm_content: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        utm_term: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        gclid: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        fbclid: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        /** Campanha do último toque, quando diferente da primeira. */
+        ultima_utm_campaign: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        valor_cents: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+        /** Nome de quem está atendendo (R-D: o produtor vê, sem ver a conversa). */
+        consultor_nome: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        ultima_acao_em: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        ultima_acao_descricao: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    }, "strip", z.ZodTypeAny, {
+        email: string;
+        id: string;
+        nome: string;
+        telefone: string;
+        canal: string;
+        campanha: string;
+        etapa: string;
+        aberto: boolean;
+        criado_em: string;
+        convertido_em: string | null;
+        crm_url: string;
+        utm_source?: string | null | undefined;
+        utm_medium?: string | null | undefined;
+        utm_campaign?: string | null | undefined;
+        utm_content?: string | null | undefined;
+        utm_term?: string | null | undefined;
+        gclid?: string | null | undefined;
+        fbclid?: string | null | undefined;
+        produto?: string | null | undefined;
+        etiquetas?: string[] | undefined;
+        ultima_utm_campaign?: string | null | undefined;
+        valor_cents?: number | null | undefined;
+        consultor_nome?: string | null | undefined;
+        ultima_acao_em?: string | null | undefined;
+        ultima_acao_descricao?: string | null | undefined;
+    }, {
+        email: string;
+        id: string;
+        nome: string;
+        telefone: string;
+        canal: string;
+        campanha: string;
+        etapa: string;
+        aberto: boolean;
+        criado_em: string;
+        convertido_em: string | null;
+        crm_url: string;
+        utm_source?: string | null | undefined;
+        utm_medium?: string | null | undefined;
+        utm_campaign?: string | null | undefined;
+        utm_content?: string | null | undefined;
+        utm_term?: string | null | undefined;
+        gclid?: string | null | undefined;
+        fbclid?: string | null | undefined;
+        produto?: string | null | undefined;
+        etiquetas?: string[] | undefined;
+        ultima_utm_campaign?: string | null | undefined;
+        valor_cents?: number | null | undefined;
+        consultor_nome?: string | null | undefined;
+        ultima_acao_em?: string | null | undefined;
+        ultima_acao_descricao?: string | null | undefined;
+    }>, "many">;
+}, "strip", z.ZodTypeAny, {
+    empresa_id: string;
+    gerado_em: string;
+    totais: {
+        leads: number;
+        ultimos_30_dias: number;
+        abertos: number;
+        ganhos: number;
+        perdidos: number;
+    };
+    leads: {
+        email: string;
+        id: string;
+        nome: string;
+        telefone: string;
+        canal: string;
+        campanha: string;
+        etapa: string;
+        aberto: boolean;
+        criado_em: string;
+        convertido_em: string | null;
+        crm_url: string;
+        utm_source?: string | null | undefined;
+        utm_medium?: string | null | undefined;
+        utm_campaign?: string | null | undefined;
+        utm_content?: string | null | undefined;
+        utm_term?: string | null | undefined;
+        gclid?: string | null | undefined;
+        fbclid?: string | null | undefined;
+        produto?: string | null | undefined;
+        etiquetas?: string[] | undefined;
+        ultima_utm_campaign?: string | null | undefined;
+        valor_cents?: number | null | undefined;
+        consultor_nome?: string | null | undefined;
+        ultima_acao_em?: string | null | undefined;
+        ultima_acao_descricao?: string | null | undefined;
+    }[];
+    por_etapa: {
+        etapa: string;
+        total: number;
+    }[];
+    por_campanha: {
+        campanha: string;
+        ganhos: number;
+        total: number;
+        valor_cents?: number | undefined;
+        foram_ao_checkout?: number | undefined;
+    }[];
+}, {
+    empresa_id: string;
+    gerado_em: string;
+    totais: {
+        leads: number;
+        ultimos_30_dias: number;
+        abertos: number;
+        ganhos: number;
+        perdidos: number;
+    };
+    leads: {
+        email: string;
+        id: string;
+        nome: string;
+        telefone: string;
+        canal: string;
+        campanha: string;
+        etapa: string;
+        aberto: boolean;
+        criado_em: string;
+        convertido_em: string | null;
+        crm_url: string;
+        utm_source?: string | null | undefined;
+        utm_medium?: string | null | undefined;
+        utm_campaign?: string | null | undefined;
+        utm_content?: string | null | undefined;
+        utm_term?: string | null | undefined;
+        gclid?: string | null | undefined;
+        fbclid?: string | null | undefined;
+        produto?: string | null | undefined;
+        etiquetas?: string[] | undefined;
+        ultima_utm_campaign?: string | null | undefined;
+        valor_cents?: number | null | undefined;
+        consultor_nome?: string | null | undefined;
+        ultima_acao_em?: string | null | undefined;
+        ultima_acao_descricao?: string | null | undefined;
+    }[];
+    por_etapa: {
+        etapa: string;
+        total: number;
+    }[];
+    por_campanha: {
+        campanha: string;
+        ganhos: number;
+        total: number;
+        valor_cents?: number | undefined;
+        foram_ao_checkout?: number | undefined;
+    }[];
+}>;
+type CrmMirror = z.infer<typeof CrmMirrorSchema>;
+
 /** Centavos inteiros. Alias documental — o compilador aceita `number`. */
 type Cents = number;
 /** Garante centavos inteiros e finitos; qualquer outra coisa vira 0. */
@@ -2614,4 +3188,4 @@ declare function brlInputToCents(display: string): Cents;
 /** Valor de um período convertido para o mês (MRR). */
 declare function monthlyCents(cents: Cents | null | undefined, frequency: string | null | undefined): Cents;
 
-export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, BUDGET_RANGES, BUDGET_RANGE_LABELS, type BudgetRange, BudgetRangeSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerDiagnosticJoinDto, BuyerDiagnosticJoinSchema, type BuyerJoinDto, BuyerJoinSchema, CATEGORY_STAGES, CATEGORY_STAGE_LABELS, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CategoryStage, CategoryStageSchema, type Cents, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, DELIVERABLE_EXECUTORS, DELIVERABLE_EXECUTOR_LABELS, DELIVERABLE_GOALS, DELIVERABLE_GOAL_LABELS, DELIVERABLE_MODALITIES, DELIVERABLE_MODALITY_LABELS, DIAGNOSTIC_CHANNELS, type DecideProposalDto, DecideProposalSchema, type DeleteVoteDto, DeleteVoteSchema, type DeliverableCategoryDto, DeliverableCategorySchema, type DeliverableExecutor, DeliverableExecutorSchema, type DeliverableGoal, DeliverableGoalSchema, type DeliverableModality, DeliverableModalitySchema, type DeliverableTemplateDto, DeliverableTemplateSchema, type DiagnosticChannel, DiagnosticChannelSchema, type DiagnosticDto, DiagnosticSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, EXECUTION_STATUSES, EXECUTION_STATUS_LABELS, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ExecutionActor, type ExecutionStatus, ExecutionStatusSchema, type ExternalDiagnosticDto, ExternalDiagnosticSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type GatewayOption, GatewayOptionSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type KpiBaseline, KpiBaselineSchema, LEAD_TIME_MIN_SAMPLE, type LoginDto, LoginSchema, METRIC_DIRECTIONS, type MetricDirection, MetricDirectionSchema, NEED_TYPES, NEED_TYPE_LABELS, type NeedType, NeedTypeSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, OFFER_KINDS, OFFER_KIND_LABELS, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, type OfferKind, OfferKindSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, PROPOSAL_STATUSES, PROPOSAL_STATUS_LABELS, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type ProposalItemDto, ProposalItemSchema, type ProposalStatus, ProposalStatusSchema, RECURRENCE_INTERVALS, RECURRENCE_INTERVAL_LABELS, RESULT_CHECKPOINTS, RESULT_CHECKPOINT_DAYS, type RecurrenceInterval, RecurrenceIntervalSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type RequiredTool, RequiredToolSchema, type ResetPasswordDto, ResetPasswordSchema, type ResultCheckpoint, ResultCheckpointSchema, type ResultMeasurementDto, ResultMeasurementSchema, type ReturnDeliverableDto, ReturnDeliverableSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type SaveProposalDto, SaveProposalSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TimeLogDto, TimeLogSchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, URGENCIES, URGENCY_LABELS, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateDeliverableCategoryDto, UpdateDeliverableCategorySchema, type UpdateDeliverableTemplateDto, UpdateDeliverableTemplateSchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateExecutionDto, UpdateExecutionSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type Urgency, UrgencySchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, VALIDATION_STEPS, VALIDATION_STEP_STATUSES, type ValidationStep, ValidationStepSchema, type ValidationStepState, ValidationStepStateSchema, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, brlInputToCents, canTransition, centsToReais, checkTemplateTiming, decodeAttribution, encodeAttribution, entitlementGrantsAccess, formatBRL, formatBRLCompact, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, kpiImproved, maskBRLInput, monthlyCents, readAttributionFromUrl, reaisToCents, toCents, withAttribution };
+export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, BUDGET_RANGES, BUDGET_RANGE_LABELS, type BudgetRange, BudgetRangeSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerDiagnosticJoinDto, BuyerDiagnosticJoinSchema, type BuyerJoinDto, BuyerJoinSchema, CATEGORY_STAGES, CATEGORY_STAGE_LABELS, CHECKOUT_ABANDON_HOURS, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, CRM_FUNNEL_STAGES, CRM_FUNNEL_TAGS, CRM_LEAD_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CategoryStage, CategoryStageSchema, type Cents, type CheckoutClick, CheckoutClickSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type CrmCaptureExtras, CrmCaptureExtrasSchema, type CrmFunnelTag, type CrmMirror, type CrmMirrorLead, CrmMirrorLeadSchema, CrmMirrorSchema, DELIVERABLE_EXECUTORS, DELIVERABLE_EXECUTOR_LABELS, DELIVERABLE_GOALS, DELIVERABLE_GOAL_LABELS, DELIVERABLE_MODALITIES, DELIVERABLE_MODALITY_LABELS, DIAGNOSTIC_CHANNELS, type DecideProposalDto, DecideProposalSchema, type DeleteVoteDto, DeleteVoteSchema, type DeliverableCategoryDto, DeliverableCategorySchema, type DeliverableExecutor, DeliverableExecutorSchema, type DeliverableGoal, DeliverableGoalSchema, type DeliverableModality, DeliverableModalitySchema, type DeliverableTemplateDto, DeliverableTemplateSchema, type DiagnosticChannel, DiagnosticChannelSchema, type DiagnosticDto, DiagnosticSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, EXECUTION_STATUSES, EXECUTION_STATUS_LABELS, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ExecutionActor, type ExecutionStatus, ExecutionStatusSchema, type ExternalDiagnosticDto, ExternalDiagnosticSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type GatewayOption, GatewayOptionSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type KpiBaseline, KpiBaselineSchema, LEAD_TIME_MIN_SAMPLE, type LoginDto, LoginSchema, METRIC_DIRECTIONS, type MetricDirection, MetricDirectionSchema, NEED_TYPES, NEED_TYPE_LABELS, type NeedType, NeedTypeSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, OFFER_KINDS, OFFER_KIND_LABELS, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, type OfferKind, OfferKindSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, PROPOSAL_STATUSES, PROPOSAL_STATUS_LABELS, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type ProposalItemDto, ProposalItemSchema, type ProposalStatus, ProposalStatusSchema, RECURRENCE_INTERVALS, RECURRENCE_INTERVAL_LABELS, RESULT_CHECKPOINTS, RESULT_CHECKPOINT_DAYS, type RecurrenceInterval, RecurrenceIntervalSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type RequiredTool, RequiredToolSchema, type ResetPasswordDto, ResetPasswordSchema, type ResultCheckpoint, ResultCheckpointSchema, type ResultMeasurementDto, ResultMeasurementSchema, type ReturnDeliverableDto, ReturnDeliverableSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type SaveProposalDto, SaveProposalSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TimeLogDto, TimeLogSchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, URGENCIES, URGENCY_LABELS, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateDeliverableCategoryDto, UpdateDeliverableCategorySchema, type UpdateDeliverableTemplateDto, UpdateDeliverableTemplateSchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateExecutionDto, UpdateExecutionSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type Urgency, UrgencySchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, VALIDATION_STEPS, VALIDATION_STEP_STATUSES, type ValidationStep, ValidationStepSchema, type ValidationStepState, ValidationStepStateSchema, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, brlInputToCents, canTransition, centsToReais, checkTemplateTiming, decodeAttribution, encodeAttribution, entitlementGrantsAccess, formatBRL, formatBRLCompact, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, kpiImproved, maskBRLInput, monthlyCents, readAttributionFromUrl, reaisToCents, toCents, withAttribution };

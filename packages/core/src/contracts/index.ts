@@ -9,3 +9,4 @@ export * from './join';
 export * from './attribution';
 export * from './commerce';
 export * from './deliverables';
+export * from './crm-funnel';
