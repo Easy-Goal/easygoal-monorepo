@@ -207,7 +207,7 @@ Liga LP/site → gateway → API → Easy CRM → app. O produto é um recorte d
 |---|---|---|
 | `CrmCaptureExtrasSchema` | LPs e site → CRM (captura pública) | `produto`, `etiquetas`, primeiro toque de UTM, `origem_pagina` |
 | `CheckoutClickSchema` | redirecionador da LP → CRM | registra "foi ao checkout" antes de mandar ao gateway |
-| `CRM_LEAD_REF_PARAM` (`eg_lead`) | LP → gateway → webhook → API | liga o pagamento ao lead certo (`lead_ref` no evento) |
+| `CRM_LEAD_REF_PARAM` (`eg_lead`) | LP → gateway → webhook → API | liga o pagamento ao lead certo (`lead_ref` no evento). Token opaco assinado pelo CRM: só ele gera e confere; é dica, não autoridade |
 | `payment.pending` em `COMMERCE_EVENT_TYPES` | API → CRM (fila `crm-events`) | Pix gerado ou boleto emitido; só registra |
 | `CRM_FUNNEL_TAGS`, `CHECKOUT_ABANDON_HOURS` (24) | CRM e app | etiquetas automáticas e prazo de "abandonou checkout" |
 | `CrmMirrorSchema` / `CrmMirrorLeadSchema` | CRM → API → app | espelho com UTMs, valor, consultor e última ação (campos novos opcionais) |

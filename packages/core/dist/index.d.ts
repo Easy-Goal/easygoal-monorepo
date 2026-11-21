@@ -2596,7 +2596,12 @@ type ResultMeasurementDto = z.infer<typeof ResultMeasurementSchema>;
 /** O número melhorou em relação à partida, no sentido da métrica. Sem partida, não dá para afirmar. */
 declare function kpiImproved(baseline: number | null | undefined, current: number, direction: MetricDirection): boolean | null;
 
-/** Parâmetro que leva o id do lead do CRM até o checkout e volta no webhook como `lead_ref`. */
+/**
+ * Parâmetro que leva a referência do lead até o checkout e volta no webhook como `lead_ref`.
+ * O valor é um token opaco assinado pelo CRM (`<lead_id>.<hmac>`), devolvido na captura. Quem
+ * repassa (LP, gateway, API) não interpreta nem gera: só o CRM assina e confere. É uma dica, nunca
+ * autoridade: com e-mail no evento, o CRM só usa o lead se o e-mail bater (revisão de segurança s369).
+ */
 declare const CRM_LEAD_REF_PARAM = "eg_lead";
 /** Horas depois do clique no checkout, sem pagamento, para o lead virar "abandonou checkout" (R-C). */
 declare const CHECKOUT_ABANDON_HOURS = 24;
@@ -2608,7 +2613,7 @@ declare const CRM_FUNNEL_TAGS: {
     readonly saleWithoutLead: "venda sem lead";
 };
 type CrmFunnelTag = (typeof CRM_FUNNEL_TAGS)[keyof typeof CRM_FUNNEL_TAGS];
-/** Etapas do funil que o espelho e o app conhecem (as do CRM, na ordem). */
+/** Etapas que a automação do funil usa (o CRM tem outras; contas personalizadas podem não ter "Checkout"). */
 declare const CRM_FUNNEL_STAGES: readonly ["Novo", "Checkout", "Fechado Ganho", "Perdido"];
 /** Campos extras que toda captura pública manda além de nome/e-mail/telefone. */
 declare const CrmCaptureExtrasSchema: z.ZodObject<{
