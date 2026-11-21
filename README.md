@@ -211,6 +211,7 @@ Liga LP/site → gateway → API → Easy CRM → app. O produto é um recorte d
 | `payment.pending` em `COMMERCE_EVENT_TYPES` | API → CRM (fila `crm-events`) | Pix gerado ou boleto emitido; só registra |
 | `CRM_FUNNEL_TAGS`, `CHECKOUT_ABANDON_HOURS` (24) | CRM e app | etiquetas automáticas e prazo de "abandonou checkout" |
 | `CrmMirrorSchema` / `CrmMirrorLeadSchema` | CRM → API → app | espelho com UTMs, valor, consultor e última ação (campos novos opcionais) |
+| `MIRROR_PROFILES`, `MIRROR_BLOCKS`, `LEAD_FIELDS`, `MirrorPolicySchema`, `DEFAULT_MIRROR_POLICIES` | API (filtro) e app (tela do admin) | política do espelho por perfil (C1); a decisão efetiva é função pura na API |
 
 ```ts
 import { CRM_LEAD_REF_PARAM, CheckoutClickSchema, CrmMirrorSchema } from '@easygoal/packages/core'

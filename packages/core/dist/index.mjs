@@ -853,6 +853,76 @@ var CrmMirrorSchema = z12.object({
   ),
   leads: z12.array(CrmMirrorLeadSchema)
 });
+var MIRROR_PROFILES = ["admin", "producer", "client", "builder"];
+var CONFIGURABLE_PROFILES = ["producer", "client"];
+var MIRROR_BLOCKS = ["totais", "por_etapa", "por_campanha", "leads"];
+var LEAD_FIELDS = [
+  "nome",
+  "email",
+  "telefone",
+  "canal",
+  "campanha",
+  "produto",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+  "gclid",
+  "fbclid",
+  "ultima_utm_campaign",
+  "etapa",
+  "aberto",
+  "criado_em",
+  "convertido_em",
+  "valor_cents",
+  "etiquetas",
+  "consultor_nome",
+  "ultima_acao_em",
+  "ultima_acao_descricao"
+];
+var MASKABLE_FIELDS = ["email", "telefone"];
+var uniq = (item) => z12.array(item).transform((list) => Array.from(new Set(list)));
+var MirrorPolicyProfileSchema = z12.enum(CONFIGURABLE_PROFILES);
+var MirrorPolicySchema = z12.object({
+  blocks: uniq(z12.enum(MIRROR_BLOCKS)),
+  allowed_fields: uniq(z12.enum(LEAD_FIELDS)),
+  masked_fields: uniq(z12.enum(MASKABLE_FIELDS)),
+  open_in_crm: z12.boolean()
+}).strict();
+var DEFAULT_MIRROR_POLICIES = {
+  producer: {
+    blocks: ["totais", "por_etapa", "por_campanha", "leads"],
+    allowed_fields: [
+      "nome",
+      "email",
+      "telefone",
+      "canal",
+      "campanha",
+      "produto",
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "etapa",
+      "aberto",
+      "criado_em",
+      "convertido_em",
+      "valor_cents",
+      "etiquetas",
+      "consultor_nome",
+      "ultima_acao_em",
+      "ultima_acao_descricao"
+    ],
+    masked_fields: ["email", "telefone"],
+    open_in_crm: false
+  },
+  client: {
+    blocks: ["totais", "por_etapa", "por_campanha"],
+    allowed_fields: [],
+    masked_fields: ["email", "telefone"],
+    open_in_crm: false
+  }
+};
 
 // src/money/index.ts
 var BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -921,6 +991,7 @@ export {
   COMMERCE_EVENT_VERIFICATION,
   COMMERCE_GATEWAYS,
   COMMERCE_REF_PARAM,
+  CONFIGURABLE_PROFILES,
   CRM_FUNNEL_STAGES,
   CRM_FUNNEL_TAGS,
   CRM_LEAD_REF_PARAM,
@@ -945,6 +1016,7 @@ export {
   CrmCaptureExtrasSchema,
   CrmMirrorLeadSchema,
   CrmMirrorSchema,
+  DEFAULT_MIRROR_POLICIES,
   DELIVERABLE_EXECUTORS,
   DELIVERABLE_EXECUTOR_LABELS,
   DELIVERABLE_GOALS,
@@ -979,10 +1051,16 @@ export {
   InviteProducerSchema,
   KiwifyConfigSchema,
   KpiBaselineSchema,
+  LEAD_FIELDS,
   LEAD_TIME_MIN_SAMPLE,
   LoginSchema,
+  MASKABLE_FIELDS,
   METRIC_DIRECTIONS,
+  MIRROR_BLOCKS,
+  MIRROR_PROFILES,
   MetricDirectionSchema,
+  MirrorPolicyProfileSchema,
+  MirrorPolicySchema,
   NEED_TYPES,
   NEED_TYPE_LABELS,
   NeedTypeSchema,

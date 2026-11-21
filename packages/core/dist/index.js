@@ -37,6 +37,7 @@ __export(index_exports, {
   COMMERCE_EVENT_VERIFICATION: () => COMMERCE_EVENT_VERIFICATION,
   COMMERCE_GATEWAYS: () => COMMERCE_GATEWAYS,
   COMMERCE_REF_PARAM: () => COMMERCE_REF_PARAM,
+  CONFIGURABLE_PROFILES: () => CONFIGURABLE_PROFILES,
   CRM_FUNNEL_STAGES: () => CRM_FUNNEL_STAGES,
   CRM_FUNNEL_TAGS: () => CRM_FUNNEL_TAGS,
   CRM_LEAD_REF_PARAM: () => CRM_LEAD_REF_PARAM,
@@ -61,6 +62,7 @@ __export(index_exports, {
   CrmCaptureExtrasSchema: () => CrmCaptureExtrasSchema,
   CrmMirrorLeadSchema: () => CrmMirrorLeadSchema,
   CrmMirrorSchema: () => CrmMirrorSchema,
+  DEFAULT_MIRROR_POLICIES: () => DEFAULT_MIRROR_POLICIES,
   DELIVERABLE_EXECUTORS: () => DELIVERABLE_EXECUTORS,
   DELIVERABLE_EXECUTOR_LABELS: () => DELIVERABLE_EXECUTOR_LABELS,
   DELIVERABLE_GOALS: () => DELIVERABLE_GOALS,
@@ -95,10 +97,16 @@ __export(index_exports, {
   InviteProducerSchema: () => InviteProducerSchema,
   KiwifyConfigSchema: () => KiwifyConfigSchema,
   KpiBaselineSchema: () => KpiBaselineSchema,
+  LEAD_FIELDS: () => LEAD_FIELDS,
   LEAD_TIME_MIN_SAMPLE: () => LEAD_TIME_MIN_SAMPLE,
   LoginSchema: () => LoginSchema,
+  MASKABLE_FIELDS: () => MASKABLE_FIELDS,
   METRIC_DIRECTIONS: () => METRIC_DIRECTIONS,
+  MIRROR_BLOCKS: () => MIRROR_BLOCKS,
+  MIRROR_PROFILES: () => MIRROR_PROFILES,
   MetricDirectionSchema: () => MetricDirectionSchema,
+  MirrorPolicyProfileSchema: () => MirrorPolicyProfileSchema,
+  MirrorPolicySchema: () => MirrorPolicySchema,
   NEED_TYPES: () => NEED_TYPES,
   NEED_TYPE_LABELS: () => NEED_TYPE_LABELS,
   NeedTypeSchema: () => NeedTypeSchema,
@@ -1044,6 +1052,76 @@ var CrmMirrorSchema = import_zod12.z.object({
   ),
   leads: import_zod12.z.array(CrmMirrorLeadSchema)
 });
+var MIRROR_PROFILES = ["admin", "producer", "client", "builder"];
+var CONFIGURABLE_PROFILES = ["producer", "client"];
+var MIRROR_BLOCKS = ["totais", "por_etapa", "por_campanha", "leads"];
+var LEAD_FIELDS = [
+  "nome",
+  "email",
+  "telefone",
+  "canal",
+  "campanha",
+  "produto",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+  "gclid",
+  "fbclid",
+  "ultima_utm_campaign",
+  "etapa",
+  "aberto",
+  "criado_em",
+  "convertido_em",
+  "valor_cents",
+  "etiquetas",
+  "consultor_nome",
+  "ultima_acao_em",
+  "ultima_acao_descricao"
+];
+var MASKABLE_FIELDS = ["email", "telefone"];
+var uniq = (item) => import_zod12.z.array(item).transform((list) => Array.from(new Set(list)));
+var MirrorPolicyProfileSchema = import_zod12.z.enum(CONFIGURABLE_PROFILES);
+var MirrorPolicySchema = import_zod12.z.object({
+  blocks: uniq(import_zod12.z.enum(MIRROR_BLOCKS)),
+  allowed_fields: uniq(import_zod12.z.enum(LEAD_FIELDS)),
+  masked_fields: uniq(import_zod12.z.enum(MASKABLE_FIELDS)),
+  open_in_crm: import_zod12.z.boolean()
+}).strict();
+var DEFAULT_MIRROR_POLICIES = {
+  producer: {
+    blocks: ["totais", "por_etapa", "por_campanha", "leads"],
+    allowed_fields: [
+      "nome",
+      "email",
+      "telefone",
+      "canal",
+      "campanha",
+      "produto",
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "etapa",
+      "aberto",
+      "criado_em",
+      "convertido_em",
+      "valor_cents",
+      "etiquetas",
+      "consultor_nome",
+      "ultima_acao_em",
+      "ultima_acao_descricao"
+    ],
+    masked_fields: ["email", "telefone"],
+    open_in_crm: false
+  },
+  client: {
+    blocks: ["totais", "por_etapa", "por_campanha"],
+    allowed_fields: [],
+    masked_fields: ["email", "telefone"],
+    open_in_crm: false
+  }
+};
 
 // src/money/index.ts
 var BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -1113,6 +1191,7 @@ function monthlyCents(cents, frequency) {
   COMMERCE_EVENT_VERIFICATION,
   COMMERCE_GATEWAYS,
   COMMERCE_REF_PARAM,
+  CONFIGURABLE_PROFILES,
   CRM_FUNNEL_STAGES,
   CRM_FUNNEL_TAGS,
   CRM_LEAD_REF_PARAM,
@@ -1137,6 +1216,7 @@ function monthlyCents(cents, frequency) {
   CrmCaptureExtrasSchema,
   CrmMirrorLeadSchema,
   CrmMirrorSchema,
+  DEFAULT_MIRROR_POLICIES,
   DELIVERABLE_EXECUTORS,
   DELIVERABLE_EXECUTOR_LABELS,
   DELIVERABLE_GOALS,
@@ -1171,10 +1251,16 @@ function monthlyCents(cents, frequency) {
   InviteProducerSchema,
   KiwifyConfigSchema,
   KpiBaselineSchema,
+  LEAD_FIELDS,
   LEAD_TIME_MIN_SAMPLE,
   LoginSchema,
+  MASKABLE_FIELDS,
   METRIC_DIRECTIONS,
+  MIRROR_BLOCKS,
+  MIRROR_PROFILES,
   MetricDirectionSchema,
+  MirrorPolicyProfileSchema,
+  MirrorPolicySchema,
   NEED_TYPES,
   NEED_TYPE_LABELS,
   NeedTypeSchema,

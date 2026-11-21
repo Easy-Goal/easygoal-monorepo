@@ -115,3 +115,87 @@ export const CrmMirrorSchema = z.object({
   leads: z.array(CrmMirrorLeadSchema),
 });
 export type CrmMirror = z.infer<typeof CrmMirrorSchema>;
+
+// ── Política do espelho por perfil (lançamento C1; movido da API para cá no s369) ──────────────
+// A API decide a política efetiva (função pura `resolveMirrorPolicy`, fica na API); o app usa
+// estas listas para a tela do admin (C2) e para saber o que pode chegar (C4).
+
+export const MIRROR_PROFILES = ['admin', 'producer', 'client', 'builder'] as const;
+export type MirrorProfile = (typeof MIRROR_PROFILES)[number];
+
+/** Perfis que o admin configura por ligação (linhas em `crm_mirror_policies`). */
+export const CONFIGURABLE_PROFILES = ['producer', 'client'] as const;
+export type ConfigurableProfile = (typeof CONFIGURABLE_PROFILES)[number];
+
+export const MIRROR_BLOCKS = ['totais', 'por_etapa', 'por_campanha', 'leads'] as const;
+export type MirrorBlock = (typeof MIRROR_BLOCKS)[number];
+
+/** Campos do lead que a política pode liberar. Tudo que não está aqui nunca sai da API. */
+export const LEAD_FIELDS = [
+  'nome',
+  'email',
+  'telefone',
+  'canal',
+  'campanha',
+  'produto',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term',
+  'gclid',
+  'fbclid',
+  'ultima_utm_campaign',
+  'etapa',
+  'aberto',
+  'criado_em',
+  'convertido_em',
+  'valor_cents',
+  'etiquetas',
+  'consultor_nome',
+  'ultima_acao_em',
+  'ultima_acao_descricao',
+] as const;
+export type LeadField = (typeof LEAD_FIELDS)[number];
+
+export const MASKABLE_FIELDS = ['email', 'telefone'] as const;
+export type MaskableField = (typeof MASKABLE_FIELDS)[number];
+
+const uniq = <T extends z.ZodTypeAny>(item: T) => z.array(item).transform((list) => Array.from(new Set(list)));
+
+export const MirrorPolicyProfileSchema = z.enum(CONFIGURABLE_PROFILES);
+
+/** Corpo do PUT `/admin/crm-links/:id/policies/:profile` e linha de `crm_mirror_policies`. */
+export const MirrorPolicySchema = z
+  .object({
+    blocks: uniq(z.enum(MIRROR_BLOCKS)),
+    allowed_fields: uniq(z.enum(LEAD_FIELDS)),
+    masked_fields: uniq(z.enum(MASKABLE_FIELDS)),
+    open_in_crm: z.boolean(),
+  })
+  .strict();
+export type MirrorPolicy = z.infer<typeof MirrorPolicySchema>;
+
+/**
+ * Padrão ao criar a política (o mesmo que a migration semeia).
+ * C-B: e-mail e telefone mascarados para produtor e cliente. R-D: o produtor vê o consultor e a
+ * última ação, sem a conversa.
+ */
+export const DEFAULT_MIRROR_POLICIES: Record<ConfigurableProfile, MirrorPolicy> = {
+  producer: {
+    blocks: ['totais', 'por_etapa', 'por_campanha', 'leads'],
+    allowed_fields: [
+      'nome', 'email', 'telefone', 'canal', 'campanha', 'produto',
+      'utm_source', 'utm_medium', 'utm_campaign', 'etapa', 'aberto', 'criado_em', 'convertido_em',
+      'valor_cents', 'etiquetas', 'consultor_nome', 'ultima_acao_em', 'ultima_acao_descricao',
+    ],
+    masked_fields: ['email', 'telefone'],
+    open_in_crm: false,
+  },
+  client: {
+    blocks: ['totais', 'por_etapa', 'por_campanha'],
+    allowed_fields: [],
+    masked_fields: ['email', 'telefone'],
+    open_in_crm: false,
+  },
+};
