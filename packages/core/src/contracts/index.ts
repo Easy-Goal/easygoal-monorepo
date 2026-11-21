@@ -10,3 +10,4 @@ export * from './attribution';
 export * from './commerce';
 export * from './deliverables';
 export * from './crm-funnel';
+export * from './diagnostic-preview';

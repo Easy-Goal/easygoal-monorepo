@@ -3208,6 +3208,206 @@ type MirrorPolicy = z.infer<typeof MirrorPolicySchema>;
  */
 declare const DEFAULT_MIRROR_POLICIES: Record<ConfigurableProfile, MirrorPolicy>;
 
+declare const PREVIEW_LEAD_TIME_SOURCES: readonly ["template", "history"];
+/** Uma etapa do preview público. */
+declare const DiagnosticPreviewItemSchema: z.ZodObject<{
+    name: z.ZodString;
+    phase: z.ZodNumber;
+    modality: z.ZodString;
+    /** Dias úteis; `null` = sem prazo definido no catálogo (o consultor define). */
+    lead_time_days: z.ZodNullable<z.ZodNumber>;
+    /** `history` = prazo médio das entregas reais; `template` = prazo padrão do catálogo. */
+    lead_time_source: z.ZodEnum<["template", "history"]>;
+    acceptance_criteria: z.ZodArray<z.ZodString, "many">;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    modality: string;
+    acceptance_criteria: string[];
+    phase: number;
+    lead_time_days: number | null;
+    lead_time_source: "template" | "history";
+}, {
+    name: string;
+    modality: string;
+    acceptance_criteria: string[];
+    phase: number;
+    lead_time_days: number | null;
+    lead_time_source: "template" | "history";
+}>;
+type DiagnosticPreviewItem = z.infer<typeof DiagnosticPreviewItemSchema>;
+/** Devolvido pela API a `POST /internal/diagnostics` (canal `site`) e mostrado pelo site. */
+declare const DiagnosticPreviewSchema: z.ZodObject<{
+    objective_id: z.ZodString;
+    items: z.ZodArray<z.ZodObject<{
+        name: z.ZodString;
+        phase: z.ZodNumber;
+        modality: z.ZodString;
+        /** Dias úteis; `null` = sem prazo definido no catálogo (o consultor define). */
+        lead_time_days: z.ZodNullable<z.ZodNumber>;
+        /** `history` = prazo médio das entregas reais; `template` = prazo padrão do catálogo. */
+        lead_time_source: z.ZodEnum<["template", "history"]>;
+        acceptance_criteria: z.ZodArray<z.ZodString, "many">;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        modality: string;
+        acceptance_criteria: string[];
+        phase: number;
+        lead_time_days: number | null;
+        lead_time_source: "template" | "history";
+    }, {
+        name: string;
+        modality: string;
+        acceptance_criteria: string[];
+        phase: number;
+        lead_time_days: number | null;
+        lead_time_source: "template" | "history";
+    }>, "many">;
+    phases: z.ZodNumber;
+    /** Soma das fases (recorrência fora), em dias úteis. */
+    total_lead_time_days: z.ZodNumber;
+    has_recurring: z.ZodBoolean;
+}, "strip", z.ZodTypeAny, {
+    items: {
+        name: string;
+        modality: string;
+        acceptance_criteria: string[];
+        phase: number;
+        lead_time_days: number | null;
+        lead_time_source: "template" | "history";
+    }[];
+    objective_id: string;
+    phases: number;
+    total_lead_time_days: number;
+    has_recurring: boolean;
+}, {
+    items: {
+        name: string;
+        modality: string;
+        acceptance_criteria: string[];
+        phase: number;
+        lead_time_days: number | null;
+        lead_time_source: "template" | "history";
+    }[];
+    objective_id: string;
+    phases: number;
+    total_lead_time_days: number;
+    has_recurring: boolean;
+}>;
+type DiagnosticPreview = z.infer<typeof DiagnosticPreviewSchema>;
+/** Item interno da proposta em rascunho (vai ao CRM, nunca ao público). */
+declare const CrmProposalDraftItemSchema: z.ZodObject<{
+    nome: z.ZodString;
+    fase: z.ZodNumber;
+    modalidade: z.ZodString;
+    prazo_dias: z.ZodNullable<z.ZodNumber>;
+    horas: z.ZodNullable<z.ZodNumber>;
+    preco_cents: z.ZodNullable<z.ZodNumber>;
+    criterios_aceite: z.ZodArray<z.ZodString, "many">;
+    ferramentas: z.ZodArray<z.ZodString, "many">;
+}, "strip", z.ZodTypeAny, {
+    nome: string;
+    fase: number;
+    modalidade: string;
+    prazo_dias: number | null;
+    horas: number | null;
+    preco_cents: number | null;
+    criterios_aceite: string[];
+    ferramentas: string[];
+}, {
+    nome: string;
+    fase: number;
+    modalidade: string;
+    prazo_dias: number | null;
+    horas: number | null;
+    preco_cents: number | null;
+    criterios_aceite: string[];
+    ferramentas: string[];
+}>;
+type CrmProposalDraftItem = z.infer<typeof CrmProposalDraftItemSchema>;
+/**
+ * API → Easy CRM (`POST /api/propostas/rascunho`, token de serviço). Idempotente por `objective_id`:
+ * reenviar substitui os itens do rascunho, nunca cria outro.
+ */
+declare const CrmProposalDraftSchema: z.ZodObject<{
+    objective_id: z.ZodString;
+    email: z.ZodString;
+    /** Token assinado do CRM, quando a captura devolveu um (ver `crm-funnel.ts`). Só dica. */
+    lead_ref: z.ZodOptional<z.ZodString>;
+    produto: z.ZodString;
+    resumo_diagnostico: z.ZodString;
+    itens: z.ZodArray<z.ZodObject<{
+        nome: z.ZodString;
+        fase: z.ZodNumber;
+        modalidade: z.ZodString;
+        prazo_dias: z.ZodNullable<z.ZodNumber>;
+        horas: z.ZodNullable<z.ZodNumber>;
+        preco_cents: z.ZodNullable<z.ZodNumber>;
+        criterios_aceite: z.ZodArray<z.ZodString, "many">;
+        ferramentas: z.ZodArray<z.ZodString, "many">;
+    }, "strip", z.ZodTypeAny, {
+        nome: string;
+        fase: number;
+        modalidade: string;
+        prazo_dias: number | null;
+        horas: number | null;
+        preco_cents: number | null;
+        criterios_aceite: string[];
+        ferramentas: string[];
+    }, {
+        nome: string;
+        fase: number;
+        modalidade: string;
+        prazo_dias: number | null;
+        horas: number | null;
+        preco_cents: number | null;
+        criterios_aceite: string[];
+        ferramentas: string[];
+    }>, "many">;
+    prazo_total_dias: z.ZodNumber;
+    preco_total_cents: z.ZodNumber;
+    /** Link do objetivo no admin do app, para o consultor abrir a proposta completa. */
+    app_url: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    email: string;
+    produto: string;
+    objective_id: string;
+    resumo_diagnostico: string;
+    itens: {
+        nome: string;
+        fase: number;
+        modalidade: string;
+        prazo_dias: number | null;
+        horas: number | null;
+        preco_cents: number | null;
+        criterios_aceite: string[];
+        ferramentas: string[];
+    }[];
+    prazo_total_dias: number;
+    preco_total_cents: number;
+    lead_ref?: string | undefined;
+    app_url?: string | undefined;
+}, {
+    email: string;
+    produto: string;
+    objective_id: string;
+    resumo_diagnostico: string;
+    itens: {
+        nome: string;
+        fase: number;
+        modalidade: string;
+        prazo_dias: number | null;
+        horas: number | null;
+        preco_cents: number | null;
+        criterios_aceite: string[];
+        ferramentas: string[];
+    }[];
+    prazo_total_dias: number;
+    preco_total_cents: number;
+    lead_ref?: string | undefined;
+    app_url?: string | undefined;
+}>;
+type CrmProposalDraft = z.infer<typeof CrmProposalDraftSchema>;
+
 /** Centavos inteiros. Alias documental — o compilador aceita `number`. */
 type Cents = number;
 /** Garante centavos inteiros e finitos; qualquer outra coisa vira 0. */
@@ -3230,4 +3430,4 @@ declare function brlInputToCents(display: string): Cents;
 /** Valor de um período convertido para o mês (MRR). */
 declare function monthlyCents(cents: Cents | null | undefined, frequency: string | null | undefined): Cents;
 
-export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, BUDGET_RANGES, BUDGET_RANGE_LABELS, type BudgetRange, BudgetRangeSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerDiagnosticJoinDto, BuyerDiagnosticJoinSchema, type BuyerJoinDto, BuyerJoinSchema, CATEGORY_STAGES, CATEGORY_STAGE_LABELS, CHECKOUT_ABANDON_HOURS, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, CONFIGURABLE_PROFILES, CRM_FUNNEL_STAGES, CRM_FUNNEL_TAGS, CRM_LEAD_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CategoryStage, CategoryStageSchema, type Cents, type CheckoutClick, CheckoutClickSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type ConfigurableProfile, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type CrmCaptureExtras, CrmCaptureExtrasSchema, type CrmFunnelTag, type CrmMirror, type CrmMirrorLead, CrmMirrorLeadSchema, CrmMirrorSchema, DEFAULT_MIRROR_POLICIES, DELIVERABLE_EXECUTORS, DELIVERABLE_EXECUTOR_LABELS, DELIVERABLE_GOALS, DELIVERABLE_GOAL_LABELS, DELIVERABLE_MODALITIES, DELIVERABLE_MODALITY_LABELS, DIAGNOSTIC_CHANNELS, type DecideProposalDto, DecideProposalSchema, type DeleteVoteDto, DeleteVoteSchema, type DeliverableCategoryDto, DeliverableCategorySchema, type DeliverableExecutor, DeliverableExecutorSchema, type DeliverableGoal, DeliverableGoalSchema, type DeliverableModality, DeliverableModalitySchema, type DeliverableTemplateDto, DeliverableTemplateSchema, type DiagnosticChannel, DiagnosticChannelSchema, type DiagnosticDto, DiagnosticSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, EXECUTION_STATUSES, EXECUTION_STATUS_LABELS, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ExecutionActor, type ExecutionStatus, ExecutionStatusSchema, type ExternalDiagnosticDto, ExternalDiagnosticSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type GatewayOption, GatewayOptionSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type KpiBaseline, KpiBaselineSchema, LEAD_FIELDS, LEAD_TIME_MIN_SAMPLE, type LeadField, type LoginDto, LoginSchema, MASKABLE_FIELDS, METRIC_DIRECTIONS, MIRROR_BLOCKS, MIRROR_PROFILES, type MaskableField, type MetricDirection, MetricDirectionSchema, type MirrorBlock, type MirrorPolicy, MirrorPolicyProfileSchema, MirrorPolicySchema, type MirrorProfile, NEED_TYPES, NEED_TYPE_LABELS, type NeedType, NeedTypeSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, OFFER_KINDS, OFFER_KIND_LABELS, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, type OfferKind, OfferKindSchema, PLAN_FREQUENCIES, PRODUCER_TERMS_VERSION, PROPOSAL_STATUSES, PROPOSAL_STATUS_LABELS, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type ProposalItemDto, ProposalItemSchema, type ProposalStatus, ProposalStatusSchema, RECURRENCE_INTERVALS, RECURRENCE_INTERVAL_LABELS, RESULT_CHECKPOINTS, RESULT_CHECKPOINT_DAYS, type RecurrenceInterval, RecurrenceIntervalSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type RequiredTool, RequiredToolSchema, type ResetPasswordDto, ResetPasswordSchema, type ResultCheckpoint, ResultCheckpointSchema, type ResultMeasurementDto, ResultMeasurementSchema, type ReturnDeliverableDto, ReturnDeliverableSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type SaveProposalDto, SaveProposalSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TimeLogDto, TimeLogSchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, URGENCIES, URGENCY_LABELS, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateDeliverableCategoryDto, UpdateDeliverableCategorySchema, type UpdateDeliverableTemplateDto, UpdateDeliverableTemplateSchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateExecutionDto, UpdateExecutionSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type Urgency, UrgencySchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, VALIDATION_STEPS, VALIDATION_STEP_STATUSES, type ValidationStep, ValidationStepSchema, type ValidationStepState, ValidationStepStateSchema, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, brlInputToCents, canTransition, centsToReais, checkTemplateTiming, decodeAttribution, encodeAttribution, entitlementGrantsAccess, formatBRL, formatBRLCompact, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, kpiImproved, maskBRLInput, monthlyCents, readAttributionFromUrl, reaisToCents, toCents, withAttribution };
+export { ATTRIBUTION_MAX_LENGTH, ATTRIBUTION_PARAM, type AttributionTouch, AttributionTouchSchema, BUDGET_RANGES, BUDGET_RANGE_LABELS, type BudgetRange, BudgetRangeSchema, type BulkDeleteUsersDto, BulkDeleteUsersSchema, type BuyerDiagnosticJoinDto, BuyerDiagnosticJoinSchema, type BuyerJoinDto, BuyerJoinSchema, CATEGORY_STAGES, CATEGORY_STAGE_LABELS, CHECKOUT_ABANDON_HOURS, CLICK_ID_KEYS, COMMERCE_EVENT_TYPES, COMMERCE_EVENT_VERIFICATION, COMMERCE_GATEWAYS, COMMERCE_REF_PARAM, CONFIGURABLE_PROFILES, CRM_FUNNEL_STAGES, CRM_FUNNEL_TAGS, CRM_LEAD_REF_PARAM, type CancelSubscriptionDto, CancelSubscriptionSchema, type CategoryStage, CategoryStageSchema, type Cents, type CheckoutClick, CheckoutClickSchema, type CommerceEvent, CommerceEventSchema, type CommerceEventType, CommerceEventTypeSchema, CommerceEventVerificationSchema, type CommerceGateway, CommerceGatewaySchema, type CompleteProfileDto, CompleteProfileSchema, type ConfigurableProfile, type CreateAdminFeedbackDto, CreateAdminFeedbackSchema, type CreateCampaignDto, CreateCampaignSchema, type CreateCommentDto, CreateCommentSchema, type CreateCompanyDto, CreateCompanySchema, type CreateFeedbackDto, CreateFeedbackSchema, type CreateNotificationPayload, type CreateObjectiveDto, CreateObjectiveSchema, type CreatePlanLinkDto, CreatePlanLinkSchema, type CreateProducerDto, CreateProducerSchema, type CreateSaasProductDto, CreateSaasProductSchema, type CreateServiceRequestDto, CreateServiceRequestSchema, type CrmCaptureExtras, CrmCaptureExtrasSchema, type CrmFunnelTag, type CrmMirror, type CrmMirrorLead, CrmMirrorLeadSchema, CrmMirrorSchema, type CrmProposalDraft, type CrmProposalDraftItem, CrmProposalDraftItemSchema, CrmProposalDraftSchema, DEFAULT_MIRROR_POLICIES, DELIVERABLE_EXECUTORS, DELIVERABLE_EXECUTOR_LABELS, DELIVERABLE_GOALS, DELIVERABLE_GOAL_LABELS, DELIVERABLE_MODALITIES, DELIVERABLE_MODALITY_LABELS, DIAGNOSTIC_CHANNELS, type DecideProposalDto, DecideProposalSchema, type DeleteVoteDto, DeleteVoteSchema, type DeliverableCategoryDto, DeliverableCategorySchema, type DeliverableExecutor, DeliverableExecutorSchema, type DeliverableGoal, DeliverableGoalSchema, type DeliverableModality, DeliverableModalitySchema, type DeliverableTemplateDto, DeliverableTemplateSchema, type DiagnosticChannel, DiagnosticChannelSchema, type DiagnosticDto, type DiagnosticPreview, type DiagnosticPreviewItem, DiagnosticPreviewItemSchema, DiagnosticPreviewSchema, DiagnosticSchema, ENTITLEMENT_STATUSES, ENTRY_PROFILES, EXECUTION_STATUSES, EXECUTION_STATUS_LABELS, type Entitlement, EntitlementKeySchema, EntitlementSchema, type EntitlementStatus, EntitlementStatusSchema, type EntryProfile, EntryProfileSchema, type EntrySource, EntrySourceSchema, type ExecutionActor, type ExecutionStatus, ExecutionStatusSchema, type ExternalDiagnosticDto, ExternalDiagnosticSchema, type ForgotPasswordDto, ForgotPasswordSchema, type GatewayDomainDto, GatewayDomainSchema, type GatewayOption, GatewayOptionSchema, type InviteProducerAdminDto, InviteProducerAdminSchema, type InviteProducerDto, InviteProducerSchema, type KiwifyConfigDto, KiwifyConfigSchema, type KpiBaseline, KpiBaselineSchema, LEAD_FIELDS, LEAD_TIME_MIN_SAMPLE, type LeadField, type LoginDto, LoginSchema, MASKABLE_FIELDS, METRIC_DIRECTIONS, MIRROR_BLOCKS, MIRROR_PROFILES, type MaskableField, type MetricDirection, MetricDirectionSchema, type MirrorBlock, type MirrorPolicy, MirrorPolicyProfileSchema, MirrorPolicySchema, type MirrorProfile, NEED_TYPES, NEED_TYPE_LABELS, type NeedType, NeedTypeSchema, type Notification, type NotificationActions, type NotificationCategory, type NotificationChannel, type NotificationFilter, type NotificationPriority, type NotificationRow, type NotificationState, type NotificationStatus, type NotificationStore, type NotificationType, OBJECTIVE_STATUSES, OFFER_KINDS, OFFER_KIND_LABELS, ObjectiveDescriptionSchema, type ObjectiveStatus, ObjectiveStatusSchema, type OfferKind, OfferKindSchema, PLAN_FREQUENCIES, PREVIEW_LEAD_TIME_SOURCES, PRODUCER_TERMS_VERSION, PROPOSAL_STATUSES, PROPOSAL_STATUS_LABELS, type PatchFeedbackDto, PatchFeedbackSchema, PhoneSchema, type PlanTier, type PreviewCampaignDto, PreviewCampaignSchema, type ProducerJoinDto, ProducerJoinSchema, type ProposalItemDto, ProposalItemSchema, type ProposalStatus, ProposalStatusSchema, RECURRENCE_INTERVALS, RECURRENCE_INTERVAL_LABELS, RESULT_CHECKPOINTS, RESULT_CHECKPOINT_DAYS, type RecurrenceInterval, RecurrenceIntervalSchema, type RegisterDto, RegisterSchema, type RejectProductDto, RejectProductSchema, type ReopenProductDto, ReopenProductSchema, type RequiredTool, RequiredToolSchema, type ResetPasswordDto, ResetPasswordSchema, type ResultCheckpoint, ResultCheckpointSchema, type ResultMeasurementDto, ResultMeasurementSchema, type ReturnDeliverableDto, ReturnDeliverableSchema, type SaasSubscriptionStatus, SaasSubscriptionStatusSchema, type SaveProposalDto, SaveProposalSchema, type ServiceRequestStatus, ServiceRequestStatusSchema, type SessionExchangeDto, SessionExchangeSchema, type SignServiceRequestDto, SignServiceRequestSchema, type SuggestItemDto, SuggestItemSchema, type SwitchCompanyDto, SwitchCompanySchema, type TimeLogDto, TimeLogSchema, type TokenRequestDto, TokenRequestSchema, type TourProgressDto, TourProgressSchema, URGENCIES, URGENCY_LABELS, UTM_KEYS, type UpdateAccountDto, UpdateAccountSchema, type UpdateCampaignDto, UpdateCampaignSchema, type UpdateCompanyDto, UpdateCompanySchema, type UpdateDeliverableCategoryDto, UpdateDeliverableCategorySchema, type UpdateDeliverableTemplateDto, UpdateDeliverableTemplateSchema, type UpdateEmailDto, UpdateEmailSchema, type UpdateExecutionDto, UpdateExecutionSchema, type UpdateGatewayDomainDto, UpdateGatewayDomainSchema, type UpdateObjectiveStatusDto, UpdateObjectiveStatusSchema, type UpdatePasswordDto, UpdatePasswordSchema, type UpdatePaymentSettingsDto, UpdatePaymentSettingsSchema, type UpdatePlanLinkDto, UpdatePlanLinkSchema, type UpdateProducerDto, UpdateProducerSchema, type UpdateSaasProductDto, UpdateSaasProductSchema, type UpdateUserDto, UpdateUserSchema, type Urgency, UrgencySchema, type UserCompany, type UserPermissions, type UserProfile, type UserRole, type UserStats, VALIDATION_STEPS, VALIDATION_STEP_STATUSES, type ValidationStep, ValidationStepSchema, type ValidationStepState, ValidationStepStateSchema, type VerifyTokenDto, VerifyTokenSchema, type VoteItemDto, VoteItemSchema, brlInputToCents, canTransition, centsToReais, checkTemplateTiming, decodeAttribution, encodeAttribution, entitlementGrantsAccess, formatBRL, formatBRLCompact, hasPermission, isCampaignTouch, isProducer, isSuperAdmin, kpiImproved, maskBRLInput, monthlyCents, readAttributionFromUrl, reaisToCents, toCents, withAttribution };

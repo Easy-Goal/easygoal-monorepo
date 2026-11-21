@@ -924,6 +924,51 @@ var DEFAULT_MIRROR_POLICIES = {
   }
 };
 
+// src/contracts/diagnostic-preview.ts
+import { z as z13 } from "zod";
+var PREVIEW_LEAD_TIME_SOURCES = ["template", "history"];
+var DiagnosticPreviewItemSchema = z13.object({
+  name: z13.string(),
+  phase: z13.number().int().min(1),
+  modality: z13.string(),
+  /** Dias úteis; `null` = sem prazo definido no catálogo (o consultor define). */
+  lead_time_days: z13.number().int().nullable(),
+  /** `history` = prazo médio das entregas reais; `template` = prazo padrão do catálogo. */
+  lead_time_source: z13.enum(PREVIEW_LEAD_TIME_SOURCES),
+  acceptance_criteria: z13.array(z13.string())
+});
+var DiagnosticPreviewSchema = z13.object({
+  objective_id: z13.string().uuid(),
+  items: z13.array(DiagnosticPreviewItemSchema),
+  phases: z13.number().int().min(0),
+  /** Soma das fases (recorrência fora), em dias úteis. */
+  total_lead_time_days: z13.number().int().min(0),
+  has_recurring: z13.boolean()
+});
+var CrmProposalDraftItemSchema = z13.object({
+  nome: z13.string(),
+  fase: z13.number().int().min(1),
+  modalidade: z13.string(),
+  prazo_dias: z13.number().int().nullable(),
+  horas: z13.number().nullable(),
+  preco_cents: z13.number().int().nullable(),
+  criterios_aceite: z13.array(z13.string()),
+  ferramentas: z13.array(z13.string())
+});
+var CrmProposalDraftSchema = z13.object({
+  objective_id: z13.string().uuid(),
+  email: z13.string().trim().toLowerCase().email(),
+  /** Token assinado do CRM, quando a captura devolveu um (ver `crm-funnel.ts`). Só dica. */
+  lead_ref: z13.string().max(300).optional(),
+  produto: z13.string().max(200),
+  resumo_diagnostico: z13.string().max(4e3),
+  itens: z13.array(CrmProposalDraftItemSchema),
+  prazo_total_dias: z13.number().int().min(0),
+  preco_total_cents: z13.number().int().min(0),
+  /** Link do objetivo no admin do app, para o consultor abrir a proposta completa. */
+  app_url: z13.string().url().optional()
+});
+
 // src/money/index.ts
 var BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 var BRL_COMPACT = new Intl.NumberFormat("pt-BR", {
@@ -1016,6 +1061,8 @@ export {
   CrmCaptureExtrasSchema,
   CrmMirrorLeadSchema,
   CrmMirrorSchema,
+  CrmProposalDraftItemSchema,
+  CrmProposalDraftSchema,
   DEFAULT_MIRROR_POLICIES,
   DELIVERABLE_EXECUTORS,
   DELIVERABLE_EXECUTOR_LABELS,
@@ -1032,6 +1079,8 @@ export {
   DeliverableModalitySchema,
   DeliverableTemplateSchema,
   DiagnosticChannelSchema,
+  DiagnosticPreviewItemSchema,
+  DiagnosticPreviewSchema,
   DiagnosticSchema,
   ENTITLEMENT_STATUSES,
   ENTRY_PROFILES,
@@ -1071,6 +1120,7 @@ export {
   ObjectiveStatusSchema,
   OfferKindSchema,
   PLAN_FREQUENCIES,
+  PREVIEW_LEAD_TIME_SOURCES,
   PRODUCER_TERMS_VERSION,
   PROPOSAL_STATUSES,
   PROPOSAL_STATUS_LABELS,

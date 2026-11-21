@@ -217,6 +217,15 @@ Liga LP/site → gateway → API → Easy CRM → app. O produto é um recorte d
 import { CRM_LEAD_REF_PARAM, CheckoutClickSchema, CrmMirrorSchema } from '@easygoal/packages/core'
 ```
 
+### Resposta do diagnóstico antes do app (`contracts/diagnostic-preview.ts`, s369)
+
+O diagnóstico do site vira objetivo e sugestão de proposta (catálogo de entregáveis + prazo médio vivo).
+
+| Contrato | Quem usa | Para quê |
+|---|---|---|
+| `DiagnosticPreviewSchema` | API → site | preview público: etapas, fases e prazo total; **sem preço nem horas** |
+| `CrmProposalDraftSchema` | API → Easy CRM (`/api/propostas/rascunho`) | proposta em rascunho ligada ao lead: itens com horas, preço, critérios e ferramentas, para o consultor chegar ao contato com squad e prazos discutidos; idempotente por `objective_id` |
+
 ---
 
 ## Build

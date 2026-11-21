@@ -62,6 +62,8 @@ __export(index_exports, {
   CrmCaptureExtrasSchema: () => CrmCaptureExtrasSchema,
   CrmMirrorLeadSchema: () => CrmMirrorLeadSchema,
   CrmMirrorSchema: () => CrmMirrorSchema,
+  CrmProposalDraftItemSchema: () => CrmProposalDraftItemSchema,
+  CrmProposalDraftSchema: () => CrmProposalDraftSchema,
   DEFAULT_MIRROR_POLICIES: () => DEFAULT_MIRROR_POLICIES,
   DELIVERABLE_EXECUTORS: () => DELIVERABLE_EXECUTORS,
   DELIVERABLE_EXECUTOR_LABELS: () => DELIVERABLE_EXECUTOR_LABELS,
@@ -78,6 +80,8 @@ __export(index_exports, {
   DeliverableModalitySchema: () => DeliverableModalitySchema,
   DeliverableTemplateSchema: () => DeliverableTemplateSchema,
   DiagnosticChannelSchema: () => DiagnosticChannelSchema,
+  DiagnosticPreviewItemSchema: () => DiagnosticPreviewItemSchema,
+  DiagnosticPreviewSchema: () => DiagnosticPreviewSchema,
   DiagnosticSchema: () => DiagnosticSchema,
   ENTITLEMENT_STATUSES: () => ENTITLEMENT_STATUSES,
   ENTRY_PROFILES: () => ENTRY_PROFILES,
@@ -117,6 +121,7 @@ __export(index_exports, {
   ObjectiveStatusSchema: () => ObjectiveStatusSchema,
   OfferKindSchema: () => OfferKindSchema,
   PLAN_FREQUENCIES: () => PLAN_FREQUENCIES,
+  PREVIEW_LEAD_TIME_SOURCES: () => PREVIEW_LEAD_TIME_SOURCES,
   PRODUCER_TERMS_VERSION: () => PRODUCER_TERMS_VERSION,
   PROPOSAL_STATUSES: () => PROPOSAL_STATUSES,
   PROPOSAL_STATUS_LABELS: () => PROPOSAL_STATUS_LABELS,
@@ -1123,6 +1128,51 @@ var DEFAULT_MIRROR_POLICIES = {
   }
 };
 
+// src/contracts/diagnostic-preview.ts
+var import_zod13 = require("zod");
+var PREVIEW_LEAD_TIME_SOURCES = ["template", "history"];
+var DiagnosticPreviewItemSchema = import_zod13.z.object({
+  name: import_zod13.z.string(),
+  phase: import_zod13.z.number().int().min(1),
+  modality: import_zod13.z.string(),
+  /** Dias úteis; `null` = sem prazo definido no catálogo (o consultor define). */
+  lead_time_days: import_zod13.z.number().int().nullable(),
+  /** `history` = prazo médio das entregas reais; `template` = prazo padrão do catálogo. */
+  lead_time_source: import_zod13.z.enum(PREVIEW_LEAD_TIME_SOURCES),
+  acceptance_criteria: import_zod13.z.array(import_zod13.z.string())
+});
+var DiagnosticPreviewSchema = import_zod13.z.object({
+  objective_id: import_zod13.z.string().uuid(),
+  items: import_zod13.z.array(DiagnosticPreviewItemSchema),
+  phases: import_zod13.z.number().int().min(0),
+  /** Soma das fases (recorrência fora), em dias úteis. */
+  total_lead_time_days: import_zod13.z.number().int().min(0),
+  has_recurring: import_zod13.z.boolean()
+});
+var CrmProposalDraftItemSchema = import_zod13.z.object({
+  nome: import_zod13.z.string(),
+  fase: import_zod13.z.number().int().min(1),
+  modalidade: import_zod13.z.string(),
+  prazo_dias: import_zod13.z.number().int().nullable(),
+  horas: import_zod13.z.number().nullable(),
+  preco_cents: import_zod13.z.number().int().nullable(),
+  criterios_aceite: import_zod13.z.array(import_zod13.z.string()),
+  ferramentas: import_zod13.z.array(import_zod13.z.string())
+});
+var CrmProposalDraftSchema = import_zod13.z.object({
+  objective_id: import_zod13.z.string().uuid(),
+  email: import_zod13.z.string().trim().toLowerCase().email(),
+  /** Token assinado do CRM, quando a captura devolveu um (ver `crm-funnel.ts`). Só dica. */
+  lead_ref: import_zod13.z.string().max(300).optional(),
+  produto: import_zod13.z.string().max(200),
+  resumo_diagnostico: import_zod13.z.string().max(4e3),
+  itens: import_zod13.z.array(CrmProposalDraftItemSchema),
+  prazo_total_dias: import_zod13.z.number().int().min(0),
+  preco_total_cents: import_zod13.z.number().int().min(0),
+  /** Link do objetivo no admin do app, para o consultor abrir a proposta completa. */
+  app_url: import_zod13.z.string().url().optional()
+});
+
 // src/money/index.ts
 var BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 var BRL_COMPACT = new Intl.NumberFormat("pt-BR", {
@@ -1216,6 +1266,8 @@ function monthlyCents(cents, frequency) {
   CrmCaptureExtrasSchema,
   CrmMirrorLeadSchema,
   CrmMirrorSchema,
+  CrmProposalDraftItemSchema,
+  CrmProposalDraftSchema,
   DEFAULT_MIRROR_POLICIES,
   DELIVERABLE_EXECUTORS,
   DELIVERABLE_EXECUTOR_LABELS,
@@ -1232,6 +1284,8 @@ function monthlyCents(cents, frequency) {
   DeliverableModalitySchema,
   DeliverableTemplateSchema,
   DiagnosticChannelSchema,
+  DiagnosticPreviewItemSchema,
+  DiagnosticPreviewSchema,
   DiagnosticSchema,
   ENTITLEMENT_STATUSES,
   ENTRY_PROFILES,
@@ -1271,6 +1325,7 @@ function monthlyCents(cents, frequency) {
   ObjectiveStatusSchema,
   OfferKindSchema,
   PLAN_FREQUENCIES,
+  PREVIEW_LEAD_TIME_SOURCES,
   PRODUCER_TERMS_VERSION,
   PROPOSAL_STATUSES,
   PROPOSAL_STATUS_LABELS,
